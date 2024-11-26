@@ -2,10 +2,8 @@
 </script>
 
 <template>
-  <main>
-  <p>Hello World</p>
-  
-  </main>
+  <router-view>
+  </router-view>
 </template>
 
 <style scoped>

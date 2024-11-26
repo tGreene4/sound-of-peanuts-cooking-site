@@ -1,7 +1,22 @@
 
-// Import the functions you need from the SDKs you need
+// Import Vue app functions for creating Vue app
 import { createApp } from 'vue';
-import App from './App.vue'
-import './assets/main.css'
+import App from './App.vue';
+//router functions
+import {createRouter, createWebHistory} from 'vue-router';
+//SPA routes
+import routes from "./router/routes"
 
-createApp(App).mount('#app')
+//bootstrap
+import "bootstrap/dist/css/bootstrap.min.css"
+
+//router object
+let mainRouter = createRouter({
+    history:createWebHistory(),
+    routes:routes
+});
+
+//main vue app create object, attach to index.html
+const mainApp = createApp(App);
+mainApp.use(mainRouter);
+mainApp.mount('#app');
