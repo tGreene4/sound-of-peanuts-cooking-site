@@ -4,9 +4,11 @@ import HomeMediaContainer from './components/HomeMainMediaContainer.vue';
 </script>
 
 <template>
+
   <Header />
   <HomeMediaContainer />
   <router-view />
+
 </template>
 
 <style scoped>
