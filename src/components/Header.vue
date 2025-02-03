@@ -1,11 +1,40 @@
 <template>
-    <nav class="navbar navbar-expand-lg sticky-top navbar-dark bg-dark">
-        <div class="container-fluid">
-            <a class = "navbar-brand">
-                <img src = "../assets/images/Potluck Logo.png" height="50vh">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Comic Neue"></link>
+    <div class="container-fluid" id="headerContainer">
+        <div class="row">
+            <a class = "navbar-brand ml-5 col" href="/">
+                <img src = "../assets/images/Potluck Logo.png" height="50vh" class="d-inline-block align-text-bottom">
+                <h1 class="d-none d-md-inline">Potluck</h1>
             </a>
-            <button @click="$router.push('/')" class="btn btn-primary col-1" type="button">Home</button>
-            <button @click="$router.push('/search')" class="btn btn-primary" type="button">Search</button>
+            <div class="input-group col" id="searchBar">
+                <button @click="$router.push('/search')" class="btn btn-primary" id="searchButton" type="button">Search</button>
+                <input type="text" class="form-control" placeholder="Search" id="searchBar">
+            </div>
+            <a href="/">
+            <div class="col"><img src="../assets/images/User icon.png" height="50vh" style="float: inline-end;"></div>
+            </a>
         </div>
-    </nav>
+    </div>
 </template>
+
+
+
+<style scoped>
+*{
+    font-family: "Comic Neue";
+}
+#searchButton{
+    background-color: #BA3500;
+    border-color: brown;
+}
+h1{
+    
+    display: inline;
+    font-size: 200%;
+    margin-left: 5px;
+}
+#headerContainer{
+    background-color: rgb(255, 183, 77);
+    padding:1vh
+}
+</style>
