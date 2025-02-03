@@ -5,6 +5,6 @@ import MediaContainer from './MediaContainer.vue';
 
 <template>
     <div class="container-fluid bg-secondary min-vh-100 vh-100">
-        <MediaContainer></MediaContainer>
+        <MediaContainer />
     </div>
 </template>

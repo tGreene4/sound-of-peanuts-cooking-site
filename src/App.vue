@@ -1,14 +1,12 @@
 <script setup>
 import Header from './components/Header.vue';
-
-import MediaContainer from './components/MediaContainer.vue';
+import HomeMediaContainer from './components/HomeMainMediaContainer.vue';
 </script>
 
 <template>
   <Header />
-  <MediaContainer></MediaContainer>
-  <router-view>
-  </router-view>
+  <HomeMediaContainer />
+  <router-view />
 </template>
 
 <style scoped>
