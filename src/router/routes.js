@@ -1,7 +1,7 @@
-function loadPage (component) {
+function loadPage(component) {
     // '@' is aliased to src/components
     return () => import(
-    /* webpackChunkName: "[request]" */
+        /* webpackChunkName: "[request]" */
         `@/pages/${component}.vue`)
 }
 export default [
