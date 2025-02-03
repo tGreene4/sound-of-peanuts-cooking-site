@@ -8,12 +8,10 @@ import HomeMediaContainer from './components/HomeMainMediaContainer.vue';
 <template>
 
   <Header />
-  <Sidebar />
   <HomeMediaContainer />
   <router-view />
 
 </template>
 
 <style scoped>
-
 </style>
