@@ -1,12 +1,11 @@
 <script>
 import app from '../api/firebase';
-import { getFunctions, httpsCallable } from
-    "../../functions/index.js";
+import { getFunctions, httpsCallable } from 'firebase/functions';
+
 export default {
     data() {
         return {
-            handle: ''
-            ,
+            handle: '',
             comment: ''
         }
     },
@@ -15,14 +14,11 @@ export default {
             console.log(this.handle);
             console.log(this.comment);
             const functions = getFunctions(app);
-            const postComment =
-                httpsCallable(functions,
-                    'postcomment');
-            const result = await postComment(
-                {
-                    "handle": this.handle,
-                    "comment": this.comment
-                });
+            const postComment = httpsCallable(functions, 'postcomment');
+            const result = await postComment({
+                handle: this.handle,
+                comment: this.comment
+            });
             console.log(result);
         }
     }

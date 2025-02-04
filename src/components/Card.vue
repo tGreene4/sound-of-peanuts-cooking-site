@@ -1,10 +1,19 @@
 <template>
     <div class="card" style="width: 18rem;">
-            <img class="card-img-top" src=".../100px180/" alt="Card image cap">
+        <img style="width: 15rem; height: 15rem" class="card-img-top img-thumbnail .img-fluid"
+            src="..\assets\images\coconut.png" alt="Card image cap">
         <div class="card-body">
-        <h5 class="card-title">Card title</h5>
-        <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-        <a href="#" class="btn btn-primary">Go somewhere</a>
+            <h5 class="card-title">Card title</h5>
+            <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's
+                content.</p>
+            <a href="#" class="btn btn-primary">Go somewhere</a>
         </div>
     </div>
-</template> <!--setup component so it shows on home page for now. and that it shows in the media scroll-->
+</template>
+
+<style scoped>
+.img-fluid {
+    max-width: 50%;
+    max-height: auto;
+}
+</style>

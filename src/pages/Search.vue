@@ -1,5 +1,5 @@
 <template>
-  <div class = "container-fluid">
+  <div class = "container-fluid bg-secondary min-vh-100 vh-100">
     <div class = 'row'>
       <div class="col-2">
         <Sidebar />
