@@ -10,9 +10,9 @@
                 <button @click="$router.push('/search')" class="btn btn-primary" id="searchButton" type="button">Search</button>
                 <input type="text" class="form-control" placeholder="Search" id="searchBar">
             </div>
-            <a href="/">
-            <div class="col"><img src="../assets/images/User icon.png" height="50vh" style="float: inline-end;"></div>
-            </a>
+            
+            <div class="col"><a href="/"><img src="../assets/images/User icon.png" height="50vh" style="float: inline-end;"></a></div>
+            
         </div>
     </div>
 </template>
