@@ -1,6 +1,5 @@
 <template>
 <div class="card" style="width: 30rem;">
-    <img src="..." class="card-img-top" alt="...">
     <div class="card-body">
       <h4 class="card-title">Title of the recipe</h4>
       <p class="card-text">Description of the meal.</p>
