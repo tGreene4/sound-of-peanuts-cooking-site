@@ -6,5 +6,6 @@ function loadPage(component) {
 }
 export default [
     { path: '/', component: loadPage('Home') },
-    { path: '/search', component: loadPage('Search') }
+    { path: '/search', component: loadPage('Search') },
+    { path: '/recipe', component: loadPage('Recipe') }
 ]
