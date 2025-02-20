@@ -10,6 +10,7 @@ import routes from "./router/routes"
 //bootstrap
 import "bootstrap/dist/css/bootstrap.min.css"
 
+
 //router object
 let mainRouter = createRouter({
     history:createWebHistory(),

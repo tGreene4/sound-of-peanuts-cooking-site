@@ -1,16 +1,20 @@
-<script>
-    import auth from '../api/firebase'
-    import {onAuthStateChanged} from 'firebase/auth'
+<script setup>
+    import funcs from '../api/firebase'
+    import {getDocs, collections, collection} from 'firebase/firestore'
+    import { httpsCallable } from 'firebase/functions';
+    
 
-    onAuthStateChanged(auth, (user) => {
-        if(user){
-            user.uid
-        }else{
-            
-        }
-    })
+    const props = defineProps({thisUserId:Int});
+
+    const dbUserRequest = httpsCallable(funcs,'getDbUser');
+    dbUserRequest({ uid: '0'})
+        .then((result)=>{const output = result.data.text})
+        .catch((error)=>{console.log(error)})
+
 </script>
 
-<template @onload="">
+<template>
+    <h1>{{output}}</h1>
+
 
 </template>

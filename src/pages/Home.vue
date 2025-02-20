@@ -1,5 +1,6 @@
 <script>
-import {app,funcs} from '../api/firebase';
+import app from '../api/firebase.js';
+import funcs from '../api/firebase.js';
 import { httpsCallable } from 'firebase/functions';
 
 </script>
