@@ -22,6 +22,7 @@ exports.getDbRecipes = onRequest(async(req,res)=>{
     num = req.query.quantity
     const q = query(db.collection('Recipe'),orderBy('likes'),limit(num))
     const snapshot = await getDocs(q);
+    logger.info("Requested posts",req);
     
     if(snapshot.empty){
         res.send('Error:no posts found')

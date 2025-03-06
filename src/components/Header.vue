@@ -11,7 +11,7 @@
                 <input type="text" class="form-control" placeholder="Search" id="searchBar">
             </div>
             
-            <div class="col"><a href="/user"><img src="../assets/images/User icon.png" height="50vh" style="float: inline-end;"></a></div>
+            <div class="col"><a href="/account"><img src="../assets/images/User icon.png" height="50vh" style="float: inline-end;"></a></div>
             
         </div>
     </div>
