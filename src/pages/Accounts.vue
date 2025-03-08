@@ -1,9 +1,10 @@
 <script setup>
-    pfpInputElem = document.getElementById("pfpInput")
-    previewImg = document.getElementById("pfpPreviewImg")
-    pfpInputElem.addEventListener("change", (e) => {
-         previewImg.src = URL.createObjectURL(e.target.files[0])
-    })
+    import {ref} from 'vue'
+    const pfpImgSrc = ref("../assets/images/User Icon.png")
+
+    function changeImg(event){
+        pfpImgSrc.value = URL.createObjectURL(event.target.files[0])
+    }
 
 </script>
 
@@ -31,8 +32,8 @@
                         <input type = "password" class = "form-control" id = "confirmPasswordInput" placeholder="Enter the same password as above">
                         <br>
                         <label for = "pfpInput" class="form-label">Upload your Profile Picture</label>
-                        <img src="../assets/images/User Icon.png" style="width:30vh;display:block;" id = "pfpPreviewImg">
-                        <input type ="file" class = form-control id = "pfpInput" accept="image/png,image/jpeg">
+                        <img :src="pfpImgSrc" style="width:30vh;display:block;" id = "pfpPreviewImg">
+                        <input type ="file" :value = null class = form-control id="pfpInput" accept="image/png,image/jpeg" @change="changeImg($event)">
                         <button class="form-control">Sign Up</button>
                     </form>
                 </div>
