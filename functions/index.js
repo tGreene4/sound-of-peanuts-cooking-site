@@ -33,6 +33,18 @@ exports.getDbRecipes = onRequest(async(req,res)=>{
     }
 })
 
+exports.getDbSingleRecipe = onRequest(async(req,res)=>{
+    id = req.query.rid
+    const snapshot = await db.collection('Recipe').where('recipeId','==',id).limit(1).get();
+
+    if(snapshot.empty){
+        res.send('Error:no recipe with this RID');
+    }else{
+        res.json(snapshot.data)
+    }
+
+})
+
 exports.getDbUser = onRequest(async(req,res)=>{
 
     const snapshot = await db.collection('User').where('uId','==',req.query.uid).limit(1).get();

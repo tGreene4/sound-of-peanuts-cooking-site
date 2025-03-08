@@ -1,6 +1,9 @@
 <script setup>
-
-
+    pfpInputElem = document.getElementById("pfpInput")
+    previewImg = document.getElementById("pfpPreviewImg")
+    pfpInputElem.addEventListener("change", (e) => {
+         previewImg.src = URL.createObjectURL(e.target.files[0])
+    })
 
 </script>
 
@@ -27,6 +30,9 @@
                         <label for = "usernameInput" class = "form-label">Confirm Password:</label>
                         <input type = "password" class = "form-control" id = "confirmPasswordInput" placeholder="Enter the same password as above">
                         <br>
+                        <label for = "pfpInput" class="form-label">Upload your Profile Picture</label>
+                        <img src="../assets/images/User Icon.png" style="width:30vh;display:block;" id = "pfpPreviewImg">
+                        <input type ="file" class = form-control id = "pfpInput" accept="image/png,image/jpeg">
                         <button class="form-control">Sign Up</button>
                     </form>
                 </div>
@@ -37,7 +43,7 @@
                         <label for = "passwordLoginInput" class = "form-label">Password:</label>
                         <input type="password" class="form-control" id="passwordLoginInput" placeholder="Enter your password">
                         <br>
-                        <button class="form-control">Log In</button>
+                        <button class="form-control" @click="">Log In</button>
                     </form>
                 </div>
 
