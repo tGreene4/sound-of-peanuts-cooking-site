@@ -45,3 +45,7 @@ exports.getDbUser = onRequest(async(req,res)=>{
 
     }
 })
+
+exports.postrecipe = onRequest(async(req,res)=>{
+    await db.collection('recipes').add(req.body);
+})
