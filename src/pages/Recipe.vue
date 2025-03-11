@@ -1,6 +1,8 @@
 <script setup>
 import Sidebar from '../components/Sidebar.vue';
 import IngredientList from '@/components/IngredientList.vue';
+
+
 </script>
 
 <template>
