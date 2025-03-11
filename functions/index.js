@@ -24,7 +24,7 @@ const store = getStorage();
 // https://firebase.google.com/docs/functions/get-started
 
 exports.getDbRecipes = onCall(async(req,res)=>{
-    num = req.query.quantity
+    const {num} = req.data
     const q = query(db.collection('Recipe'),orderBy('likes'),limit(num))
     const snapshot = await getDocs(q);
     logger.info("Requested posts",req);
@@ -40,13 +40,12 @@ exports.getDbRecipes = onCall(async(req,res)=>{
                 ...doc.data()
             })
         })
-        return recipes
-
+        return {success:true,recipeList:recipes}
     }
 })
 
 exports.getDbRecipeSingle = onCall(async(req,res)=>{
-    const id = req.data
+    const {id} = req.data
     const snapshot = await db.doc("/Recipe/"+id).get();
 
     if(snapshot.empty){
