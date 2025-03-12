@@ -1,16 +1,16 @@
 <script setup>
-    import { httpsCallable } from 'firebase/functions';
-    import funcs from "../api/firebase"
+    // import { httpsCallable } from 'firebase/functions';
+    // import funcs from "../api/firebase"
 
 
-    const props = defineProps({
-        thisRecipeId: Number
-    });
+    // const props = defineProps({
+    //     thisRecipeId: Number
+    // });
 
-    const dbRecipeRequest = httpsCallable(funcs,"getDbSingleRecipe");
-    dbRecipeRequest({rid: props.thisRecipeId})
-        .then((res)=>{const output = res.data.text;console.log(output);})
-        .catch((error)=>{console.log(error)})
+    // const dbRecipeRequest = httpsCallable(funcs,"getDbSingleRecipe");
+    // dbRecipeRequest({rid: props.thisRecipeId})
+    //     .then((res)=>{const output = res.data.text;console.log(output);})
+    //     .catch((error)=>{console.log(error)})
 </script>
 
 <template>
