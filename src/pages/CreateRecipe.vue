@@ -63,7 +63,7 @@ import funcs from '../api/firebase';
 
       <!--Basic, doesn't work yet-->
       <br><a>Upload Image</a><br>
-      <input type="file" id="media" accept="image/*" multiple @change="(event) => handelFileUpload(event)"/>
+      <input type="file" id="media" accept="image/*" multiple @change="(event) => handleFileUpload(event)"/>
       <br><br>
       <label for = "timeField" class = "form-label">Time</label>
       <input class="form-control" v-model="time"  id="timeField">
