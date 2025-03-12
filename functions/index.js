@@ -101,4 +101,6 @@ exports.createDbUser = onCall(async(req,res)=>{
         return{success:false,message:"Error: could not create user"}
     }
 
+exports.postrecipe = onRequest(async(req,res)=>{
+    await db.collection('recipes').add(req.body);
 })
