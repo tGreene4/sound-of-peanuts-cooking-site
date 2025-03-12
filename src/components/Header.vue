@@ -1,7 +1,7 @@
 <template>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Comic Neue"></link>
     <div class="container-fluid" id="headerContainer">
-        <div class="row">
+        <div class="row" style="padding:0; margin:0">
             <a class = "navbar-brand ml-5 col" href="/">
                 <img src = "../assets/images/Potluck Logo.png" height="50vh" class="d-inline-block align-text-bottom">
                 <h1 class="d-none d-md-inline">Potluck</h1>
