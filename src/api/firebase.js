@@ -2,8 +2,10 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import { getFunctions } from 'firebase/functions';
+import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
+
 import { getStorage } from 'firebase/storage';
+
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -26,4 +28,13 @@ const auth = getAuth(app);
 const storage = getStorage(app);
 const functions = getFunctions(app);
 
+// Connect to the local emulator if we are running in a local environment
+console.log('Attempting to connect to the local emulator');
+console.log('Hostname:', window.location.hostname);
+
+if (window.location.hostname === '127.0.0.1') {
+  console.log('Connecting to the local emulator');
+  connectFunctionsEmulator(functions, 'localhost', 5001);
+}
+ 
 export { app, db, auth, storage, functions };

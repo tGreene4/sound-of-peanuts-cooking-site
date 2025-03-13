@@ -6,9 +6,10 @@ import Sidebar from '../components/Sidebar.vue';
 import IngredientList from '@/components/IngredientList.vue';
 
 const getHelloWorld = async () => {
+  console.log("Calling helloWorld");
   const helloWorld = httpsCallable(functions, 'helloWorld');
   try {
-    const result = await helloWorld({}); // Pass an empty object as data
+    const result = await helloWorld({});
     console.log(result.data);
   } catch (error) {
     console.error("Error calling helloWorld:", error);

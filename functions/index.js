@@ -66,7 +66,6 @@ exports.getDbRecipeSingle = onCall(async(req,res)=>{
     else{
         return{success: true,recipe:snapshot.data()}
     }
-
 })
 
 exports.getDbUser = onCall(async(req,res)=>{
@@ -109,8 +108,6 @@ exports.createDbUser = onCall(async(req,res)=>{
 
 exports.postrecipe = onCall(async(req,res)=>{
     
-
-
     const complete = await db.collection('recipes').add(req.body);
     if(complete){
         return{success:true,message:"Recipe added"}
