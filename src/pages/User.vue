@@ -4,7 +4,7 @@
     
 
     const props = defineProps({
-        thisUserId:Int
+        thisUserId:Number
     });
 
     const dbUserRequest = httpsCallable(funcs,'getDbUser');

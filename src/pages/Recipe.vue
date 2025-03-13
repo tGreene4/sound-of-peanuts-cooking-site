@@ -2,7 +2,9 @@
 import Sidebar from '../components/Sidebar.vue';
 import IngredientList from '@/components/IngredientList.vue';
 
-
+defineProps({
+  id:String
+})
 </script>
 
 <template>
@@ -17,6 +19,7 @@ import IngredientList from '@/components/IngredientList.vue';
       </div>
       <div class="col-md-5 d-flex justify-content-center align-items-center" style="background-color: lightblue; padding: 20px; border-radius: 15px;">
         <img  class="img-fluid rounded w-50 h-auto" src="..\assets\images\coconut.png" alt="Recipe default">
+        <p>{{ id }}</p>
       </div>
       
         

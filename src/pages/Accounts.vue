@@ -1,5 +1,13 @@
 <script setup>
+
+
+    
     import {ref} from 'vue'
+    import auth from '../api/firebase'
+    if(auth.auth.currentUser!=null){
+        const id = auth.auth.currentUser.uid;
+        $router.push("/user/"+id);
+    }
     const pfpImgSrc = ref("../assets/images/User Icon.png")
 
     function changeImg(event){
