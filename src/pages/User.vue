@@ -1,5 +1,5 @@
 <script setup>
-    import funcs from '../api/firebase'
+    import functions from '../api/firebase'
     import { httpsCallable } from 'firebase/functions';
     
 

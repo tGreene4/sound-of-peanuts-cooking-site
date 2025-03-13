@@ -20,14 +20,14 @@ initializeApp({
 const db = getFirestore();
 const store = getStorage();
 
-exports.helloWorld = onCall(async (request, response) => {
+exports.helloWorld = onCall(async (req, res) => {
   logger.info("Hello logs!", { structuredData: true });
 
   try {
-    response.send("Hello from Firebase!"); // Replace with your actual response
+    return { message: "Hello from Firebase!"};
   } catch (error) {
     logger.error("Error in Cloud Function:", error);
-    response.send({ error: error.message }); //Return an error message to the client
+    return { error: error.message }; //Return an error message to the client
   }
 });
 
@@ -53,7 +53,11 @@ exports.getDbRecipes = onCall(async(req,res)=>{
 })
 
 exports.getDbRecipeSingle = onCall(async(req,res)=>{
-    const {id} = req.data
+    const {id} = req.data   
+    if(!id){
+        throw new Error("id not found")
+    }
+
     const snapshot = await db.doc("/Recipe/"+id).get();
 
     if(snapshot.empty){
@@ -62,7 +66,6 @@ exports.getDbRecipeSingle = onCall(async(req,res)=>{
     else{
         return{success: true,recipe:snapshot.data()}
     }
-
 })
 
 exports.getDbUser = onCall(async(req,res)=>{
@@ -97,8 +100,19 @@ exports.createDbUser = onCall(async(req,res)=>{
 
     if(complete){
         return{success:true,message:"User added"}
-    }else{
+    }
+    else{
         return{success:false,message:"Error: could not create user"}
     }
+})
 
+exports.postrecipe = onCall(async(req,res)=>{
+    
+    const complete = await db.collection('recipes').add(req.body);
+    if(complete){
+        return{success:true,message:"Recipe added"}
+    }
+    else{
+        return{success:false,message:"Error: could not add recipe"}
+    }
 })
