@@ -18,6 +18,9 @@ const getHelloWorld = async () => {
 };
 
 const recipeId = ref('');
+const recipeName = ref('');
+const recipeIngredients = ref('');
+const recipeInstructions = ref('');
 
 const getDbRecipeSingle = async () => {
   console.log("Calling getDbRecipeSingle with ID:", recipeId.value);
@@ -25,10 +28,28 @@ const getDbRecipeSingle = async () => {
   try {
     const result = await getDbRecipeSingleFunction({ id: recipeId.value });
     console.log(result.data);
+    return result.data;
   } catch (error) {
     console.error("Error calling getDbRecipeSingle:", error);
+    return null;
   }
 };
+
+const postRecipe = async () => {
+  console.log("Calling postRecipe with name:", recipeName.value);
+  const postRecipeFunction = httpsCallable(functions, 'postRecipe');
+  try {
+    const result = await postRecipeFunction({
+      name: recipeName.value,
+      ingredients: recipeIngredients.value,
+      instructions: recipeInstructions.value
+    });
+    console.log(result.data);
+  } catch (error) {
+    console.error("Error calling postRecipe:", error);
+  }
+};
+
 </script>
 
 <template>
@@ -48,6 +69,16 @@ const getDbRecipeSingle = async () => {
 
       <input v-model="recipeId" placeholder="Enter Recipe ID" class="form-control mb-2" />
       <button class="btn btn-primary" @click="getDbRecipeSingle">Get Recipe</button>    
+
+      
+      <div class="col-md-12 mt-4">
+        <h3>Add New Recipe</h3>
+        <input v-model="recipeName" placeholder="Recipe Name" class="form-control mb-2" />
+        <textarea v-model="recipeIngredients" placeholder="Ingredients" class="form-control mb-2"></textarea>
+        <textarea v-model="recipeInstructions" placeholder="Instructions" class="form-control mb-2"></textarea>
+        <button class="btn btn-primary" @click="postRecipe">Add Recipe</button>
+      </div>
+
     </div>
   </div>
 </template>
