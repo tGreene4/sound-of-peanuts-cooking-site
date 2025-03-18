@@ -7,7 +7,7 @@ function loadPage(component) {
 export default [
     { path: '/', component: loadPage('Home') },
     { path: '/search', component: loadPage('Search') },
-    { path: '/recipe', component: loadPage('Recipe'),props:true},
+    { path: '/recipe/:id', component: loadPage('Recipe'), props: true },
     { path: '/user', component: loadPage('User'),props:true},
     { path: '/account', component: loadPage('Accounts')},
     { path: '/CreateRecipe', component: loadPage('CreateRecipe') },

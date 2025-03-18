@@ -51,7 +51,6 @@ exports.getDbRecipes = onCall(async(req,res)=>{
         return {success:true,recipeList:recipes}
     }
 })
-
 exports.getDbRecipeSingle = onCall(async(req,res)=>{
     const {id} = req.data   
     if(!id){
@@ -104,15 +103,19 @@ exports.createDbUser = onCall(async(req,res)=>{
     else{
         return{success:false,message:"Error: could not create user"}
     }
-})
+});
 
-exports.postrecipe = onCall(async(req,res)=>{
-    
-    const complete = await db.collection('recipes').add(req.body);
+exports.postDbRecipe = onCall(async(req,res)=>{
+    const {title,ingredients,steps,author,likes,comments} = req.data
+    const complete = await db.collection('Recipe').add({
+        title:title,
+        ingredients:ingredients,
+        steps:steps,
+    })
     if(complete){
         return{success:true,message:"Recipe added"}
     }
     else{
-        return{success:false,message:"Error: could not add recipe"}
+        return{success:false,message:"Error: could not create recipe"}
     }
-})
+});
