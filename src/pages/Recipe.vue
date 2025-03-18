@@ -1,7 +1,7 @@
 <script setup>
-import { functions } from '../api/firebase';
+import { functions, auth } from '../api/firebase';
 import { httpsCallable } from 'firebase/functions';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, useId } from 'vue';
 
 import IngredientList from '@/components/IngredientList.vue';
 
@@ -50,6 +50,48 @@ const getDbRecipeSingle = async () => {
   }
 };
 
+const likeRecipe = async () => {
+
+  const user = auth.currentUser;
+
+  if (!user) {
+    console.error("User is not authenticated. Cannot like the recipe.");
+    return;
+  }
+
+  const uid = user.uid;
+
+  console.log("Calling addLikeRecipe with ID:", routeProp.id, "and user ID: ", uid);
+  const likeRecipeFunction = httpsCallable(functions, 'addLikeRecipe');
+  try {
+    const result = await likeRecipeFunction({ id: routeProp.id , uid});
+    console.log(result.data);
+  } catch (error) {
+    console.error("Error calling addLikeRecipe:", error);
+  }
+};
+
+const dislikeRecipe = async () => {
+
+  const user = auth.currentUser;
+
+  if (!user) {
+    console.error("User is not authenticated. Cannot like the recipe.");
+    return;
+  }
+
+  const uid = user.uid;
+
+  console.log("Calling addDislikeRecipe with ID:", routeProp.id, "and user ID: ", uid);
+  const dislikeRecipeFunction = httpsCallable(functions, 'addDislikeRecipe');
+  try {
+    const result = await dislikeRecipeFunction({ id: routeProp.id , uid});
+    console.log(result.data);
+  } catch (error) {
+    console.error("Error calling addDislikeRecipe:", error);
+  }
+};
+
 /**>
 const postRecipe = async () => {
   console.log("Calling postRecipe with name:", recipeName.value);
@@ -90,7 +132,8 @@ onMounted(() => {
         <p><strong>Instructions:</strong> {{ recipeInstructions }}</p>
       </div>
 
-      <button class="btn btn-primary" @click="getData">See recipe data</button>
+      <button class="btn btn-primary" @click="likeRecipe">Like</button>
+      <button class="btn btn-primary" @click="dislikeRecipe">Dislike</button>
       <button class="btn btn-primary" @click="getHelloWorld">Hello world</button>
     </div>
   </div>
