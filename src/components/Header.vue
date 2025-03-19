@@ -1,14 +1,4 @@
 <script setup>
-import auth from "../api/firebase.js";
-function userRedirect(){
-    if(auth.currentUser!=null){
-        $router.push('/search/'+auth.currentUser.uid)
-    }
-    else{
-        $router.push('/account')
-    }
-}
-
 </script>
 
 <template>
