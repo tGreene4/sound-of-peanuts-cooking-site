@@ -14,7 +14,7 @@
 
 <template>
     <div class="card" style="width: 18rem;">
-        <img style="width: 18rem; height: 18rem" class="card-img-top img-thumbnail .img-fluid align-self-center"
+        <img style="width: 18rem; height: 18rem" class="card-img-top img-thumbnail img-fluid align-self-center"
             src="..\assets\images\coconut.png" alt="Card image cap">
         <div class="card-body">
             <h5 class="card-title"><a :href="recipeLink">{{thisRecipeName}}</a></h5>
@@ -27,7 +27,7 @@
 
 <style scoped>
 .img-fluid {
-    max-width: 50%;
-    max-height: auto;
+    max-width: 100%;
+    max-height: 100%;
 }
 </style>
