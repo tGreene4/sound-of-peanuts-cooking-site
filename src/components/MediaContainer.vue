@@ -13,28 +13,36 @@ export default {
 }
 </script>
 <template>
-  <div class="container-fluid align-self-center gradient-custom w-100">
+  <div class="container-fluid align-self-center gradient-custom w-100 min-vh-100">
     <h1 class="sectionHeader">Newest</h1>
     <div class="row" id="newestField">
         <div class="col-sm-auto"   id="Newest" v-for="item in newest">
-          <Card thisRecipeId={{item}}
-                this-recipe-name="New"
-          />
+          <div class="cardContainer">
+            <Card thisRecipeId={{item}}
+                  this-recipe-name="New"
+            />
+          </div>
+
         </div>
 
     </div>
     <h1 class="sectionHeader">Most Liked</h1>
     <div class="row" id="mostLikedField">
       <div class="col-sm-auto"   id="MostLiked" v-for="item in mostLiked">
+        <div class="cardContainer">
           <Card thisRecipeId={{item}}
           />
+        </div>
       </div>
     </div>
     <h1 class="sectionHeader">More</h1>
     <div class="row" id="moreField" style="padding-bottom: 25px">
         <div class="col-sm-auto"   id="More" v-for="item in more">
-          <Card thisRecipeId={{item}}
-          />
+          <div class="cardContainer">
+            <Card thisRecipeId={{item}}
+            />
+          </div>
+
         </div>
     </div>
   </div>
@@ -57,6 +65,11 @@ export default {
   min-width: 250px;
   text-align: center;
   background: rgba(255, 183, 77,50%);
+}
+
+.cardContainer {
+  padding-top: 5px;
+  padding-bottom: 5px;
 }
 
 </style>
