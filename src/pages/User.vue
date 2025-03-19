@@ -8,7 +8,7 @@
     });
 
     const dbUserRequest = httpsCallable(funcs,'getDbUser');
-    dbUserRequest({ uid: '0'})
+    dbUserRequest({ uid: props.thisUserId})
         .then((res)=>{const output = result.data.text;console.log(output);})
         .catch((error)=>{console.log(error)})
 
