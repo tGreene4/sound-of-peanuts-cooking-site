@@ -50,7 +50,7 @@ exports.getDbRecipes = onCall(async(req,res)=>{
         })
         return {success:true,recipeList:recipes}
     }
-})
+});
 
 exports.getDbRecipeSingle = onCall(async(req,res)=>{
     const {id} = req.data   
@@ -58,7 +58,8 @@ exports.getDbRecipeSingle = onCall(async(req,res)=>{
         throw new Error("id not found")
     }
 
-    const snapshot = await db.doc("/Recipe/"+id).get();
+    const snapshot = await db.doc("/Recipe/" + id).select('name', 'ingredients', 'instructions', 'authorId', 
+        'cookTimeMins', 'likes', 'dislikes', 'equipment').get();
 
     if(snapshot.empty){
         return{success:false,message:"Error: recipe not found"}
@@ -66,7 +67,98 @@ exports.getDbRecipeSingle = onCall(async(req,res)=>{
     else{
         return{success: true,recipe:snapshot.data()}
     }
-})
+});
+
+exports.postDbRecipe = onCall(async(req,res)=>{
+    const {title,ingredients,steps,author,likes,comments} = req.data
+    const complete = await db.collection('Recipe').add({
+        title:title,
+        ingredients:ingredients,
+        steps:steps,
+    })
+    if(complete){
+        return{success:true,message:"Recipe added"}
+    }
+    else{
+        return{success:false,message:"Error: could not create recipe"}
+    }
+});
+
+exports.addLikeRecipe = onCall(async (req, res) => {
+    const { id, userId } = req.data;
+    if (!id || !userId) {
+        throw new Error("Recipe ID or User ID not found");
+    }
+
+    const ref = db.doc("/Recipe/" + id);
+    const snapshot = await ref.get();
+
+    if (!snapshot.exists) {
+        return { success: false, message: "Error: recipe not found" };
+    } else {
+        const recipeData = snapshot.data();
+        const likedBy = recipeData.likedBy || []; 
+        const dislikedBy = recipeData.dislikedBy || [];
+
+        if (likedBy.includes(userId)) {
+            return { success: false, message: "You have already liked this recipe" };
+        }
+        let dislikes = 0
+        if(dislikedBy.includes(userId)){
+            dislikedBy.splice(dislikedBy.indexOf(userId),1)
+            dislikes = 1
+        }
+
+        likedBy.push(userId);
+        await ref.update({
+            likes: recipeData.likes + 1,
+            dislikes: recipeData.dislikes - dislikes,
+            dislikedBy: dislikedBy,
+            likedBy: likedBy
+        });
+
+        return { success: true, message: "Recipe liked" };
+    }
+});
+
+exports.addDislikeRecipe = onCall(async (req, res) => {
+    const { id, userId } = req.data;
+    if (!id || !userId) {
+        throw new Error("Recipe ID or User ID not found");
+    }
+
+    const ref = db.doc("/Recipe/" + id);
+    const snapshot = await ref.get();
+
+    if (!snapshot.exists) {
+        return { success: false, message: "Error: recipe not found" };
+    } else {
+        const recipeData = snapshot.data();
+        const likedBy = recipeData.likedBy || [];
+        const dislikedBy = recipeData.dislikedBy || []; 
+
+        if (dislikedBy.includes(userId)) {
+            return { success: false, message: "You have already disliked this recipe" };
+        }
+
+        let likes = 0
+
+        if(likedBy.includes(userId)){
+            likedBy.splice(likedBy.indexOf(userId),1)
+            likes = 1
+        }
+
+        likedBy.push(userId);
+        await ref.update({
+            dislikes: recipeData.dislikes + 1,
+            likes: recipeData.likes - likes,
+            likedBy: likedBy,
+            dislikedBy: dislikedBy
+        });
+
+        return { success: true, message: "Recipe liked" };
+    }
+});
 
 exports.getDbUser = onCall(async(req,res)=>{
     const {uID} = req.data
@@ -83,10 +175,29 @@ exports.getDbUser = onCall(async(req,res)=>{
         return{success:true,user:snapshot.data()}
 
     }
-})
+});
+
+exports.verifyUser = onCall(async (req, res) => {
+    const { token } = req.data;
+
+    if (!token) {
+        throw new Error("Token not found");
+    }
+
+    try {
+        const decodedToken = await getAuth().verifyIdToken(token);
+        return { success: true, uid: decodedToken.uid };
+    } catch (error) {
+        return { success: false, message: "Invalid token" };
+    }
+});
 
 exports.createDbUser = onCall(async(req,res)=>{
     const{uName,pfpFile,uId} = req.data
+    if(!uName || !pfpFile || !uId){
+        throw new Error("Name, pfp, or UID not found")
+    }
+
     pfpRef = ref(store,uId+"/pfp.png")
     uploadBytes(pfpRef,pfpFile).then((snapshot)=>{
         pfpDownloadURL = getDownloadURL(snapshot.ref);
@@ -104,15 +215,40 @@ exports.createDbUser = onCall(async(req,res)=>{
     else{
         return{success:false,message:"Error: could not create user"}
     }
-})
+});
 
-exports.postrecipe = onCall(async(req,res)=>{
-    
-    const complete = await db.collection('recipes').add(req.body);
+exports.updateDbUser = onCall(async(req,res)=>{
+    const{uName,pfpFile,uId} = req.data
+    pfpRef = ref(store,uId+"/pfp.png")
+    uploadBytes(pfpRef,pfpFile).then((snapshot)=>{
+        pfpDownloadURL = getDownloadURL(snapshot.ref);
+    })
+
+    const complete = await db.collection('User').doc(uId).update({
+        name: uName,
+        pfpUrl: pfpDownloadURL
+    })
+
     if(complete){
-        return{success:true,message:"Recipe added"}
+        return{success:true,message:"User updated"}
     }
     else{
-        return{success:false,message:"Error: could not add recipe"}
+        return{success:false,message:"Error: could not update user"}
     }
-})
+});
+
+exports.deleteDbUser = onCall(async(req,res)=>{
+    const{uId} = req.data
+    if(!uId){
+        throw new Error("UID not found")
+    }
+
+    const complete = await db.collection('User').doc(uId).delete()
+
+    if(complete){
+        return{success:true,message:"User deleted"}
+    }
+    else{
+        return{success:false,message:"Error: could not delete user"}
+    }
+});
