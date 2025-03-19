@@ -5,6 +5,7 @@ import { ref, onMounted, useId } from 'vue';
 
 import IngredientList from '@/components/IngredientList.vue';
 
+
 const getHelloWorld = async () => {
   console.log("Calling helloWorld");
   const helloWorld = httpsCallable(functions, 'helloWorld');

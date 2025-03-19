@@ -1,3 +1,16 @@
+<script setup>
+import auth from "../api/firebase.js";
+function userRedirect(){
+    if(auth.currentUser!=null){
+        $router.push('/search/'+auth.currentUser.uid)
+    }
+    else{
+        $router.push('/account')
+    }
+}
+
+</script>
+
 <template>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Comic Neue"></link>
     <div class="container-fluid" id="headerContainer">

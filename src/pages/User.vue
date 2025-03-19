@@ -4,11 +4,12 @@
     
 
     const props = defineProps({
-        thisUserId:Int
+        thisUserId:Number
     });
 
-    const dbUserRequest = httpsCallable(functions,'getDbUser');
-    dbUserRequest({ uid: '0'})
+    const dbUserRequest = httpsCallable(funcs,'getDbUser');
+    dbUserRequest({ uid: props.thisUserId})
+
         .then((res)=>{const output = result.data.text;console.log(output);})
         .catch((error)=>{console.log(error)})
 

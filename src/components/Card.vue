@@ -1,16 +1,16 @@
 <script setup>
-    // import { httpsCallable } from 'firebase/functions';
-    // import funcs from "../api/firebase"
+    import {ref} from 'vue'
+    const props = defineProps({
+        thisRecipeId: Number,
+        thisRecipeName: String,
+        thisAuthorName: String,
+        thisCookTime: Number,
+        thisLikes: Number,
+        thisImgStorageSrc: String
+    });
 
+    const recipeLink = ref("/recipe/"+props.thisRecipeId)
 
-    // const props = defineProps({
-    //     thisRecipeId: Number
-    // });
-
-    // const dbRecipeRequest = httpsCallable(funcs,"getDbSingleRecipe");
-    // dbRecipeRequest({rid: props.thisRecipeId})
-    //     .then((res)=>{const output = res.data.text;console.log(output);})
-    //     .catch((error)=>{console.log(error)})
 </script>
 
 <template>
@@ -18,10 +18,10 @@
         <img style="width: 15rem; height: 15rem" class="card-img-top img-thumbnail .img-fluid"
             src="..\assets\images\coconut.png" alt="Card image cap">
         <div class="card-body">
-            <h5 class="card-title">Card title</h5>
-            <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's
-                content.</p>
-            <button @click="$router.push('/recipe')" class="btn btn-primary">Recipe</button>
+            <h5 class="card-title"><a :href="recipeLink">{{thisRecipeName}}</a></h5>
+            <h6 class = "card-text">by {{thisAuthorName}}</h6>
+            <p class="card-text" style="display: inline;float: left;">{{thisCookTime}} Minutes</p>
+            <p class="card-text" style="display: inline;float: right;">{{thisLikes}} Likes</p>
         </div>
     </div>
 </template>
