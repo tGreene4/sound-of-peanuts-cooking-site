@@ -58,8 +58,8 @@ exports.getDbRecipeSingle = onCall(async(req,res)=>{
         throw new Error("id not found")
     }
 
-    const snapshot = await db.doc("/Recipe/" + id).select('name', 'ingredients', 'instructions', 'authorId',
-        'likes', 'dislikes', 'equipment').get();
+    const snapshot = await db.doc("/Recipe/" + id).select('name', 'ingredients', 'instructions', 'authorId', 
+        'cookTimeMins', 'likes', 'dislikes', 'equipment').get();
 
     if(snapshot.empty){
         return{success:false,message:"Error: recipe not found"}
@@ -183,7 +183,7 @@ exports.verifyUser = onCall(async (req, res) => {
     if (!token) {
         throw new Error("Token not found");
     }
-    
+
     try {
         const decodedToken = await getAuth().verifyIdToken(token);
         return { success: true, uid: decodedToken.uid };
