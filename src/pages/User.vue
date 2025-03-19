@@ -1,5 +1,5 @@
 <script setup>
-    import funcs from '../api/firebase'
+    import { functions } from '../api/firebase'
     import { httpsCallable } from 'firebase/functions';
     
 
@@ -9,6 +9,7 @@
 
     const dbUserRequest = httpsCallable(funcs,'getDbUser');
     dbUserRequest({ uid: props.thisUserId})
+
         .then((res)=>{const output = result.data.text;console.log(output);})
         .catch((error)=>{console.log(error)})
 
