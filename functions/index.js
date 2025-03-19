@@ -58,7 +58,7 @@ exports.getDbRecipeSingle = onCall(async(req,res)=>{
         throw new Error("id not found")
     }
 
-    const snapshot = await db.doc("/Recipe/" + id).select('name', 'ingredients', 'instructions', 'authorId', 
+    const snapshot = await (db.doc("/Recipe/" + id)).select('name', 'ingredients', 'instructions', 'authorId', 
         'cookTimeMins', 'likes', 'dislikes', 'equipment').get();
 
     if(snapshot.empty){
