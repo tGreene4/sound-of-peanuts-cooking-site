@@ -140,14 +140,14 @@ onMounted(() => {
                 <img class="img-fluid rounded" src="../assets/images/coconut.png" alt="Recipe default" style="max-width: 100%; height: auto;">
               </div>
               <div class="col-md-6">
-                <h2 class="card-title mb-4">{{ recipeName }}</h2>
+                <h2 class="card-title mb-4">{{ recipe.name }}</h2>
                 <div class="mb-4">
                   <h5>Ingredients:</h5>
-                  <p class="card-text">{{ recipeIngredients }}</p>
+                  <p class="card-text">{{ recipe.ingredients }}</p>
                 </div>
                 <div class="mb-4">
                   <h5>Instructions:</h5>
-                  <p class="card-text">{{ recipeInstructions }}</p>
+                  <p class="card-text">{{ recipe.instructions }}</p>
                 </div>
                 <div class="d-flex gap-2">
                   <button class="btn btn-primary" @click="likeRecipe">Like</button>
