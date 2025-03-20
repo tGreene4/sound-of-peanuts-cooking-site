@@ -20,14 +20,15 @@ const routeProp = defineProps(['id']);
 
 const recipe = ref({
   name: '',
-  ingredients: '',
-  instructions: '',
+  ingredients: [],
+  instructions: [],
   likes: 0,
   dislikes: 0,
   image: '',
   author: '',
-  cookTime: 0,
-  equipment: ''
+  preparationTime: 0,
+  equipment: '',
+  publishDate: ''
 });
 
 const getDbRecipeSingle = async () => {
@@ -49,8 +50,9 @@ const getDbRecipeSingle = async () => {
         dislikes: recipeData.dislikes || 0,
         image: recipeData.image || '',
         author: recipeData.authorRef || '',
-        cookTime: recipeData.cookTime || 0,
-        equipment: recipeData.equipment || ''
+        preparationTime: recipeData.preparationTime || 0,
+        equipment: recipeData.equipment || '',
+        publishDate: recipeData.publishDate || ''
       };
     } else {
       console.log("Recipe not found: ", result.data.message);
@@ -63,7 +65,7 @@ const getDbRecipeSingle = async () => {
         dislikes: 0,
         image: '',
         author: '',
-        cookTime: 0,
+        preparationTime: 0,
         equipment: ''
       };
     }
@@ -78,7 +80,7 @@ const getDbRecipeSingle = async () => {
       dislikes: 0,
       image: '',
       author: '',
-      cookTime: 0,
+      preparationTime: 0,
       equipment: ''
     };
   }
