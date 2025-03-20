@@ -8,14 +8,13 @@
         thisLikes: Number,
         thisImgStorageSrc: String
     });
-
     const recipeLink = ref("/recipe/"+props.thisRecipeId)
 
 </script>
 
 <template>
-    <div class="card" style="width: 18rem;">
-        <img style="width: 15rem; height: 15rem" class="card-img-top img-thumbnail .img-fluid"
+    <div class="card" id="card">
+        <img class="card-img-top img-thumbnail img-fluid align-self-center"
             src="..\assets\images\coconut.png" alt="Card image cap">
         <div class="card-body">
             <h5 class="card-title"><a :href="recipeLink">{{thisRecipeName}}</a></h5>
@@ -28,7 +27,17 @@
 
 <style scoped>
 .img-fluid {
-    max-width: 50%;
-    max-height: auto;
+    max-width: 100%;
+    max-height: 100%;
+}
+.card{
+  box-shadow: 2px 5px 5px black;
+  width: 18rem;
+  background-color: rgba(255, 183, 77,50% );
+  position: relative;
+}
+
+.card-body{
+  background: linear-gradient(to bottom, rgba(255, 183, 77,50% ),rgba(255, 183, 77,0% ));
 }
 </style>
