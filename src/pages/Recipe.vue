@@ -1,10 +1,9 @@
 <script setup>
 import { functions, auth } from '../api/firebase';
 import { httpsCallable } from 'firebase/functions';
-import { ref, onMounted, useId } from 'vue';
+import { ref, onMounted } from 'vue';
 
 import IngredientList from '@/components/IngredientList.vue';
-
 
 const getHelloWorld = async () => {
   console.log("Calling helloWorld");
@@ -86,7 +85,6 @@ const getDbRecipeSingle = async () => {
 };
 
 const likeRecipe = async () => {
-
   const user = auth.currentUser;
 
   if (!user) {
@@ -107,7 +105,6 @@ const likeRecipe = async () => {
 };
 
 const dislikeRecipe = async () => {
-
   const user = auth.currentUser;
 
   if (!user) {
@@ -127,55 +124,63 @@ const dislikeRecipe = async () => {
   }
 };
 
-/**>
-const postRecipe = async () => {
-  console.log("Calling postRecipe with name:", recipeName.value);
-  const postRecipeFunction = httpsCallable(functions, 'postRecipe');
-  try {
-    const result = await postRecipeFunction({
-      name: recipeName.value,
-      ingredients: recipeIngredients.value,
-      instructions: recipeInstructions.value
-    });
-    console.log(result.data);
-  } catch (error) {
-    console.error("Error calling postRecipe:", error);
-  }
-};
-*/
-
 onMounted(() => {
     getDbRecipeSingle();
   });
 </script>
 
 <template>
-  <div class="container-fluid bg-secondary min-vh-100 vh-100" style="padding-top: 10px;">
-    <div class='row d-flex align-items-start'>
-      <div class="col-md-2">
+  <div class="container-fluid bg-secondary min-vh-100" style="padding-top: 20px;">
+    <div class="row d-flex justify-content-center">
+      <div class="col-md-8">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6 d-flex justify-content-center align-items-center">
+                <img class="img-fluid rounded" src="../assets/images/coconut.png" alt="Recipe default" style="max-width: 100%; height: auto;">
+              </div>
+              <div class="col-md-6">
+                <h2 class="card-title mb-4">{{ recipeName }}</h2>
+                <div class="mb-4">
+                  <h5>Ingredients:</h5>
+                  <p class="card-text">{{ recipeIngredients }}</p>
+                </div>
+                <div class="mb-4">
+                  <h5>Instructions:</h5>
+                  <p class="card-text">{{ recipeInstructions }}</p>
+                </div>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-primary" @click="likeRecipe">Like</button>
+                  <button class="btn btn-primary" @click="dislikeRecipe">Dislike</button>
+                  <button class="btn btn-secondary" @click="getHelloWorld">Hello World</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="col-md-4">
-        <!--<IngredientList></IngredientList> -->  
-      </div>
-      <div class="col-md-5 d-flex justify-content-center align-items-center" style="background-color: lightblue; padding: 20px; border-radius: 15px;">
-        <img class="img-fluid rounded w-50 h-auto" src="..\assets\images\coconut.png" alt="Recipe default">
-      </div>
-      
-      <div class="col-md-12 mt-4">
-        <p><strong>Name:</strong> {{ recipe.name }}</p>
-        <p><strong>Ingredients:</strong> {{ recipe.ingredients }}</p>
-        <p><strong>Instructions:</strong> {{ recipe.instructions }}</p>
-        <p><strong>Likes:</strong> {{ recipe.likes }}</p>
-        <p><strong>Dislikes:</strong> {{ recipe.dislikes }}</p>
-        <p><strong>Author:</strong> {{ recipe.author }}</p>
-        <p><strong>Cook Time:</strong> {{ recipe.cookTime }}</p>
-        <p><strong>Equipment:</strong> {{ recipe.equipment }}</p>
-      </div>
-
-      <button class="btn btn-primary" @click="getDbRecipeSingle">get Recipe</button>
-      <button class="btn btn-primary" @click="likeRecipe">Like</button>
-      <button class="btn btn-primary" @click="dislikeRecipe">Dislike</button>
-      <button class="btn btn-primary" @click="getHelloWorld">Hello world</button>
     </div>
   </div>
 </template>
+
+<style scoped>
+.card {
+  border-radius: 15px;
+  background-color: lightblue;
+}
+
+.card-title {
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.card-text {
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.btn {
+  font-size: 1rem;
+  padding: 0.5rem 1rem;
+}
+</style>
