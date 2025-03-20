@@ -4,9 +4,9 @@ import { httpsCallable } from 'firebase/functions';
 </script>
 
 <script setup>
-import MainMediaContainer from '../components/HomeMainMediaContainer.vue';
+import MediaContainer from '../components/MediaContainer.vue';
 </script>
 
 <template>
-    <MainMediaContainer />
+    <MediaContainer />
 </template>
