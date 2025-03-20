@@ -1,9 +1,9 @@
 <script setup>
-    import {ref} from 'vue'
+    import { ref } from 'vue'
     const props = defineProps({
         thisRecipeId: Number,
         thisRecipeName: String,
-        thisAuthorName: String,
+        thisAuthorRef: String,
         thisCookTime: Number,
         thisLikes: Number,
         thisImgStorageSrc: String
@@ -18,7 +18,7 @@
             src="..\assets\images\coconut.png" alt="Card image cap">
         <div class="card-body">
             <h5 class="card-title"><a :href="recipeLink">{{thisRecipeName}}</a></h5>
-            <h6 class = "card-text">by {{thisAuthorName}}</h6>
+            <h6 class = "card-text">by {{thisAuthorRef}}</h6>
             <p class="card-text" style="display: inline;float: left;">{{thisCookTime}} Minutes</p>
             <p class="card-text" style="display: inline;float: right;">{{thisLikes}} Likes</p>
         </div>

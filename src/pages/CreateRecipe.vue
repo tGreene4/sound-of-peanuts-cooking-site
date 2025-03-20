@@ -180,8 +180,6 @@ export default {
   position: relative;
   left: 5px;
 }
-.form-control{
-}
 
 .form-label{
   font-family: 'Segoe UI', Tahoma, Verdana, sans-serif;

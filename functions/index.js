@@ -6,13 +6,12 @@
  *
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
-const { getFirestore } = require('firebase-admin/firestore');
+const { getFirestore, query, orderBy, limit, getDocs } = require('firebase-admin/firestore');
 const { getStorage, getDownloadURL, uploadBytes } = require('firebase-admin/storage');
 const { onCall } = require("firebase-functions/v2/https");
+const { initializeApp } = require('firebase-admin/app');
 
 const logger = require("firebase-functions/logger");
-const { initializeApp } = require('firebase-admin/app');
-const { firestore } = require('firebase-admin');
 
 initializeApp({
     storageBucket: 'sound-of-peanuts-cooking-site.appspot.com'
@@ -33,56 +32,82 @@ exports.helloWorld = onCall(async (req, res) => {
 });
 
 exports.getDbRecipesByMostRecent = onCall(async (req, res) => {
-    const { num } = req.data
-    logger.info("Requesting " + num + " most recent recipes");
-    const q = query(db.collection('Recipe'), orderBy('publishDate'), limit(num));
-    const snapshot = await getDocs(q);
-    logger.info("Requested posts", req);
+    const docLimit = req.data.docLimit || 6;
+    if (!docLimit || typeof docLimit !== 'number') {
+        logger.log("Error: docLimit not found or invalid: ", docLimit);
+        return { success: false, message: "docLimit not found or invalid" };
+    }
 
-    if (!snapshot.exist || snapshot.empty) {
-        logger.log("Error: no recipes found");
-        return { success: false, message: "No recipes found" }
+    logger.info("Requesting " + docLimit + " most liked recipes");
 
-    } else {
-        const recipes = [];
-        snapshot.docs.forEach(doc => {
-            recipes.push({
-                id: doc.id,
-                name: recipeData.name || "",
-                likes: recipeData.likes || 0,
-                preparationTime: recipeData.preparationTime || 0,
-                cardImgReg: recipeData.cardImgReg || ""
-            })
-        })
-        logger.log("Recipes found: ", recipes);
-        return { success: true, recipeList: recipes }
+    try {
+        const q = db.collection('Recipe').orderBy('likes', 'desc').limit(docLimit);
+
+        const snapshot = await q.get();
+
+        logger.log("Requested posts "+ req.data);
+        if (snapshot.empty) {
+            logger.log("Error: no recipes found");
+            return { success: false, message: "No recipes found" };
+        } else {
+            const recipes = [];
+            snapshot.docs.forEach(doc => {
+                const recipeData = doc.data();
+                recipes.push({
+                    id: doc.id,
+                    name: recipeData.name || "",
+                    likes: recipeData.likes || 0,
+                    preparationTime: recipeData.preparationTime || 0,
+                    cardImgReg: recipeData.cardImgReg || "",
+                    // authorName: recipeData.authorRef || ""
+                });
+            });
+            logger.log("Recipes found: ", recipes);
+            return { success: true, recipeList: recipes };
+        }
+    } catch (error) {
+        logger.error("Error fetching recipes by most likes:", error);
+        return { success: false, message: "Error fetching recipes" };
     }
 });
 
 exports.getDbRecipesByMostLikes = onCall(async (req, res) => {
-    const { num } = req.data
-    logger.info("Requesting " + num + " most recent recipes");
-    const q = query(db.collection('Recipe'), orderBy('likes'), limit(num));
-    const snapshot = await getDocs(q);
-    logger.info("Requested posts", req);
+    const docLimit = req.data.docLimit || 6;
+    if (!docLimit || typeof docLimit !== 'number') {
+        logger.log("Error: docLimit not found or invalid: ", docLimit);
+        return { success: false, message: "docLimit not found or invalid" };
+    }
 
-    if (!snapshot.exist || snapshot.empty) {
-        logger.log("Error: no recipes found");
-        return { success: false, message: "No recipes found" }
+    logger.info("Requesting " + docLimit + " most liked recipes");
 
-    } else {
-        const recipes = [];
-        snapshot.docs.forEach(doc => {
-            recipes.push({
-                id: doc.id,
-                name: recipeData.name || "",
-                likes: recipeData.likes || 0,
-                preparationTime: recipeData.preparationTime || 0,
-                cardImgReg: recipeData.cardImgReg || ""
-            })
-        })
-        logger.log("Recipes found: ", recipes);
-        return { success: true, recipeList: recipes }
+    try {
+        const q = db.collection('Recipe').orderBy('likes', 'desc').limit(docLimit);
+
+        const snapshot = await q.get();
+
+        logger.log("Requested posts "+ req.data);
+        if (snapshot.empty) {
+            logger.log("Error: no recipes found");
+            return { success: false, message: "No recipes found" };
+        } else {
+            const recipes = [];
+            snapshot.docs.forEach(doc => {
+                const recipeData = doc.data();
+                recipes.push({
+                    id: doc.id,
+                    name: recipeData.name || "",
+                    likes: recipeData.likes || 0,
+                    preparationTime: recipeData.preparationTime || 0,
+                    cardImgReg: recipeData.cardImgReg || "",
+                    // authorName: recipeData.authorRef || ""
+                });
+            });
+            logger.log("Recipes found: ", recipes);
+            return { success: true, recipeList: recipes };
+        }
+    } catch (error) {
+        logger.error("Error fetching recipes by most likes:", error);
+        return { success: false, message: "Error fetching recipes" };
     }
 });
 
