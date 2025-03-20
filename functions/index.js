@@ -12,6 +12,7 @@ const { onCall } = require("firebase-functions/v2/https");
 
 const logger = require("firebase-functions/logger");
 const { initializeApp } = require('firebase-admin/app');
+const { firestore } = require('firebase-admin');
 
 initializeApp({
   storageBucket: 'sound-of-peanuts-cooking-site.appspot.com'
@@ -58,14 +59,30 @@ exports.getDbRecipeSingle = onCall(async(req,res)=>{
         throw new Error("id not found")
     }
 
-    const snapshot = await db.doc("/Recipe/" + id).select('name', 'ingredients', 'instructions', 'authorId', 
-        'cookTimeMins', 'likes', 'dislikes', 'equipment').get();
+    const ref = db.doc("/Recipe/" + id);
+    const snapshot = await ref.get();
 
-    if(snapshot.empty){
+    logger.log("ID: ", id);
+    logger.log("Ref: ", ref.path);
+
+    if(!snapshot.exists || snapshot.empty){
+        logger.log("Error: recipe not found");
         return{success:false,message:"Error: recipe not found"}
     }
     else{
-        return{success: true,recipe:snapshot.data()}
+        const recipeData = snapshot.data();
+        const recipe = {
+            name: recipeData.name || "",
+            ingredients: recipeData.ingredients || [],
+            instructions: recipeData.instructions || "",
+            likes: recipeData.likes || 0,
+            dislikes: recipeData.dislikes || 0,
+            author: recipeData.author || "",
+            cookTime: recipeData.cookTime || 0,
+            equipment: recipeData.equipment || [],
+            cardImgReg: recipeData.cardImgReg || ""
+        };
+        return{success: true, recipe}
     }
 });
 
@@ -106,13 +123,13 @@ exports.addLikeRecipe = onCall(async (req, res) => {
         let dislikes = 0
         if(dislikedBy.includes(userId)){
             dislikedBy.splice(dislikedBy.indexOf(userId),1)
-            dislikes = 1
+            dislikes = -1
         }
 
         likedBy.push(userId);
         await ref.update({
             likes: recipeData.likes + 1,
-            dislikes: recipeData.dislikes - dislikes,
+            dislikes: recipeData.dislikes + dislikes,
             dislikedBy: dislikedBy,
             likedBy: likedBy
         });

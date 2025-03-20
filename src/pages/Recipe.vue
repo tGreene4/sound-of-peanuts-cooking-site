@@ -19,9 +19,17 @@ const getHelloWorld = async () => {
 
 const routeProp = defineProps(['id']);
 
-const recipeName = ref('');
-const recipeIngredients = ref('');
-const recipeInstructions = ref('');
+const recipe = ref({
+  name: '',
+  ingredients: '',
+  instructions: '',
+  likes: 0,
+  dislikes: 0,
+  image: '',
+  author: '',
+  cookTime: 0,
+  equipment: ''
+});
 
 const getDbRecipeSingle = async () => {
   console.log("Calling getDbRecipeSingle with ID:", routeProp.id);
@@ -31,23 +39,49 @@ const getDbRecipeSingle = async () => {
     console.log("Response from getDbRecipeSingle:", result.data);
 
     if (result.data.success) {
-      const recipe = result.data.recipe;
+      const recipeData = result.data.recipe;
       console.log("Recipe found:", recipe);
 
-      recipeName.value = recipe.name || "No name provided";
-      recipeIngredients.value = recipe.ingredients || "No ingredients provided";
-      recipeInstructions.value = recipe.instructions || "No instructions provided";
+      recipe.value = {
+        name: recipeData.name || "No name provided",
+        ingredients: recipeData.ingredients || "No ingredients provided",
+        instructions: recipeData.instructions || "No instructions provided",
+        likes: recipeData.likes || 0,
+        dislikes: recipeData.dislikes || 0,
+        image: recipeData.image || '',
+        author: recipeData.authorRef || '',
+        cookTime: recipeData.cookTime || 0,
+        equipment: recipeData.equipment || ''
+      };
     } else {
       console.log("Recipe not found: ", result.data.message);
-      recipeName.value = "Recipe not found";
-      recipeIngredients.value = "";
-      recipeInstructions.value = "";
+      //set up a 404 page when this works consistently
+      recipe.value = {
+        name: "Recipe not found",
+        ingredients: "",
+        instructions: "",
+        likes: 0,
+        dislikes: 0,
+        image: '',
+        author: '',
+        cookTime: 0,
+        equipment: ''
+      };
     }
   } catch (error) {
     console.error("Error calling getDbRecipeSingle:", error);
-    recipeName.value = "Error fetching recipe";
-    recipeIngredients.value = "";
-    recipeInstructions.value = "";
+         //set up a 404 page when this works consistently
+    recipe.value = {
+      name: "Error fetching recipe",
+      ingredients: "",
+      instructions: "",
+      likes: 0,
+      dislikes: 0,
+      image: '',
+      author: '',
+      cookTime: 0,
+      equipment: ''
+    };
   }
 };
 
@@ -128,11 +162,17 @@ onMounted(() => {
       </div>
       
       <div class="col-md-12 mt-4">
-        <p><strong>Name:</strong> {{ recipeName }}</p>
-        <p><strong>Ingredients:</strong> {{ recipeIngredients }}</p>
-        <p><strong>Instructions:</strong> {{ recipeInstructions }}</p>
+        <p><strong>Name:</strong> {{ recipe.name }}</p>
+        <p><strong>Ingredients:</strong> {{ recipe.ingredients }}</p>
+        <p><strong>Instructions:</strong> {{ recipe.instructions }}</p>
+        <p><strong>Likes:</strong> {{ recipe.likes }}</p>
+        <p><strong>Dislikes:</strong> {{ recipe.dislikes }}</p>
+        <p><strong>Author:</strong> {{ recipe.author }}</p>
+        <p><strong>Cook Time:</strong> {{ recipe.cookTime }}</p>
+        <p><strong>Equipment:</strong> {{ recipe.equipment }}</p>
       </div>
 
+      <button class="btn btn-primary" @click="getDbRecipeSingle">get Recipe</button>
       <button class="btn btn-primary" @click="likeRecipe">Like</button>
       <button class="btn btn-primary" @click="dislikeRecipe">Dislike</button>
       <button class="btn btn-primary" @click="getHelloWorld">Hello world</button>
