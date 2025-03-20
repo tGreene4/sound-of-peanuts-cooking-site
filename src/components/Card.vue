@@ -33,7 +33,11 @@
 .card{
   box-shadow: 2px 5px 5px black;
   width: 18rem;
-  background-color: rgba(255, 183, 77,50%);
+  background-color: rgba(255, 183, 77,50% );
   position: relative;
+}
+
+.card-body{
+  background: linear-gradient(to bottom, rgba(255, 183, 77,50% ),rgba(255, 183, 77,0% ));
 }
 </style>
