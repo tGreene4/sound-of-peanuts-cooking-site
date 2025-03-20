@@ -111,6 +111,61 @@ exports.getDbRecipesByMostLikes = onCall(async (req, res) => {
     }
 });
 
+exports.getDbMoreRecipes = onCall(async (req, res) => {
+    const docLimit = req.data.docLimit || 6; 
+    const lastDocId = req.data.lastDocId || null;
+
+    
+
+    if (!docLimit || typeof docLimit !== 'number') {
+        logger.log("Error: docLimit or lastDocId not found or invalid: ", docLimit);
+        return { success: false, message: "docLimit not found or invalid" };
+    }
+
+    logger.info("Requesting " + docLimit + " recipes after " + lastDocId);
+    
+    try {
+        const q = db.collection('Recipe').orderBy('name').limit(docLimit);
+
+        if (lastDocId) {
+            logger.log("Starting from: ", lastDocId);
+            const lastDocRef = await db.collection('Recipe').doc(lastDocId).get();
+            if (lastDocRef.exists) {
+                q = q.startAfter(lastDocRef);
+            } else {
+                logger.log("Error: lastDocId not found in the database");
+                return { success: false, message: "Invalid lastDocId" };
+            }
+        }
+
+        const snapshot = await q.get();
+
+        if (snapshot.empty) {
+            logger.log("Error: no recipes found");
+            return { success: false, message: "No recipes found" };
+        } else {
+            const recipes = [];
+            snapshot.docs.forEach(doc => {
+                const recipeData = doc.data();
+                recipes.push({
+                    id: doc.id,
+                    name: recipeData.name || "",
+                    likes: recipeData.likes || 0,
+                    preparationTime: recipeData.preparationTime || 0,
+                    cardImgReg: recipeData.cardImgReg || "",
+                    // authorName: recipeData.authorRef || ""
+                });
+            });
+            const lastDoc = snapshot.docs[snapshot.docs.length - 1];
+            logger.log("Recipes found: ", recipes);
+            return { success: true, recipeList: recipes, lastDocId: lastDoc.id };
+        }
+    } catch (error) {
+        logger.error("Error fetching recipes by most likes:", error);
+        return { success: false, message: "Error fetching recipes" };
+    }
+});
+
 exports.getDbRecipeSingle = onCall(async (req, res) => {
     const { id } = req.data
     if (!id) {

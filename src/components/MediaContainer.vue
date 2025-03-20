@@ -18,7 +18,7 @@ const getMostLikedRecipe = async () => {
   try {
     const docLimit = 6;
     console.log("Calling getDbMostLikedRecipe with docLimit: ", docLimit);
-    const result = await getDbMostLikedRecipe({ docLimit: 6 }); // Ensure docLimit is passed correctly
+    const result = await getDbMostLikedRecipe({ docLimit }); // Ensure docLimit is passed correctly
     console.log("Response from getDbMostLikedRecipe:", result.data);
 
     if (result.data.success) {
@@ -40,7 +40,7 @@ const getMostRecentRecipe = async () => {
   try {
     const docLimit = 6;
     console.log("Calling getDbRecipesByMostRecent with docLimit: ", docLimit);
-    const result = await getDbMostRecentRecipe({ docLimit: 6 }); // Ensure docLimit is passed correctly
+    const result = await getDbMostRecentRecipe({ docLimit }); // Ensure docLimit is passed correctly
     console.log("Response from getDbRecipesByMostRecent:", result.data);
 
     if (result.data.success) {
@@ -53,6 +53,44 @@ const getMostRecentRecipe = async () => {
   } catch (error) {
     console.error("Error calling getDbRecipesByMostRecent:", error);
     return [];
+  }
+};
+
+let lastDocId = ref(null);
+const getMoreRecipe = async () => {
+  console.log("Calling getDbMoreRecipes");
+  const getDbMoreRecipes = httpsCallable(functions, 'getDbMoreRecipes');
+  try {
+    const docLimit = 6;
+    console.log("Calling getDbMoreRecipes with docLimit: ", docLimit);
+    const result = await getDbMoreRecipes({ docLimit, lastDocId: lastDocId.value});
+    console.log("Response from getDbMoreRecipes:", result.data);
+
+    if (result.data.success) {
+      console.log("Recipe found:" , result.data);
+      console.log("Last Doc ID: ", result.data.lastDocId);
+      lastDocId.value = result.data.lastDocId;
+      return result.data.recipeList;
+    } else {
+      console.log("Recipes not found: ", result.data.message);
+      return [];
+    }
+  } catch (error) {
+    console.error("Error calling getDbMoreRecipes:", error);
+    return [];
+  }
+};
+
+const tryGetMoreRecipes = async () => {
+  try {
+    const moreRecipes = await getMoreRecipe();
+    if (moreRecipes.length > 0) {
+      more.value.push(...moreRecipes);
+    } else {
+      console.log("No more recipes to load.");
+    }
+  } catch (error) {
+    console.error("Error in tryGetMoreRecipes: ", error);
   }
 };
 
@@ -71,6 +109,13 @@ onMounted(async () => {
     }
     else {
       mostLiked = [];
+    }
+    const moreRecipes = await getMoreRecipe();
+    if (mostLikedRecipes.length > 0) {
+      more.value = moreRecipes;
+    }
+    else {
+      more = [];
     }
 
   } catch (error) {
@@ -102,13 +147,15 @@ onMounted(async () => {
       </div>
     </div>
 
-    <h1 class="sectionHeader">More</h1>
-    <div class="row" id="moreField" style="padding-bottom: 25px">
+    <h1 class="sectionHeader">Most</h1>
+    <div class="row" id="moreField">
       <div class="col-sm-auto" id="More" v-for="item in more">
         <div class="cardContainer">
-          <Card thisRecipeId={{item}} />
+          <Card :thisRecipeId="item.id" :thisRecipeName="item.name" :thisAuthorRef="item.authorRef"
+            :thisCookTime="item.preparationTime" :thisLikes="item.likes" :thisImgStorageSrc="item.cardImgReg" />
         </div>
       </div>
+      <button @click="tryGetMoreRecipes">Load More</button>  <!--If more fails to return more recipes, remove this button and functionality(script bool)-->
     </div>
   </div>
 </template>

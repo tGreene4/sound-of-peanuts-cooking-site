@@ -1,7 +1,7 @@
 <script setup>
     import { ref } from 'vue'
     const props = defineProps({
-        thisRecipeId: Number,
+        thisRecipeId: String,
         thisRecipeName: String,
         thisAuthorRef: String,
         thisCookTime: Number,
