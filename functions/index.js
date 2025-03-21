@@ -6,7 +6,7 @@
  *
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
-const { getFirestore, query, orderBy, limit, getDocs } = require('firebase-admin/firestore');
+const { getFirestore, query, orderBy, limit, getDocs, Timestamp } = require('firebase-admin/firestore');
 const { getStorage, getDownloadURL, uploadBytes } = require('firebase-admin/storage');
 const { onCall } = require("firebase-functions/v2/https");
 const { initializeApp } = require('firebase-admin/app');
@@ -186,16 +186,35 @@ exports.getDbRecipeSingle = onCall(async (req, res) => {
 });
 
 exports.postDbRecipe = onCall(async (req, res) => {
-    const { title, ingredients, steps, author, likes, comments } = req.data
+    const { name, preparationTime, instructions, ingredients, equipment, cardImgReg, uId } = req.data
+    if(!name || !preparationTime || !instructions || !ingredients || !equipment || !cardImgReg || !uId) {
+        logger.log("Error: Recipe data not found or invalid: ", req.data);
+        return { success: false, message: "Recipe data not found or invalid" }
+    }
+
+    logger.log("Attempting to add recipe with: ", req.data);
     const complete = await db.collection('Recipe').add({
-        title: title,
+        name: name,
+        preparationTime: preparationTime,
+        cardImgReg: cardImgReg,
+        authorRef: db.doc("/User/" + uId),
+        authoruid: uId || "",
+        equipment: equipment,
+        instructions: instructions,
         ingredients: ingredients,
-        steps: steps,
+        likes: 0,
+        dislikes: 0,
+        likedBy: [],
+        dislikedBy: [],
+        publishDate: Timestamp.now()
     })
+
     if (complete) {
+        logger.log("Recipe added");
         return { success: true, message: "Recipe added" }
     }
     else {
+        logger.log("Error: could not create recipe");
         return { success: false, message: "Error: could not create recipe" }
     }
 });
