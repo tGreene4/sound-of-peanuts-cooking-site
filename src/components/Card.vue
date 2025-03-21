@@ -6,7 +6,7 @@
         thisAuthor: {
             type: Object,
             default: () => ({ 
-                name: "Unknown"
+                name: "Unknown" //add default pfp and no link, like a deleted reddit profile
             })
         },
         thisCookTime: Number,
