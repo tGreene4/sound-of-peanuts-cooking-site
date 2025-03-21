@@ -28,7 +28,7 @@ const auth = getAuth(app);
 const storage = getStorage(app);
 const functions = getFunctions(app);
 
-if (window.location.hostname === '127.0.0.1') {
+if (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') {
   console.log('Connecting to the local emulator');
   connectFunctionsEmulator(functions, 'localhost', 5001);
 }

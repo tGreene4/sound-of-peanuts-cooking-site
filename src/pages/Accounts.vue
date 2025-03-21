@@ -1,8 +1,7 @@
 <script setup>
-
     import {onMounted, ref} from 'vue'
     import {auth,functions} from '../api/firebase'
-    import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
+    import { createUserWithEmailAndPassword, deleteUser, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
     import { httpsCallable } from 'firebase/functions';
 
     var signUpUsername,signUpEmail,signUpPassword,signUpConfirmPassword;
@@ -16,11 +15,7 @@
     }
 
     onMounted(()=>{
-        authCheck();
-    })
-
-    onAuthStateChanged(auth, (user)=>{
-        authCheck();
+        authCheck()
     })
     
     const pfpImgSrc = ref("../assets/images/User Icon.png")
@@ -29,24 +24,52 @@
         pfpImgSrc.value = URL.createObjectURL(event.target.files[0])
     }
 
-    const userCreate = async() => {
-            createUserWithEmailAndPassword(auth,signUpEmail,signUpPassword);
-            console.log("Account created");
-            let signUpUser = auth.currentUser
-            const createFun = httpsCallable(functions,createDbUser);
+    const userCreate = async()=>{
+        if(!(signUpEmail.search("/@/") && signUpEmail.length > 3)){
+            alert("Invalid Email")
+            return;
+        }
+        if(!(signUpPassword.length>5 && /\d/.test(signUpPassword))){
+            alert("Invalid password: passwords must be at least 6 characters and contain at least 1 number")
+            return;
+        }
+        if(signUpConfirmPassword!=signUpPassword){
+            alert("Password and confirmation password do not match")
+            return;
+        }
+        let createSuccess = await createUserWithEmailAndPassword(auth,signUpEmail,signUpPassword)
+        if(!createSuccess){
+            alert("Failed to create account")
+            return;
+        }
+        console.log("Account created");
+        console.log(createSuccess)
+        let signUpUser = auth.currentUser
+        console.log(signUpUser)
+        const createFun = httpsCallable(functions,"createDbUser")
+        try{
+            const result = await createFun({uName:signUpUsername,pfpFile:pfpImgSrc.value,uId:signUpUser.uid})
+            if(result.data.success==true){
+                console.log("Added User to database")
+            }
+            else if(result.data.success==false){
+                console.log("Could not add user to database")
+                deleteUser(signUpUser)
 
-            try{
-                await createFun({uName:signUpUsername,pfpFile:pfpImgSrc.value,uId:signUpUser.uid});
-                console.log("User created in database");
             }
-            catch(error){
-                console.log(error.message)
-            }
+        }
+        catch(error){
+            console.error(error.message)
+            deleteUser(signUpUser)
+        }
             
-     }
+    }
 
     function userLogin(){
-        signInWithEmailAndPassword(auth,loginEmail,loginPassword)
+        let loginSuccess = signInWithEmailAndPassword(auth,loginEmail,loginPassword)
+        if(!loginSuccess){
+            alert("Could not log in")
+        }
     }
 
 </script>
@@ -62,7 +85,7 @@
                     <button class="nav-link" id="loginTab" data-bs-toggle="tab" data-bs-target="#loginDiv" type="button" role="tab" aria-controls="log in tab" aria-selected="false">Log In</button>
                 </li>
             </ul>
-            <div class="tab-content">
+            <div class="tab-content" style="width: 8cm;">
                 <div class="tab-pane show active" id="newAccountDiv">
                     <form>
                         <label for = "usernameInput" class = "form-label">Username:</label>
@@ -73,11 +96,10 @@
                         <input type = "password" class = "form-control" id = "passwordInput" placeholder="Enter your password" v-model="signUpPassword">
                         <label for = "usernameInput" class = "form-label">Confirm Password:</label>
                         <input type = "password" class = "form-control" id = "confirmPasswordInput" placeholder="Enter the same password as above" v-model="signUpConfirmPassword">
-                        <br>
                         <label for = "pfpInput" class="form-label">Upload your Profile Picture</label>
-                        <img :src="pfpImgSrc" style="width:30vh;display:block;" id = "pfpPreviewImg">
+                        <img :src="pfpImgSrc" style="width:100%;height:30vh;display:block;object-fit: cover;" id = "pfpPreviewImg">
                         <input type ="file" :value = null class = form-control id="pfpInput" accept="image/png,image/jpeg" @change="changeImg($event)">
-                        <button class="form-control" @click="userCreate">Sign Up</button>
+                        <button class="form-control" @click="userCreate" type="button">Sign Up</button>
                     </form>
                 </div>
                 <div class = "tab-pane" id = "loginDiv">
@@ -87,7 +109,7 @@
                         <label for = "passwordLoginInput" class = "form-label">Password:</label>
                         <input type="password" class="form-control" id="passwordLoginInput" placeholder="Enter your password" v-model="loginPassword">
                         <br>
-                        <button class="form-control" @click="userLogin">Log In</button>
+                        <button class="form-control" @click="userLogin" type="button">Log In</button>
                     </form>
                 </div>
 
@@ -114,6 +136,6 @@
 
 #flexWrapper{
     background-color: rgb(255, 243, 224);
-    height: 100vh;
+    height:100vh;
 }
 </style>

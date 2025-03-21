@@ -7,7 +7,7 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 const { getFirestore } = require('firebase-admin/firestore');
-const { getStorage, getDownloadURL, uploadBytes } = require('firebase-admin/storage');
+const { getStorage, getDownloadURL, uploadBytes, ref } = require('firebase-admin/storage');
 const { onCall } = require("firebase-functions/v2/https");
 
 const logger = require("firebase-functions/logger");
@@ -195,18 +195,26 @@ exports.verifyUser = onCall(async (req, res) => {
 exports.createDbUser = onCall(async(req,res)=>{
     const{uName,pfpFile,uId} = req.data
     if(!uName || !pfpFile || !uId){
-        throw new Error("Name, pfp, or UID not found")
+        throw new Error("Name, pfp, or UID not found");
     }
 
-    pfpRef = ref(store,uId+"/pfp.png")
-    uploadBytes(pfpRef,pfpFile).then((snapshot)=>{
-        pfpDownloadURL = getDownloadURL(snapshot.ref);
-    })
+    let pfpDownloadURL = "";
 
-    const complete = await db.collection('User').add({
+    try{
+        const pfpRef = store.bucket().file(uId+"/pfp.png");
+        await pfpRef.save(pfpFile,{public:true},function(){pfpDownloadURL = pfpRef.publicUrl();});
+    }
+    catch(error){
+        logger.log("Failed to upload profile picture:"+error);
+        return{success:false,message:"Failed to upload profile picture"}
+
+    }
+    
+    const complete = await db.collection('Users').add({
         name: uName,
         pfpUrl: pfpDownloadURL,
-        uId: uId
+        uId: uId,
+        biography:""
     })
 
     if(complete){
