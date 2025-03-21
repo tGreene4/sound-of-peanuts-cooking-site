@@ -134,6 +134,7 @@ onMounted(async () => {
         </div>
       </div>
       <button @click="tryGetMoreRecipes">Load More</button>  <!--If more fails to return more recipes, remove this button and functionality(script bool)-->
+      <button @click="$router.push('/createRecipe')"></button>
     </div>
   </div>
 </template>
