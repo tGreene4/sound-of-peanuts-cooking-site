@@ -1,3 +1,6 @@
+<script setup>
+</script>
+
 <template>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Comic Neue"></link>
     <div class="container-fluid" id="headerContainer">

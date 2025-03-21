@@ -1,14 +1,12 @@
 <script>
-import app from '../api/firebase.js';
-import funcs from '../api/firebase.js';
+import { functions } from '../api/firebase';
 import { httpsCallable } from 'firebase/functions';
-
 </script>
 
 <script setup>
-import MainMediaContainer from '../components/HomeMainMediaContainer.vue';
+import MediaContainer from '../components/MediaContainer.vue';
 </script>
 
 <template>
-    <MainMediaContainer />
+    <MediaContainer />
 </template>
