@@ -31,7 +31,7 @@ exports.helloWorld = onCall(async (req, res) => {
     }
 });
 
-exports.getDbRecipesByMostRecent = onCall(async (req, res) => {
+exports.getDbRecipesByField = onCall(async (req, res) => {
     const docLimit = req.data.docLimit || 6;
     if (!docLimit || typeof docLimit !== 'number') {
         logger.log("Error: docLimit not found or invalid: ", docLimit);
@@ -41,67 +41,54 @@ exports.getDbRecipesByMostRecent = onCall(async (req, res) => {
     logger.info("Requesting " + docLimit + " most liked recipes");
 
     try {
-        const q = db.collection('Recipe').orderBy('likes', 'desc').limit(docLimit);
+        const queryType = req.data.queryType || 'likes';
+        const order = req.data.order || 'desc';
+        logger.log("Query type: " + queryType + " Order: " + order);
 
+        const q = db.collection('Recipe').orderBy(queryType, order).limit(docLimit);
         const snapshot = await q.get();
 
-        logger.log("Requested posts "+ req.data);
+        logger.log("Requested posts " + req.data);
         if (snapshot.empty) {
             logger.log("Error: no recipes found");
             return { success: false, message: "No recipes found" };
         } else {
             const recipes = [];
-            snapshot.docs.forEach(doc => {
+            for (const doc of snapshot.docs) {
                 const recipeData = doc.data();
+
+                let author = null;
+
+                if (recipeData.authorRef) {
+                    logger.log("Author ref found");
+                    const aSnapshot = await recipeData.authorRef.get();
+                    if (aSnapshot.exists) {
+                        logger.log("Author found: ", aSnapshot.data());
+                        author = {
+                            id: aSnapshot.id,
+                            name: aSnapshot.data().name,
+                            pfpUrl: aSnapshot.data().pfpUrl
+                        };
+                    }
+                    else {
+                        logger.log("Author not found: ", recipeData.authorRef);
+                        author = {
+                            id: null,
+                            name: "Deleted User"
+                        }
+                    }
+                }
+                
                 recipes.push({
                     id: doc.id,
                     name: recipeData.name || "",
                     likes: recipeData.likes || 0,
                     preparationTime: recipeData.preparationTime || 0,
                     cardImgReg: recipeData.cardImgReg || "",
-                    // authorName: recipeData.authorRef || ""
+                    author: author
                 });
-            });
-            logger.log("Recipes found: ", recipes);
-            return { success: true, recipeList: recipes };
-        }
-    } catch (error) {
-        logger.error("Error fetching recipes by most likes:", error);
-        return { success: false, message: "Error fetching recipes" };
-    }
-});
 
-exports.getDbRecipesByMostLikes = onCall(async (req, res) => {
-    const docLimit = req.data.docLimit || 6;
-    if (!docLimit || typeof docLimit !== 'number') {
-        logger.log("Error: docLimit not found or invalid: ", docLimit);
-        return { success: false, message: "docLimit not found or invalid" };
-    }
-
-    logger.info("Requesting " + docLimit + " most liked recipes");
-
-    try {
-        const q = db.collection('Recipe').orderBy('likes', 'desc').limit(docLimit);
-
-        const snapshot = await q.get();
-
-        logger.log("Requested posts "+ req.data);
-        if (snapshot.empty) {
-            logger.log("Error: no recipes found");
-            return { success: false, message: "No recipes found" };
-        } else {
-            const recipes = [];
-            snapshot.docs.forEach(doc => {
-                const recipeData = doc.data();
-                recipes.push({
-                    id: doc.id,
-                    name: recipeData.name || "",
-                    likes: recipeData.likes || 0,
-                    preparationTime: recipeData.preparationTime || 0,
-                    cardImgReg: recipeData.cardImgReg || "",
-                    // authorName: recipeData.authorRef || ""
-                });
-            });
+            }
             logger.log("Recipes found: ", recipes);
             return { success: true, recipeList: recipes };
         }
@@ -112,10 +99,8 @@ exports.getDbRecipesByMostLikes = onCall(async (req, res) => {
 });
 
 exports.getDbMoreRecipes = onCall(async (req, res) => {
-    const docLimit = req.data.docLimit || 6; 
+    const docLimit = req.data.docLimit || 6;
     const lastDocId = req.data.lastDocId || null;
-
-    
 
     if (!docLimit || typeof docLimit !== 'number') {
         logger.log("Error: docLimit or lastDocId not found or invalid: ", docLimit);
@@ -123,7 +108,7 @@ exports.getDbMoreRecipes = onCall(async (req, res) => {
     }
 
     logger.info("Requesting " + docLimit + " recipes after " + lastDocId);
-    
+
     try {
         const q = db.collection('Recipe').orderBy('name').limit(docLimit);
 
@@ -298,14 +283,16 @@ exports.addDislikeRecipe = onCall(async (req, res) => {
 });
 
 exports.getDbUser = onCall(async (req, res) => {
-    const { uID } = req.data
-    if (!uID) {
-        throw new Error("UID not found")
+    const { uId } = req.data
+    if (!uId) {
+        logger.log("Error: uId not found or invalid ", uId);
+        return { success: false, message: "uId not found or invalid" }
     }
 
     const snapshot = await db.collection('User').where('uId', '==', req.query.uId).limit(1).get();
 
     if (snapshot.empty) {
+        logger.log("Error: no user found with the uId", uId);
         return { success: false, message: 'Error:no user with this UID' }
 
     } else {
@@ -323,7 +310,7 @@ exports.verifyUser = onCall(async (req, res) => {
 
     try {
         const decodedToken = await getAuth().verifyIdToken(token);
-        return { success: true, uid: decodedToken.uid };
+        return { success: true, uId: decodedToken.uId };
     } catch (error) {
         return { success: false, message: "Invalid token" };
     }

@@ -3,7 +3,12 @@
     const props = defineProps({
         thisRecipeId: String,
         thisRecipeName: String,
-        thisAuthorRef: String,
+        thisAuthor: {
+            type: Object,
+            default: () => ({ 
+                name: "Unknown"
+            })
+        },
         thisCookTime: Number,
         thisLikes: Number,
         thisImgStorageSrc: String
@@ -18,7 +23,7 @@
             src="..\assets\images\coconut.png" alt="Card image cap">
         <div class="card-body">
             <h5 class="card-title"><a :href="recipeLink">{{thisRecipeName}}</a></h5>
-            <h6 class = "card-text">by {{thisAuthorRef}}</h6>
+            <h6 class = "card-text">by {{thisAuthor.name}}</h6>
             <p class="card-text" style="display: inline;float: left;">{{thisCookTime}} Minutes</p>
             <p class="card-text" style="display: inline;float: right;">{{thisLikes}} Likes</p>
         </div>

@@ -10,48 +10,26 @@ import { ref, onMounted } from 'vue';
 
 const mostRecent = ref([]);
 const mostLiked = ref([]);
-const more = ref([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+const more = ref([]);
 
-const getMostLikedRecipe = async () => {
-  console.log("Calling getDbRecipesByMostLikes");
-  const getDbMostLikedRecipe = httpsCallable(functions, 'getDbRecipesByMostLikes');
+const getRecipeByField = async (queryType = 'likes', order = 'desc') => {
+  console.log("Calling getDbRecipesByField");
+  const getDbRecipesByField = httpsCallable(functions, 'getDbRecipesByField');
   try {
     const docLimit = 6;
-    console.log("Calling getDbMostLikedRecipe with docLimit: ", docLimit);
-    const result = await getDbMostLikedRecipe({ docLimit }); // Ensure docLimit is passed correctly
-    console.log("Response from getDbMostLikedRecipe:", result.data);
+    console.log(`Calling getDbRecipesByField with queryType: ${queryType}, order: ${order}, docLimit: ${docLimit}`);
+    const result = await getDbRecipesByField({ queryType, order, docLimit });
+    console.log("Response from getDbRecipesByField:", result.data);
 
     if (result.data.success) {
-      console.log("Recipe found:", result.data);
+      console.log("Recipes found:", result.data.recipeList);
       return result.data.recipeList;
     } else {
-      console.log("Recipes not found: ", result.data.message);
+      console.warn("Recipes not found:", result.data.message);
       return [];
     }
   } catch (error) {
-    console.error("Error calling getDbRecipesByMostLikes:", error);
-    return [];
-  }
-};
-
-const getMostRecentRecipe = async () => {
-  console.log("Calling getDbRecipesByMostRecent");
-  const getDbMostRecentRecipe = httpsCallable(functions, 'getDbRecipesByMostRecent');
-  try {
-    const docLimit = 6;
-    console.log("Calling getDbRecipesByMostRecent with docLimit: ", docLimit);
-    const result = await getDbMostRecentRecipe({ docLimit }); // Ensure docLimit is passed correctly
-    console.log("Response from getDbRecipesByMostRecent:", result.data);
-
-    if (result.data.success) {
-      console.log("Recipe found:", result.data);
-      return result.data.recipeList;
-    } else {
-      console.log("Recipes not found: ", result.data.message);
-      return [];
-    }
-  } catch (error) {
-    console.error("Error calling getDbRecipesByMostRecent:", error);
+    console.error("Error calling getDbRecipesByField:", error);
     return [];
   }
 };
@@ -72,7 +50,7 @@ const getMoreRecipe = async () => {
       lastDocId.value = result.data.lastDocId;
       return result.data.recipeList;
     } else {
-      console.log("Recipes not found: ", result.data.message);
+      console.warn("Recipes not found: ", result.data.message);
       return [];
     }
   } catch (error) {
@@ -96,14 +74,14 @@ const tryGetMoreRecipes = async () => {
 
 onMounted(async () => {
   try {
-    const mostRecentRecipes = await getMostRecentRecipe();
+    const mostRecentRecipes = await getRecipeByField('publishDate', 'desc');
     if (mostRecentRecipes.length > 0) {
       mostRecent.value = mostRecentRecipes;
     }
     else {
       mostRecent = [];
     }
-    const mostLikedRecipes = await getMostLikedRecipe();
+    const mostLikedRecipes = await getRecipeByField('likes', 'desc');
     if (mostLikedRecipes.length > 0) {
       mostLiked.value = mostLikedRecipes;
     }
@@ -131,7 +109,7 @@ onMounted(async () => {
     <div class="row" id="mostRecentField">
       <div class="col-sm-auto" id="MostRecent" v-for="item in mostRecent">
         <div class="cardContainer">
-          <Card :thisRecipeId="item.id" :thisRecipeName="item.name" :thisAuthorRef="item.authorRef"
+          <Card :thisRecipeId="item.id" :thisRecipeName="item.name" :thisAuthor="item.author"
             :thisCookTime="item.preparationTime" :thisLikes="item.likes" :thisImgStorageSrc="item.cardImgReg" />
         </div>
       </div>
@@ -141,7 +119,7 @@ onMounted(async () => {
     <div class="row" id="mostLikedField">
       <div class="col-sm-auto" id="MostLiked" v-for="item in mostLiked">
         <div class="cardContainer">
-          <Card :thisRecipeId="item.id" :thisRecipeName="item.name" :thisAuthorRef="item.authorRef"
+          <Card :thisRecipeId="item.id" :thisRecipeName="item.name" :thisAuthor="item.author"
             :thisCookTime="item.preparationTime" :thisLikes="item.likes" :thisImgStorageSrc="item.cardImgReg" />
         </div>
       </div>
@@ -151,7 +129,7 @@ onMounted(async () => {
     <div class="row" id="moreField">
       <div class="col-sm-auto" id="More" v-for="item in more">
         <div class="cardContainer">
-          <Card :thisRecipeId="item.id" :thisRecipeName="item.name" :thisAuthorRef="item.authorRef"
+          <Card :thisRecipeId="item.id" :thisRecipeName="item.name" :thisAuthor="item.author"
             :thisCookTime="item.preparationTime" :thisLikes="item.likes" :thisImgStorageSrc="item.cardImgReg" />
         </div>
       </div>
