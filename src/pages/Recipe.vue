@@ -1,12 +1,15 @@
 <script setup>
 import { functions, auth } from '../api/firebase';
 import { httpsCallable } from 'firebase/functions';
-import { ref, onMounted, useId } from 'vue';
+import { ref, onMounted } from 'vue';
 
 import IngredientList from '@/components/IngredientList.vue';
+import NotFound from '@/components/NotFound.vue';
 
+const recipeNotFound = ref(false);
+const loading = ref(true);
 
-const getHelloWorld = async () => {
+const getHelloWorld = async () => { //remove before final deployment
   console.log("Calling helloWorld");
   const helloWorld = httpsCallable(functions, 'helloWorld');
   try {
@@ -19,9 +22,18 @@ const getHelloWorld = async () => {
 
 const routeProp = defineProps(['id']);
 
-const recipeName = ref('');
-const recipeIngredients = ref('');
-const recipeInstructions = ref('');
+const recipe = ref({
+  name: '',
+  ingredients: [],
+  instructions: [],
+  likes: 0,
+  dislikes: 0,
+  image: '',
+  author: [],
+  preparationTime: 0,
+  equipment: '',
+  publishDate: ''
+});
 
 const getDbRecipeSingle = async () => {
   console.log("Calling getDbRecipeSingle with ID:", routeProp.id);
@@ -31,28 +43,34 @@ const getDbRecipeSingle = async () => {
     console.log("Response from getDbRecipeSingle:", result.data);
 
     if (result.data.success) {
-      const recipe = result.data.recipe;
+      const recipeData = result.data.recipe;
       console.log("Recipe found:", recipe);
 
-      recipeName.value = recipe.name || "No name provided";
-      recipeIngredients.value = recipe.ingredients || "No ingredients provided";
-      recipeInstructions.value = recipe.instructions || "No instructions provided";
+      recipe.value = {
+        name: recipeData.name || "No name provided",
+        ingredients: recipeData.ingredients || "No ingredients provided",
+        instructions: recipeData.instructions || "No instructions provided",
+        likes: recipeData.likes || 0,
+        dislikes: recipeData.dislikes || 0,
+        image: recipeData.image || '',
+        author: recipeData.authorRef || '',
+        preparationTime: recipeData.preparationTime || 0,
+        equipment: recipeData.equipment || '',
+        publishDate: recipeData.publishDate || ''
+      };
     } else {
       console.log("Recipe not found: ", result.data.message);
-      recipeName.value = "Recipe not found";
-      recipeIngredients.value = "";
-      recipeInstructions.value = "";
+      recipeNotFound.value = true;
     }
   } catch (error) {
     console.error("Error calling getDbRecipeSingle:", error);
-    recipeName.value = "Error fetching recipe";
-    recipeIngredients.value = "";
-    recipeInstructions.value = "";
+    recipeNotFound.value = true;
+  } finally {
+    loading.value = false;
   }
 };
 
 const likeRecipe = async () => {
-
   const user = auth.currentUser;
 
   if (!user) {
@@ -65,7 +83,7 @@ const likeRecipe = async () => {
   console.log("Calling addLikeRecipe with ID:", routeProp.id, "and user ID: ", uid);
   const likeRecipeFunction = httpsCallable(functions, 'addLikeRecipe');
   try {
-    const result = await likeRecipeFunction({ id: routeProp.id , uid});
+    const result = await likeRecipeFunction({ id: routeProp.id, uid });
     console.log(result.data);
   } catch (error) {
     console.error("Error calling addLikeRecipe:", error);
@@ -73,7 +91,6 @@ const likeRecipe = async () => {
 };
 
 const dislikeRecipe = async () => {
-
   const user = auth.currentUser;
 
   if (!user) {
@@ -86,56 +103,77 @@ const dislikeRecipe = async () => {
   console.log("Calling addDislikeRecipe with ID:", routeProp.id, "and user ID: ", uid);
   const dislikeRecipeFunction = httpsCallable(functions, 'addDislikeRecipe');
   try {
-    const result = await dislikeRecipeFunction({ id: routeProp.id , uid});
+    const result = await dislikeRecipeFunction({ id: routeProp.id, uid });
     console.log(result.data);
   } catch (error) {
     console.error("Error calling addDislikeRecipe:", error);
   }
 };
 
-/**>
-const postRecipe = async () => {
-  console.log("Calling postRecipe with name:", recipeName.value);
-  const postRecipeFunction = httpsCallable(functions, 'postRecipe');
-  try {
-    const result = await postRecipeFunction({
-      name: recipeName.value,
-      ingredients: recipeIngredients.value,
-      instructions: recipeInstructions.value
-    });
-    console.log(result.data);
-  } catch (error) {
-    console.error("Error calling postRecipe:", error);
-  }
-};
-*/
-
 onMounted(() => {
-    getDbRecipeSingle();
-  });
+  getDbRecipeSingle();
+});
 </script>
 
 <template>
-  <div class="container-fluid bg-secondary min-vh-100 vh-100" style="padding-top: 10px;">
-    <div class='row d-flex align-items-start'>
-      <div class="col-md-2">
+  <div class="container-fluid bg-secondary min-vh-100" style="padding-top: 20px;">
+    <div v-if="loading" class="spinner-border" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <div v-else-if="recipeNotFound">
+      <NotFound />
+    </div>
+    <div v-else class="row d-flex justify-content-center">
+      <div class="col-md-8">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6 d-flex justify-content-center align-items-center">
+                <img class="img-fluid rounded" src="../assets/images/coconut.png" alt="Recipe default"
+                  style="max-width: 100%; height: auto;">
+              </div>
+              <div class="col-md-6">
+                <h2 class="card-title mb-4">{{ recipe.name }}</h2>
+                <div class="mb-4">
+                  <h5>Ingredients:</h5>
+                  <p class="card-text">{{ recipe.ingredients }}</p>
+                </div>
+                <div class="mb-4">
+                  <h5>Instructions:</h5>
+                  <p class="card-text">{{ recipe.instructions }}</p>
+                </div>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-primary" @click="likeRecipe">Like</button>
+                  <button class="btn btn-primary" @click="dislikeRecipe">Dislike</button>
+                  <button class="btn btn-secondary" @click="getHelloWorld">Hello World</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="col-md-4">
-        <!--<IngredientList></IngredientList> -->  
-      </div>
-      <div class="col-md-5 d-flex justify-content-center align-items-center" style="background-color: lightblue; padding: 20px; border-radius: 15px;">
-        <img class="img-fluid rounded w-50 h-auto" src="..\assets\images\coconut.png" alt="Recipe default">
-      </div>
-      
-      <div class="col-md-12 mt-4">
-        <p><strong>Name:</strong> {{ recipeName }}</p>
-        <p><strong>Ingredients:</strong> {{ recipeIngredients }}</p>
-        <p><strong>Instructions:</strong> {{ recipeInstructions }}</p>
-      </div>
-
-      <button class="btn btn-primary" @click="likeRecipe">Like</button>
-      <button class="btn btn-primary" @click="dislikeRecipe">Dislike</button>
-      <button class="btn btn-primary" @click="getHelloWorld">Hello world</button>
     </div>
   </div>
 </template>
+
+<style scoped>
+.card {
+  border-radius: 15px;
+  background-color: lightblue;
+}
+
+.card-title {
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.card-text {
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.btn {
+  font-size: 1rem;
+  padding: 0.5rem 1rem;
+}
+</style>
