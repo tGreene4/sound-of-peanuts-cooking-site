@@ -125,7 +125,7 @@ onMounted(async () => {
       </div>
     </div>
 
-    <h1 class="sectionHeader">Most</h1>
+    <h1 class="sectionHeader">More</h1>
     <div class="row" id="moreField">
       <div class="col-sm-auto" id="More" v-for="item in more">
         <div class="cardContainer">
