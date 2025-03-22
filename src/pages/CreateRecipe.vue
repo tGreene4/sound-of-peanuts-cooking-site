@@ -1,5 +1,5 @@
 <script>
-import { functions } from '../api/firebase';
+import { functions, auth } from '../api/firebase';
 import { httpsCallable } from 'firebase/functions';
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import placeholderImg from '@/assets/images/coconut.png';
@@ -54,9 +54,15 @@ export default {
     },
     async postRecipe() {
       if (!this.name || !this.time || !this.steps.length || !this.ingredients.length || !this.equipment.length || !this.downloadURL) {
-            console.error("Error: Missing required fields");
-            alert("Please fill in all fields before publishing the recipe.");
-            return;
+        console.error("Error: Missing required fields");
+        alert("Please fill in all fields before publishing the recipe.");
+        return;
+      }
+      const user = auth.currentUser;
+      if (!user) {
+        console.error("Error: User is not authenticated");
+        alert("You must be logged in to post a recipe.");
+        return;
       }
 
       const postDbRecipe = httpsCallable(functions, 'postDbRecipe');
@@ -69,6 +75,7 @@ export default {
           ingredients: this.ingredients.map(ingredient => ingredient.value),
           equipment: this.equipment.map(equipment => equipment.value),
           cardImgReg: this.downloadURL,
+          uid: user.uid,
         });
 
         console.log("Response from postDbRecipe:", result.data);
