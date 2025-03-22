@@ -195,7 +195,7 @@ exports.getDbRecipeSingle = onCall(async (req, res) => {
 
         let author = null;
         const recipeData = snapshot.data();
-        
+
         if (recipeData.authorRef) {
             logger.log("Author ref found");
             const aSnapshot = await recipeData.authorRef.get();
@@ -381,37 +381,39 @@ exports.verifyUser = onCall(async (req, res) => {
     }
 });
 
-exports.createDbUser = onCall(async(req,res)=>{
-    const{uName,pfpFile,uId} = req.data
-    if(!uName || !pfpFile || !uId){
+exports.createDbUser = onCall(async (req, res) => {
+    const { uName, pfpFile, uId } = req.data
+    if (!uName || !pfpFile || !uId) {
         throw new Error("Name, pfp, or UID not found");
     }
 
     let pfpDownloadURL = "";
 
-    try{
-        const pfpRef = store.bucket().file(uId+"/pfp.png");
-        await pfpRef.save(pfpFile,{public:true},function(){pfpDownloadURL = pfpRef.publicUrl();});
+    try {
+        const pfpRef = store.bucket().file(uId + "/pfp.png");
+        logger.log("Uploading profile picture to: " + pfpRef);
+        await pfpRef.save(pfpFile, { public: true }, function () { pfpDownloadURL = pfpRef.publicUrl(); });
     }
-    catch(error){
-        logger.log("Failed to upload profile picture:"+error);
-        return{success:false,message:"Failed to upload profile picture"}
+    catch (error) {
+        logger.log("Failed to upload profile picture:" + error);
+        return { success: false, message: "Failed to upload profile picture" }
+    }
 
-    }
-    
+    logger.log("Attempting to add user : " + uName + " with uId: " + uId + " and pfp url: " + pfpDownloadURL);
+
     const complete = await db.collection('Users').add({
         name: uName,
         pfpUrl: pfpDownloadURL,
         uId: uId,
-        biography:""
+        biography: ""
     })
 
-    logger.log("Attempting to add user : " + uName + " with uId: " + uId + " and pfp url: " + pfpDownloadURL);
-
     if (complete) {
+        logger.log("User successfully added")
         return { success: true, message: "User added" }
     }
     else {
+        logger.log("User failed to be added")
         return { success: false, message: "Error: could not create user" }
     }
 });

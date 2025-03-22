@@ -4,8 +4,18 @@
     import { createUserWithEmailAndPassword, deleteUser, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
     import { httpsCallable } from 'firebase/functions';
 
-    var signUpUsername,signUpEmail,signUpPassword,signUpConfirmPassword;
-    var loginEmail,loginPassword;
+    const signUp = {
+        username: ref(""),
+        email: ref(""),
+        password: ref(""),
+        confirmPassword: ref("")
+    }
+
+    const login = {
+        email: ref(""),
+        password: ref("")
+    }
+
 
     function authCheck(){
         if(auth.currentUser!=null){
@@ -25,117 +35,139 @@
     }
 
     const userCreate = async()=>{
-        if(!(signUpEmail.search("/@/") && signUpEmail.length > 3)){
-            alert("Invalid Email")
-            return;
-        }
-        if(!(signUpPassword.length>5 && /\d/.test(signUpPassword))){
-            alert("Invalid password: passwords must be at least 6 characters and contain at least 1 number")
-            return;
-        }
-        if(signUpConfirmPassword!=signUpPassword){
-            alert("Password and confirmation password do not match")
-            return;
-        }
-        let createSuccess = await createUserWithEmailAndPassword(auth,signUpEmail,signUpPassword)
-        if(!createSuccess){
-            alert("Failed to create account")
-            return;
-        }
-        console.log("Account created");
-        console.log(createSuccess)
-        let signUpUser = auth.currentUser
-        console.log(signUpUser)
-        const createFun = httpsCallable(functions,"createDbUser")
-        try{
-            const result = await createFun({uName:signUpUsername,pfpFile:pfpImgSrc.value,uId:signUpUser.uid})
-            if(result.data.success==true){
-                console.log("Added User to database")
-            }
-            else if(result.data.success==false){
-                console.log("Could not add user to database")
-                deleteUser(signUpUser)
-
-            }
-        }
-        catch(error){
-            console.error(error.message)
-            deleteUser(signUpUser)
-        }
-            
+        const regexEmail = /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
+        if (!regexEmail.test(signUp.email.value)) {
+        alert("Invalid Email");
+        return;
     }
 
-    function userLogin(){
-        let loginSuccess = signInWithEmailAndPassword(auth,loginEmail,loginPassword)
-        if(!loginSuccess){
-            alert("Could not log in")
-        }
+    if (!(signUp.password.value.length > 5 && /\d/.test(signUp.password.value))) {
+        alert("Invalid password: passwords must be at least 6 characters and contain at least 1 number");
+        return;
     }
 
+    if (signUp.confirmPassword.value !== signUp.password.value) {
+        alert("Password and confirmation password do not match");
+        return;
+    }
+
+    try {
+        const createSuccess = await createUserWithEmailAndPassword(auth, signUp.email.value, signUp.password.value);
+        if (!createSuccess) {
+            alert("Failed to create account");
+            return;
+        }
+
+        console.log("Attempting to create account");
+        console.log(createSuccess);
+
+        const signUpUser = auth.currentUser;
+        console.log(signUpUser);
+
+        const createUser = httpsCallable(functions, "createDbUser");
+        const result = await createUser({
+            uName: signUp.username.value,
+            pfpFile: pfpImgSrc.value,
+            uId: signUpUser.uid
+        });
+
+        if (result.data.success === true) {
+            console.log("Added User to database");
+        } else if (result.data.success === false) {
+            console.log("Could not add user to database");
+            await deleteUser(signUpUser);
+        }
+    } catch (error) {
+        console.error("Error during user creation:", error.message);
+        if (auth.currentUser) {
+            await deleteUser(auth.currentUser); 
+        }
+        alert("An error occurred while creating the account. Please try again.");
+    }
+};
+
+function userLogin(event) {
+    event.preventDefault();
+
+    signInWithEmailAndPassword(auth, login.email.value, login.password.value)
+        .then(() => {
+            console.log("Login successful");
+        })
+        .catch((error) => {
+            console.error("Error during login:", error.message);
+            alert("Could not log in. Please check your credentials.");
+        });
+}
 </script>
 
 <template>
-    <div id = "flexWrapper" class = "d-flex flex-column align-self-center">
-        <div id = "accountPageDiv" class="align-self-center">
+    <div id="flexWrapper" class="d-flex flex-column align-self-center">
+        <div id="accountPageDiv" class="align-self-center">
             <ul class="nav nav-tabs">
-                <li class = "nav-item">
+                <li class="nav-item">
                     <button class="nav-link active" id="newAccountTab" data-bs-toggle="tab" data-bs-target="#newAccountDiv" type="button" role="tab" aria-controls="sign up tab" aria-selected="true">Sign Up</button>
                 </li>
-                <li class = "nav-item">
+                <li class="nav-item">
                     <button class="nav-link" id="loginTab" data-bs-toggle="tab" data-bs-target="#loginDiv" type="button" role="tab" aria-controls="log in tab" aria-selected="false">Log In</button>
                 </li>
             </ul>
             <div class="tab-content" style="width: 8cm;">
                 <div class="tab-pane show active" id="newAccountDiv">
                     <form>
-                        <label for = "usernameInput" class = "form-label">Username:</label>
-                        <input type = "text" class = "form-control" id = "usernameInput" placeholder="Enter your username" v-model="signUpUsername">
-                        <label for = "usernameInput" class = "form-label">Email:</label>
-                        <input type = "email" class = "form-control" id = "emailInput" placeholder="Enter your email" v-model="signUpEmail">
-                        <label for = "usernameInput" class = "form-label">Password:</label>
-                        <input type = "password" class = "form-control" id = "passwordInput" placeholder="Enter your password" v-model="signUpPassword">
-                        <label for = "usernameInput" class = "form-label">Confirm Password:</label>
-                        <input type = "password" class = "form-control" id = "confirmPasswordInput" placeholder="Enter the same password as above" v-model="signUpConfirmPassword">
-                        <label for = "pfpInput" class="form-label">Upload your Profile Picture</label>
-                        <img :src="pfpImgSrc" style="width:100%;height:30vh;display:block;object-fit: cover;" id = "pfpPreviewImg">
-                        <input type ="file" :value = null class = form-control id="pfpInput" accept="image/png,image/jpeg" @change="changeImg($event)">
+                        <label for="usernameInput" class="form-label">Username:</label>
+                        <input type="text" class="form-control" id="usernameInput" placeholder="Enter your username" v-model="signUp.username.value">
+
+                        <label for="emailInput" class="form-label">Email:</label>
+                        <input type="email" class="form-control" id="emailInput" placeholder="Enter your email" v-model="signUp.email.value">
+
+                        <label for="passwordInput" class="form-label">Password:</label>
+                        <input type="password" class="form-control" id="passwordInput" placeholder="Enter your password" v-model="signUp.password.value">
+
+                        <label for="confirmPasswordInput" class="form-label">Confirm Password:</label>
+                        <input type="password" class="form-control" id="confirmPasswordInput" placeholder="Enter the same password as above" v-model="signUp.confirmPassword.value">
+
+                        <label for="pfpInput" class="form-label">Upload your Profile Picture</label>
+                        <img :src="pfpImgSrc" style="width:100%;height:30vh;display:block;object-fit: cover;" id="pfpPreviewImg">
+                        <input type="file" :value="null" class="form-control" id="pfpInput" accept="image/png,image/jpeg" @change="changeImg($event)">
+
                         <button class="form-control" @click="userCreate" type="button">Sign Up</button>
                     </form>
                 </div>
-                <div class = "tab-pane" id = "loginDiv">
+                <div class="tab-pane" id="loginDiv">
                     <form>
-                        <label for = "emailLoginInput" class = "form-label">Email:</label>
-                        <input type="email" class="form-control" id="emailLoginInput" placeholder="Enter your email" v-model="loginEmail">
-                        <label for = "passwordLoginInput" class = "form-label">Password:</label>
-                        <input type="password" class="form-control" id="passwordLoginInput" placeholder="Enter your password" v-model="loginPassword">
+                        <label for="emailLoginInput" class="form-label">Email:</label>
+                        <input type="email" class="form-control" id="emailLoginInput" placeholder="Enter your email" v-model="login.email.value">
+
+                        <label for="passwordLoginInput" class="form-label">Password:</label>
+                        <input type="password" class="form-control" id="passwordLoginInput" placeholder="Enter your password" v-model="login.password.value">
+
                         <br>
                         <button class="form-control" @click="userLogin" type="button">Log In</button>
                     </form>
                 </div>
-
             </div>
         </div>
     </div>
-
 </template>
 
 <style scoped>
-#accountPageDiv{
+#accountPageDiv {
     align-items: center;
-    width:max-content;
+    width: max-content;
     padding: 4vh;
     border: 2px solid lightgrey;
     border-radius: 20px;
     margin: 3vh;
-    background-color:rgb(243, 239, 234);
-    
+    background-color: rgb(243, 239, 234);
 }
-#emailInput,#emailLoginInput{
+
+#emailInput,
+#emailLoginInput {
     width: 35ch;
 }
 
-#flexWrapper{
+#flexWrapper {
     background-color: rgb(255, 243, 224);
-    height:100vh;
+    height: 100vh;
 }
 </style>
