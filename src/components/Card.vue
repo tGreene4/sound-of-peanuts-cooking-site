@@ -1,5 +1,6 @@
 <script setup>
     import { ref } from 'vue'
+    import placeholderImg from '@/assets/images/coconut.png';
     const props = defineProps({
         thisRecipeId: String,
         thisRecipeName: String,
@@ -14,13 +15,12 @@
         thisImgStorageSrc: String
     });
     const recipeLink = ref("/recipe/"+props.thisRecipeId)
-
 </script>
 
 <template>
     <div class="card" id="card">
-        <img class="card-img-top img-thumbnail img-fluid align-self-center"
-            src="..\assets\images\coconut.png" alt="Card image cap">
+        <a :href="recipeLink"><img class="card-img-top img-thumbnail img-fluid align-self-center" 
+            :src= "thisImgStorageSrc || placeholderImg" alt="Card image cap"></a>
         <div class="card-body">
             <h5 class="card-title"><a :href="recipeLink">{{thisRecipeName}}</a></h5>
             <h6 class = "card-text">by {{thisAuthor.name}}</h6>
