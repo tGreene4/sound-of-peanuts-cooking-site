@@ -1,82 +1,8 @@
-<script setup>
-import { getFunctions, httpsCallable } from "firebase/functions";
-import funcs from '../api/firebase';
-</script>
-
-<template>
-  <div class = "flex-d flex-column align-self-center" id = "flexWrapper">
-    <form class = "align-self-center" id = "content">
-      <label for = "nameField" class = "form-label">Name</label>
-      <input class="form-control" v-model="name" id="nameField">
-      <div class="container-fluid align-self-center">
-        <div class="row">
-
-          <div class="col-lg-6">
-            <label for = "instructionsField" class = "form-label">Instructions</label>
-            <div class="container-fluid"   id="instructionsFields" v-for="(step,index) in steps">
-              <div class= "row">
-                <div class="col-sm-1"><a>Step {{index+1}}</a></div>
-                <div class="col-sm-10">
-                  <input id="field" class="form-label" v-model="step.value">
-                </div>
-                <div class="col-sm-1">
-                  <button type="button" @click="deleteField('steps',index)">X</button>
-                </div>
-              </div>
-            </div>
-            <br><button type="button" @click="addField('steps')">Add new step</button><br>
-          </div>
-
-          <div class="col-lg-3">
-            <label for = "ingredientFields" class = "form-label">Ingredients</label>
-            <div id="ingredientFields" v-for="ingredient in ingredients">
-              <div class="row">
-                <div class="col-sm-11">
-                  <input id="field" class = "form-label" v-model="ingredient.value">
-                </div>
-                <div class="col-sm-1">
-                  <button type="button" @click="deleteField('ingredients',index)">X</button>
-                </div>
-              </div>
-              <br>
-            </div>
-            <br><button type="button" @click="addField('ingredients')">Add new Ingredient</button><br>
-          </div>
-
-          <div class="col-lg-3">
-            <label for = "equipmentFields" class = "form-label">Equipment</label>
-            <div id="equipmentFields" v-for="item in equipment">
-              <div class="row">
-                <div class="col-sm-11">
-                  <input id="field" class = "form-label" v-model="item.value">
-                </div>
-                <div class="col-sm-1">
-                  <button type="button" @click="deleteField('equipment',index)">X</button>
-                </div>
-              </div>
-              <br>
-            </div>
-            <br><button type="button" @click="addField('equipment')">Add new Equipment</button><br>
-          </div>
-        </div>
-      </div>
-
-      <!--Basic, doesn't work yet-->
-      <br><a>Upload Image</a><br>
-      <input type="file" id="media" accept="image/*" multiple @change="(event) => handleFileUpload(event)"/>
-      <br><br>
-      <label for = "timeField" class = "form-label">Time</label>
-      <input class="form-control" v-model="time"  id="timeField">
-      <br>
-      <div style="width:40%;align-self:center;">
-        <button class="form-control" type="button" @click="postRecipe">Save Recipe</button>
-      </div>
-      <br>
-    </form>
-  </div>
-</template>
-
 <script>
+import { functions } from '../api/firebase';
+import { httpsCallable } from 'firebase/functions';
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+
 export default {
   data() {
     return {
@@ -85,92 +11,245 @@ export default {
       equipment: [],
       steps: [],
       time: '',
-    }
+      downloadURL: '',
+    };
   },
   mounted() {
-    this.ingredients.push({value: ''});
-    this.equipment.push({value: ''});
-    this.steps.push({value: ''});
+    this.ingredients.push({ value: '' });
+    this.equipment.push({ value: '' });
+    this.steps.push({ value: '' });
   },
-  methods : {
-    addField: function(type){
-      switch(type){
-        case('ingredients'):
-          this.ingredients.push({value: ''});
+  methods: {
+    addField(type) {
+      switch (type) {
+        case 'ingredients':
+          this.ingredients.push({ value: '' });
           break;
-        case('equipment'):
-          this.equipment.push({value: ''});
+        case 'equipment':
+          this.equipment.push({ value: '' });
           break;
-        case('steps'):
-          this.steps.push({value: ''});
-          break;
-      }
-    },
-    deleteField: function(type, index){
-      switch(type){
-        case('ingredients'):
-          this.ingredients.splice(index, 1);
-          break;
-        case('equipment'):
-          this.equipment.splice(index, 1);
-          break;
-        case('steps'):
-          this.steps.splice(index, 1);
+        case 'steps':
+          this.steps.push({ value: '' });
           break;
       }
     },
-    handleFileUpload: function (event) {
-      console.log("image uploaded");
+    async handleFileUpload(event) {
+      try {
+        const storage = getStorage(); // Ensure storage is initialized
+        const file = event.target.files[0];
+        const storageRef = ref(storage, 'images/' + file.name);
+        const snapshot = await uploadBytes(storageRef, file);
+        const downloadURL = await getDownloadURL(snapshot.ref);
+        console.log(downloadURL);
+        this.downloadURL = downloadURL;
+        const imageElement = this.$refs.image;
+        if (imageElement) {
+          imageElement.setAttribute("src", downloadURL);
+        }
+      } catch (error) {
+        console.error("Error uploading image:", error);
+      }
     },
-
-    //Method that hopefully uploads the recipe info to the db
     async postRecipe() {
-      console.log(this.name);
-      console.log(this.ingredients);
-      console.log(this.equipment);
-      console.log(this.steps );
-      console.log(this.time);
-      /* Code for posting recipe unfinished
-      const postRecipe = httpsCallable(funcs, 'postrecipe');
-      const result = await postRecipe(
-          {
-            "steps": this.steps,
-            "authorId": 0,
-            "cardImgReg": "blank",
-            "time": this.time,
-            "equipment": this.equipment,
-            "ingredients": this.ingredients,
-            "likes": 0,
-            "name": this.name,
-            "recipeId": 0,
-          });
-      console.log(result);
-      */
-    }
-  }
-}
+      if (!this.name || !this.time || !this.steps.length || !this.ingredients.length || !this.equipment.length || !this.downloadURL) {
+            console.error("Error: Missing required fields");
+            alert("Please fill in all fields before publishing the recipe.");
+            return;
+      }
+
+      const postDbRecipe = httpsCallable(functions, 'postDbRecipe');
+      try {
+        console.log(`Calling postDbRecipe`);
+        const result = await postDbRecipe({
+          name: this.name,
+          preparationTime: parseInt(this.time),
+          instructions: this.steps.map(step => step.value),
+          ingredients: this.ingredients.map(ingredient => ingredient.value),
+          equipment: this.equipment.map(equipment => equipment.value),
+          cardImgReg: this.downloadURL,
+        });
+
+        console.log("Response from postDbRecipe:", result.data);
+
+        if (result.data.success) {
+          console.log("Recipe posted successfully", result.data.message);
+        } else {
+          console.warn("Recipes failed to post", result.data.message);
+        }
+      } catch (error) {
+        console.error("Error calling postDbRecipe:", error);
+      }
+    },
+  },
+};
 </script>
+
+<template>
+  <div class="main container-fluid align-self-center min-vh-100">
+    <div class="flex-d flex-column align-self-center" id="flexWrapper">
+      <form class="align-self-center" id="content">
+        <div class="container-fluid align-self-center">
+          <div class="row">
+            <div class="col-lg-3">
+              <br>
+              <div style="width:40%;align-self:center;">
+                <button class="form-control" type="button" @click="postRecipe" style="width:200px;">Publish
+                  Recipe</button>
+              </div>
+              <br>
+              <label for="nameField" class="form-label">Name</label>
+              <input class="form-control" v-model="name" id="nameField"><br><br><br><br>
+              <label for="timeField" class="form-label">Cooking Time (in minutes)</label>
+              <input class="form-control" v-model="time" id="timeField">
+              <br><br><br><br>
+            </div>
+            <div class="col-lg-3"></div>
+            <div class="col-lg-2">
+              <a>Upload Image</a><br>
+              <input type="file" id="media" accept="image/*" multiple @change="(event) => handleFileUpload(event)" />
+              <br><br>
+            </div>
+            <div class="col-lg-3">
+              <img class="card-img-top img-thumbnail img-fluid align-self-center" src="..\assets\images\coconut.png"
+                alt="Card image cap" style="max-height:90%;max-width:90%;position: relative; top:10px">
+              <br>
+            </div>
+
+            <div class="row">
+              <div class="col-lg-6 form-group">
+                <label for="instructionsField" class="form-label">Instructions</label>
+                <div class="container-fluid" id="instructionsFields" v-for="(step, index) in steps">
+                  <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text" id="inputGroup-sizing-sm">Step # {{ index + 1 }}</span>
+                    </div>
+                    <input type="text" class="form-control" v-model="step.value">
+                    <div class="input-group-append">
+                      <button class="btn" type="button" @click="deleteField('steps', index)">X</button>
+                    </div>
+                  </div>
+                </div>
+                <br><button type="button" @click="addField('steps')">Add new step</button><br>
+              </div>
+              <div class="col-lg-1"></div>
+              <div class="col-lg-2 form-group">
+                <label for="ingredientFields" class="form-label">Ingredients</label>
+                <div id="ingredientFields" v-for="(ingredient, index) in ingredients">
+                  <div class="input-group mb-3">
+                    <input type="text" class="form-control" v-model="ingredient.value">
+                    <div class="input-group-append">
+                      <button class="btn" type="button" @click="deleteField('ingredients', index)">X</button>
+                    </div>
+                  </div>
+                </div>
+                <br><button type="button" @click="addField('ingredients')">Add new Ingredient</button><br>
+
+              </div>
+              <div class="col-lg-1"></div>
+              <div class="col-lg-2 form-group">
+                <label for="equipmentFields" class="form-label">Equipment</label>
+                <div id="equipmentFields" v-for="(item, index) in equipment">
+                  <div class="input-group mb-3">
+                    <input type="text" class="form-control" v-model="item.value">
+                    <div class="input-group-append">
+                      <button class="btn" type="button" @click="deleteField('equipment', index)">X</button>
+                    </div>
+                  </div>
+                </div>
+                <button type="button" class="align-self-start" @click="addField('equipment')">Add new
+                  Equipment</button><br><br>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</template>
 
 
 <style scoped>
-#flexWrapper{
-  background-color: rgb(255, 243, 224);
+#flexWrapper {
+  background: radial-gradient(rgba(242, 233, 126, 50%), rgba(255, 121, 0, 25%));
+  min-height: 99vh;
   height: 100%;
   align-items: center;
-  padding: 2vh;
-  border: 2px solid lightgrey;
-  border-radius: 20px;
-  padding-bottom: 0;
-  margin: 3vh;
-}
-#content{
-  width: 100%;
-}
-.form-control{
-  width: 20%;
+  border: 2px solid black;
+  border-top: 0;
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+  margin-left: 20px;
+  margin-right: 20px;
+  position: relative;
 }
 
-#field{
-  width:100%;
+#content {
+  width: 100%;
+  position: relative;
+  left: 5px;
+}
+
+.form-label {
+  font-family: 'Segoe UI', Tahoma, Verdana, sans-serif;
+  font-weight: bold;
+}
+
+.col-lg-2 {
+  width: 15%;
+}
+
+.col-lg-6 {
+  width: 50%;
+  position: relative;
+  left: 10px
+}
+
+.form-group {
+  border: 2px solid;
+  border-radius: 5px;
+  padding-bottom: 10px;
+  padding-left: 10px;
+  min-width: 300px;
+  min-height: 50vh;
+  Box-shadow: 3px 3px 5px black;
+  background-color: rgba(255, 183, 77, 35%);
+}
+
+.main {
+  background: radial-gradient(rgba(242, 233, 126, 75%), rgba(255, 121, 0, 50%));
+  min-height: 100vh;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  position: relative;
+}
+
+.btn {
+  color: red;
+  border: none;
+  border-radius: 0;
+}
+
+button {
+  background: rgb(240, 240, 240);
+  border: black 2px solid;
+  border-radius: 15px;
+  Box-shadow: 3px 3px 5px black;
+}
+
+img {
+  border: 2px dashed black;
+  border-radius: 20px;
+}
+
+#media {
+  background: linear-gradient(to left, rgba(255, 121, 0, 0%), rgba(255, 121, 0, 100%));
+  border-radius: 2px;
+  width: 100%;
+}
+
+
+#field {
+  width: 100%;
 }
 </style>
