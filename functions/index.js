@@ -403,13 +403,15 @@ exports.createDbUser = onCall(async (req, res) => {
 
     let madeRecipes = []
     let likedRecipes = []
+    let dislikedRecipes = []
     const complete = await db.collection('Users').add({
         name: uName,
         pfpUrl: pfpDownloadURL,
         uId: uId,
         biography: "",
         madeRecipes,
-        likedRecipes
+        likedRecipes,
+        dislikedRecipes
     })
 
     if (complete) {

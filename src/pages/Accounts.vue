@@ -1,42 +1,55 @@
 <script setup>
-    import {onMounted, ref} from 'vue'
-    import {auth,functions} from '../api/firebase'
-    import { createUserWithEmailAndPassword, deleteUser, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
-    import { httpsCallable } from 'firebase/functions';
+import { onMounted, ref } from 'vue'
+import { auth, functions } from '../api/firebase'
+import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
+import { httpsCallable } from 'firebase/functions';
+import { getStorage, ref as storageRef ,uploadBytes, getDownloadURL } from "firebase/storage";
+import placeholderImg from '@/assets/images/User icon.png'
 
-    const signUp = {
-        username: ref(""),
-        email: ref(""),
-        password: ref(""),
-        confirmPassword: ref("")
-    }
-
-    const login = {
-        email: ref(""),
-        password: ref("")
-    }
+const signUp = {
+    username: ref(""),
+    email: ref(""),
+    password: ref(""),
+    confirmPassword: ref(""),
+    downloadURL: ref(placeholderImg)
+}
 
 
-    function authCheck(){
-        if(auth.currentUser!=null){
+const login = {
+    email: ref(""),
+    password: ref("")
+}
+
+
+function authCheck() {
+    if (auth.currentUser != null) {
         const id = auth.currentUser.uid;
-        $router.push("/user/"+id);
-        }
+        $router.push("/user/" + id);
     }
+}
 
-    onMounted(()=>{
-        authCheck()
-    })
-    
-    const pfpImgSrc = ref("../assets/images/User Icon.png")
+onMounted(() => {
+    authCheck()
+})
 
-    function changeImg(event){
-        pfpImgSrc.value = URL.createObjectURL(event.target.files[0])
+
+const handleFileUpload = async (event) => {
+    try {
+        const storage = getStorage();
+        const file = event.target.files[0];
+        const storageReference = storageRef(storage, 'images/' + file.name);
+        const snapshot = await uploadBytes(storageReference, file); 
+        const url = await getDownloadURL(snapshot.ref); 
+        console.log("Image uploaded successfully. Download URL:", url);
+        signUp.downloadURL.value = url; 
+    } catch (error) {
+        console.error("Error uploading image:", error);
     }
+};
 
-    const userCreate = async()=>{
-        const regexEmail = /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
-        if (!regexEmail.test(signUp.email.value)) {
+const userCreate = async () => {
+    const regexEmail = /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
+    if (!regexEmail.test(signUp.email.value)) {
         alert("Invalid Email");
         return;
     }
@@ -67,7 +80,7 @@
         const createUser = httpsCallable(functions, "createDbUser");
         const result = await createUser({
             uName: signUp.username.value,
-            pfpFile: pfpImgSrc.value,
+            pfpFile: signUp.downloadURL.value,
             uId: signUpUser.uid
         });
 
@@ -101,30 +114,40 @@ function userLogin(event) {
         <div id="accountPageDiv" class="align-self-center">
             <ul class="nav nav-tabs">
                 <li class="nav-item">
-                    <button class="nav-link active" id="newAccountTab" data-bs-toggle="tab" data-bs-target="#newAccountDiv" type="button" role="tab" aria-controls="sign up tab" aria-selected="true">Sign Up</button>
+                    <button class="nav-link active" id="newAccountTab" data-bs-toggle="tab"
+                        data-bs-target="#newAccountDiv" type="button" role="tab" aria-controls="sign up tab"
+                        aria-selected="true">Sign Up</button>
                 </li>
                 <li class="nav-item">
-                    <button class="nav-link" id="loginTab" data-bs-toggle="tab" data-bs-target="#loginDiv" type="button" role="tab" aria-controls="log in tab" aria-selected="false">Log In</button>
+                    <button class="nav-link" id="loginTab" data-bs-toggle="tab" data-bs-target="#loginDiv" type="button"
+                        role="tab" aria-controls="log in tab" aria-selected="false">Log In</button>
                 </li>
             </ul>
             <div class="tab-content" style="width: 8cm;">
                 <div class="tab-pane show active" id="newAccountDiv">
                     <form>
                         <label for="usernameInput" class="form-label">Username:</label>
-                        <input type="text" class="form-control" id="usernameInput" placeholder="Enter your username" v-model="signUp.username.value">
+                        <input type="text" class="form-control" id="usernameInput" placeholder="Enter your username"
+                            v-model="signUp.username.value">
 
                         <label for="emailInput" class="form-label">Email:</label>
-                        <input type="email" class="form-control" id="emailInput" placeholder="Enter your email" v-model="signUp.email.value">
+                        <input type="email" class="form-control" id="emailInput" placeholder="Enter your email"
+                            v-model="signUp.email.value">
 
                         <label for="passwordInput" class="form-label">Password:</label>
-                        <input type="password" class="form-control" id="passwordInput" placeholder="Enter your password" v-model="signUp.password.value">
+                        <input type="password" class="form-control" id="passwordInput" placeholder="Enter your password"
+                            v-model="signUp.password.value">
 
                         <label for="confirmPasswordInput" class="form-label">Confirm Password:</label>
-                        <input type="password" class="form-control" id="confirmPasswordInput" placeholder="Enter the same password as above" v-model="signUp.confirmPassword.value">
+                        <input type="password" class="form-control" id="confirmPasswordInput"
+                            placeholder="Enter the same password as above" v-model="signUp.confirmPassword.value">
 
                         <label for="pfpInput" class="form-label">Upload your Profile Picture</label>
-                        <img :src="pfpImgSrc" style="width:100%;height:30vh;display:block;object-fit: cover;" id="pfpPreviewImg">
-                        <input type="file" :value="null" class="form-control" id="pfpInput" accept="image/png,image/jpeg" @change="changeImg($event)">
+                        <img :src="signUp.downloadURL" style="width:100%;height:30vh;display:block;object-fit: cover;"
+                            id="pfpPreviewImg">
+                        <input type="file" :value="null" class="form-control" id="pfpInput"
+                            accept="image/png,image/jpeg" multiple @change="(event) => handleFileUpload(event)">
+              <br>
 
                         <button class="form-control" @click="userCreate" type="button">Sign Up</button>
                     </form>
@@ -132,10 +155,12 @@ function userLogin(event) {
                 <div class="tab-pane" id="loginDiv">
                     <form>
                         <label for="emailLoginInput" class="form-label">Email:</label>
-                        <input type="email" class="form-control" id="emailLoginInput" placeholder="Enter your email" v-model="login.email.value">
+                        <input type="email" class="form-control" id="emailLoginInput" placeholder="Enter your email"
+                            v-model="login.email.value">
 
                         <label for="passwordLoginInput" class="form-label">Password:</label>
-                        <input type="password" class="form-control" id="passwordLoginInput" placeholder="Enter your password" v-model="login.password.value">
+                        <input type="password" class="form-control" id="passwordLoginInput"
+                            placeholder="Enter your password" v-model="login.password.value">
 
                         <br>
                         <button class="form-control" @click="userLogin" type="button">Log In</button>

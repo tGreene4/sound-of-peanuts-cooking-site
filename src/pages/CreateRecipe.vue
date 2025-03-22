@@ -37,7 +37,7 @@ export default {
     },
     async handleFileUpload(event) {
       try {
-        const storage = getStorage(); // Ensure storage is initialized
+        const storage = getStorage();
         const file = event.target.files[0];
         const storageRef = ref(storage, 'images/' + file.name);
         const snapshot = await uploadBytes(storageRef, file);
