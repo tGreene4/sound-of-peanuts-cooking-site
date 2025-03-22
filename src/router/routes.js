@@ -20,6 +20,6 @@ export default [
     { path: '/recipe/:id', component: loadPage('Recipe'), props: true },
     { path: '/user/:id', component: loadPage('User'),props:true},
     { path: '/account', component: loadPage('Accounts')},
-    { path: '/createRecipe', component: loadPage('CreateRecipe') },{ path: '/upload', component: loadPage('Upload'), beforeEnter: isAuth },
+    { path: '/createRecipe', component: loadPage('CreateRecipe') },
     { path: '/secure', component: loadPage('Secure'), beforeEnter: isAuth },
 ]
