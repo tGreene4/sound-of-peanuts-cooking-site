@@ -295,47 +295,75 @@ exports.postDbRecipe = onCall(async (req, res) => {
 });
 
 exports.addLikeRecipe = onCall(async (req, res) => {
-    const { id, userId } = req.data;
+    const { id, uid } = req.data;
 
-    logger.log("Attempting to like recipe with ID: " + id + " and user ID: " + userId);
-    if (!id || !userId) {
+    logger.log("Attempting to like recipe with ID: " + id + " and user ID: " + uid);
+    if (!id || !uid) {
         logger.log("Error: Recipe ID or User ID not found");
         return { success: false, message: "Recipe ID or User ID not found" };
     }
 
-    if(!req.auth){
-        return{ success:false, message: "Error: User is not authenticated"}
-    }
+    try {
+            
+        const recipeRef = db.doc("/Recipe/" + id);
+        
+        const userQuery = db.collection("Users").where('uId', '==', uid).limit(1);
+        const userSnapshot = await userQuery.get();
 
-    const ref = db.doc("/Recipe/" + id);
-    const snapshot = await ref.get();
+        logger.log("user Snapshot: ", userSnapshot)
+        if (userSnapshot.empty) {
+            logger.log("Error: User not found");
+            return { success: false, message: "Error: User not found" };
+        }
 
-    if (!snapshot.exists) {
-        return { success: false, message: "Error: recipe not found" };
-    } else {
-        const recipeData = snapshot.data();
+        const userDoc = userSnapshot.docs[0];
+        const userData = userDoc.data();
+        const likedRecipes = userData.likedRecipes || [];
+        const dislikedRecipes = userData.dislikedRecipes || [];
+
+        if (!likedRecipes.includes(id)) {
+            likedRecipes.push(id);
+        }
+        
+        if (dislikedRecipes.includes(id)) {
+            dislikedRecipes.splice(dislikedRecipes.indexOf(id), 1);
+        }
+
+        await userDoc.ref.update({
+            likedRecipes: likedRecipes,
+            dislikedRecipes: dislikedRecipes,
+        });
+        
+        const recipeSnapshot = await recipeRef.get();
+        const recipeData = recipeSnapshot.data();
         const likedBy = recipeData.likedBy || [];
         const dislikedBy = recipeData.dislikedBy || [];
 
-        if (likedBy.includes(userId)) {
+        if (likedBy.includes(uid)) {
             return { success: false, message: "You have already liked this recipe" };
         }
-        let dislikes = 0
-        if (dislikedBy.includes(userId)) {
-            dislikedBy.splice(dislikedBy.indexOf(userId), 1)
-            dislikes = -1
+
+        let dislikes = 0;
+
+        if (dislikedBy.includes(uid)) {
+            dislikedBy.splice(dislikedBy.indexOf(uid), 1);
+            dislikes = -1;
         }
 
-        likedBy.push(userId);
-        await ref.update({
-            likes: recipeData.likes + 1,
+        likedBy.push(uid);
+
+        await recipeRef.update({
             dislikes: recipeData.dislikes + dislikes,
+            likes: recipeData.likes + 1,
+            likedBy: likedBy,
             dislikedBy: dislikedBy,
-            likedBy: likedBy
         });
 
-
+        logger.log("Recipe liked successfully and updated in user document");
         return { success: true, message: "Recipe liked" };
+    } catch (error) {
+        logger.error("Error liking recipe:", error);
+        return { success: false, message: "Error liking recipe" };
     }
 });
 
@@ -364,13 +392,19 @@ exports.addDislikeRecipe = onCall(async (req, res) => {
         const userDoc = userSnapshot.docs[0];
         const userData = userDoc.data();
         const dislikedRecipes = userData.dislikedRecipes || [];
+        const likedRecipes = userData.likedRecipes || [];
 
         if (!dislikedRecipes.includes(id)) {
             dislikedRecipes.push(id);
         }
+        
+        if (likedRecipes.includes(id)) {
+            likedRecipes.splice(likedRecipes.indexOf(id), 1);
+        }
 
         await userDoc.ref.update({
             dislikedRecipes: dislikedRecipes,
+            likedRecipes: likedRecipes,
         });
         
         const recipeSnapshot = await recipeRef.get();
