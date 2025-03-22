@@ -2,6 +2,7 @@
 import { functions } from '../api/firebase';
 import { httpsCallable } from 'firebase/functions';
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import placeholderImg from '@/assets/images/coconut.png';
 
 export default {
   data() {
@@ -12,6 +13,7 @@ export default {
       steps: [],
       time: '',
       downloadURL: '',
+      placeholderImg,
     };
   },
   mounted() {
@@ -110,7 +112,7 @@ export default {
               <br><br>
             </div>
             <div class="col-lg-3">
-              <img class="card-img-top img-thumbnail img-fluid align-self-center" src="..\assets\images\coconut.png"
+              <img class="card-img-top img-thumbnail img-fluid align-self-center" :src="downloadURL || placeholderImg"
                 alt="Card image cap" style="max-height:90%;max-width:90%;position: relative; top:10px">
               <br>
             </div>

@@ -75,13 +75,9 @@
             console.log("Added User to database");
         } else if (result.data.success === false) {
             console.log("Could not add user to database");
-            await deleteUser(signUpUser);
         }
     } catch (error) {
         console.error("Error during user creation:", error.message);
-        if (auth.currentUser) {
-            await deleteUser(auth.currentUser); 
-        }
         alert("An error occurred while creating the account. Please try again.");
     }
 };
