@@ -194,6 +194,8 @@ exports.getDbRecipeSingle = onCall(async (req, res) => {
     else {
 
         let author = null;
+        const recipeData = snapshot.data();
+        
         if (recipeData.authorRef) {
             logger.log("Author ref found");
             const aSnapshot = await recipeData.authorRef.get();
@@ -213,14 +215,13 @@ exports.getDbRecipeSingle = onCall(async (req, res) => {
                 }
             }
         }
-        const recipeData = snapshot.data();
         const recipe = {
             name: recipeData.name || "",
             ingredients: recipeData.ingredients || [],
             instructions: recipeData.instructions || "",
             likes: recipeData.likes || 0,
             dislikes: recipeData.dislikes || 0,
-            author: recipeData.author || "",
+            author: author,
             preparationTime: recipeData.preparationTime || 0,
             equipment: recipeData.equipment || [],
             cardImgReg: recipeData.cardImgReg || "",

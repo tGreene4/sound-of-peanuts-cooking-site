@@ -4,8 +4,12 @@ import { httpsCallable } from 'firebase/functions';
 import { ref, onMounted } from 'vue';
 
 import IngredientList from '@/components/IngredientList.vue';
+import NotFound from '@/components/NotFound.vue';
 
-const getHelloWorld = async () => {
+const recipeNotFound = ref(false);
+const loading = ref(true);
+
+const getHelloWorld = async () => { //remove before final deployment
   console.log("Calling helloWorld");
   const helloWorld = httpsCallable(functions, 'helloWorld');
   try {
@@ -25,7 +29,7 @@ const recipe = ref({
   likes: 0,
   dislikes: 0,
   image: '',
-  author: '',
+  author: [],
   preparationTime: 0,
   equipment: '',
   publishDate: ''
@@ -56,33 +60,13 @@ const getDbRecipeSingle = async () => {
       };
     } else {
       console.log("Recipe not found: ", result.data.message);
-      //set up a 404 page when this works consistently
-      recipe.value = {
-        name: "Recipe not found",
-        ingredients: "",
-        instructions: "",
-        likes: 0,
-        dislikes: 0,
-        image: '',
-        author: '',
-        preparationTime: 0,
-        equipment: ''
-      };
+      recipeNotFound.value = true;
     }
   } catch (error) {
     console.error("Error calling getDbRecipeSingle:", error);
-         //set up a 404 page when this works consistently
-    recipe.value = {
-      name: "Error fetching recipe",
-      ingredients: "",
-      instructions: "",
-      likes: 0,
-      dislikes: 0,
-      image: '',
-      author: '',
-      preparationTime: 0,
-      equipment: ''
-    };
+    recipeNotFound.value = true;
+  } finally {
+    loading.value = false;
   }
 };
 
@@ -99,7 +83,7 @@ const likeRecipe = async () => {
   console.log("Calling addLikeRecipe with ID:", routeProp.id, "and user ID: ", uid);
   const likeRecipeFunction = httpsCallable(functions, 'addLikeRecipe');
   try {
-    const result = await likeRecipeFunction({ id: routeProp.id , uid});
+    const result = await likeRecipeFunction({ id: routeProp.id, uid });
     console.log(result.data);
   } catch (error) {
     console.error("Error calling addLikeRecipe:", error);
@@ -119,7 +103,7 @@ const dislikeRecipe = async () => {
   console.log("Calling addDislikeRecipe with ID:", routeProp.id, "and user ID: ", uid);
   const dislikeRecipeFunction = httpsCallable(functions, 'addDislikeRecipe');
   try {
-    const result = await dislikeRecipeFunction({ id: routeProp.id , uid});
+    const result = await dislikeRecipeFunction({ id: routeProp.id, uid });
     console.log(result.data);
   } catch (error) {
     console.error("Error calling addDislikeRecipe:", error);
@@ -127,19 +111,26 @@ const dislikeRecipe = async () => {
 };
 
 onMounted(() => {
-    getDbRecipeSingle();
-  });
+  getDbRecipeSingle();
+});
 </script>
 
 <template>
   <div class="container-fluid bg-secondary min-vh-100" style="padding-top: 20px;">
-    <div class="row d-flex justify-content-center">
+    <div v-if="loading" class="spinner-border" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <div v-else-if="recipeNotFound">
+      <NotFound />
+    </div>
+    <div v-else class="row d-flex justify-content-center">
       <div class="col-md-8">
         <div class="card shadow-sm">
           <div class="card-body">
             <div class="row">
               <div class="col-md-6 d-flex justify-content-center align-items-center">
-                <img class="img-fluid rounded" src="../assets/images/coconut.png" alt="Recipe default" style="max-width: 100%; height: auto;">
+                <img class="img-fluid rounded" src="../assets/images/coconut.png" alt="Recipe default"
+                  style="max-width: 100%; height: auto;">
               </div>
               <div class="col-md-6">
                 <h2 class="card-title mb-4">{{ recipe.name }}</h2>
