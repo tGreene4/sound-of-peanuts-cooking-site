@@ -1,7 +1,8 @@
 <script>
-import { functions } from '../api/firebase';
+import { functions, auth } from '../api/firebase';
 import { httpsCallable } from 'firebase/functions';
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import placeholderImg from '@/assets/images/coconut.png';
 
 export default {
   data() {
@@ -12,6 +13,7 @@ export default {
       steps: [],
       time: '',
       downloadURL: '',
+      placeholderImg,
     };
   },
   mounted() {
@@ -35,7 +37,7 @@ export default {
     },
     async handleFileUpload(event) {
       try {
-        const storage = getStorage(); // Ensure storage is initialized
+        const storage = getStorage();
         const file = event.target.files[0];
         const storageRef = ref(storage, 'images/' + file.name);
         const snapshot = await uploadBytes(storageRef, file);
@@ -52,9 +54,15 @@ export default {
     },
     async postRecipe() {
       if (!this.name || !this.time || !this.steps.length || !this.ingredients.length || !this.equipment.length || !this.downloadURL) {
-            console.error("Error: Missing required fields");
-            alert("Please fill in all fields before publishing the recipe.");
-            return;
+        console.error("Error: Missing required fields");
+        alert("Please fill in all fields before publishing the recipe.");
+        return;
+      }
+      const user = auth.currentUser;
+      if (!user) {
+        console.error("Error: User is not authenticated");
+        alert("You must be logged in to post a recipe.");
+        return;
       }
 
       const postDbRecipe = httpsCallable(functions, 'postDbRecipe');
@@ -67,6 +75,7 @@ export default {
           ingredients: this.ingredients.map(ingredient => ingredient.value),
           equipment: this.equipment.map(equipment => equipment.value),
           cardImgReg: this.downloadURL,
+          uid: user.uid,
         });
 
         console.log("Response from postDbRecipe:", result.data);
@@ -110,7 +119,7 @@ export default {
               <br><br>
             </div>
             <div class="col-lg-3">
-              <img class="card-img-top img-thumbnail img-fluid align-self-center" src="..\assets\images\coconut.png"
+              <img class="card-img-top img-thumbnail img-fluid align-self-center" :src="downloadURL || placeholderImg"
                 alt="Card image cap" style="max-height:90%;max-width:90%;position: relative; top:10px">
               <br>
             </div>
