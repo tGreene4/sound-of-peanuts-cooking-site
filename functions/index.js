@@ -78,7 +78,7 @@ exports.getDbRecipesByField = onCall(async (req, res) => {
                         }
                     }
                 }
-                
+
                 recipes.push({
                     id: doc.id,
                     name: recipeData.name || "",
@@ -110,7 +110,7 @@ exports.getDbMoreRecipes = onCall(async (req, res) => {
     logger.info("Requesting " + docLimit + " recipes after " + lastDocId);
 
     try {
-        const q = db.collection('Recipe').orderBy('name').limit(docLimit);
+        let q = db.collection('Recipe').orderBy('name').limit(docLimit);
 
         if (lastDocId) {
             logger.log("Starting from: ", lastDocId);
@@ -129,24 +129,48 @@ exports.getDbMoreRecipes = onCall(async (req, res) => {
             logger.log("Error: no recipes found");
             return { success: false, message: "No recipes found" };
         } else {
+
             const recipes = [];
-            snapshot.docs.forEach(doc => {
+            for (const doc of snapshot.docs) {
                 const recipeData = doc.data();
+
+                let author = null;
+
+                if (recipeData.authorRef) {
+                    logger.log("Author ref found");
+                    const aSnapshot = await recipeData.authorRef.get();
+                    if (aSnapshot.exists) {
+                        logger.log("Author found: ", aSnapshot.data());
+                        author = {
+                            id: aSnapshot.id,
+                            name: aSnapshot.data().name,
+                            pfpUrl: aSnapshot.data().pfpUrl
+                        };
+                    } else {
+                        logger.log("Author not found: ", recipeData.authorRef);
+                        author = {
+                            id: null,
+                            name: "Deleted User"
+                        };
+                    }
+                }
+
                 recipes.push({
                     id: doc.id,
                     name: recipeData.name || "",
                     likes: recipeData.likes || 0,
                     preparationTime: recipeData.preparationTime || 0,
                     cardImgReg: recipeData.cardImgReg || "",
-                    // authorName: recipeData.authorRef || ""
+                    author: author
                 });
-            });
+            }
+
             const lastDoc = snapshot.docs[snapshot.docs.length - 1];
             logger.log("Recipes found: ", recipes);
             return { success: true, recipeList: recipes, lastDocId: lastDoc.id };
         }
     } catch (error) {
-        logger.error("Error fetching recipes by most likes:", error);
+        logger.error("Error fetching recipes:", error);
         return { success: false, message: "Error fetching recipes" };
     }
 });
@@ -168,14 +192,36 @@ exports.getDbRecipeSingle = onCall(async (req, res) => {
         return { success: false, message: "Error: recipe not found" }
     }
     else {
+
+        let author = null;
         const recipeData = snapshot.data();
+        
+        if (recipeData.authorRef) {
+            logger.log("Author ref found");
+            const aSnapshot = await recipeData.authorRef.get();
+            if (aSnapshot.exists) {
+                logger.log("Author found: ", aSnapshot.data());
+                author = {
+                    id: aSnapshot.id,
+                    name: aSnapshot.data().name,
+                    pfpUrl: aSnapshot.data().pfpUrl
+                };
+            }
+            else {
+                logger.log("Author not found: ", recipeData.authorRef);
+                author = {
+                    id: null,
+                    name: "Deleted User"
+                }
+            }
+        }
         const recipe = {
             name: recipeData.name || "",
             ingredients: recipeData.ingredients || [],
             instructions: recipeData.instructions || "",
             likes: recipeData.likes || 0,
             dislikes: recipeData.dislikes || 0,
-            author: recipeData.author || "",
+            author: author,
             preparationTime: recipeData.preparationTime || 0,
             equipment: recipeData.equipment || [],
             cardImgReg: recipeData.cardImgReg || "",
@@ -187,7 +233,7 @@ exports.getDbRecipeSingle = onCall(async (req, res) => {
 
 exports.postDbRecipe = onCall(async (req, res) => {
     const { name, preparationTime, instructions, ingredients, equipment, cardImgReg, uId } = req.data
-    if(!name || !preparationTime || !instructions || !ingredients || !equipment || !cardImgReg || !uId) {
+    if (!name || !preparationTime || !instructions || !ingredients || !equipment || !cardImgReg || !uId) {
         logger.log("Error: Recipe data not found or invalid: ", req.data);
         return { success: false, message: "Recipe data not found or invalid" }
     }
