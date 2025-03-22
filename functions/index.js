@@ -260,9 +260,6 @@ exports.postDbRecipe = onCall(async (req, res) => {
         const userData = userDoc.data();
         const madeRecipes = userData.madeRecipes || [];
 
-        await userRef.update({
-            madeRecipes: madeRecipes,
-        });
         logger.log("Attempting to add recipe with: ", req.data);
         const recipeRef = await db.collection('Recipe').add({
             name: name,
@@ -281,6 +278,10 @@ exports.postDbRecipe = onCall(async (req, res) => {
         });
 
         madeRecipes.push(recipeRef.id);
+        
+        await userRef.update({
+            madeRecipes: madeRecipes,
+        });
         logger.log("Recipe added with ID: ", recipeRef.id);
 
 
@@ -300,6 +301,10 @@ exports.addLikeRecipe = onCall(async (req, res) => {
     if (!id || !userId) {
         logger.log("Error: Recipe ID or User ID not found");
         return { success: false, message: "Recipe ID or User ID not found" };
+    }
+
+    if(!req.auth){
+        return{ success:false, message: "Error: User is not authenticated"}
     }
 
     const ref = db.doc("/Recipe/" + id);
@@ -343,31 +348,32 @@ exports.addDislikeRecipe = onCall(async (req, res) => {
         return { success: false, message: "Recipe ID or User ID not found" };
     }
 
-    const recipeRef = db.doc("/Recipe/" + id);
-    const userQuery = db.collection("User").where('uId', '==', uid).limit(1); 
-
-    logger.log('userReference: ', userQuery)
     try {
+            
+        const recipeRef = db.doc("/Recipe/" + id);
+        
+        const userQuery = db.collection("Users").where('uId', '==', uid).limit(1);
         const userSnapshot = await userQuery.get();
-        if (!userSnapshot.exists) {
-            logger.log("User not found");
-            return { success: false, message: "Error: user not found" };
+
+        logger.log("user Snapshot: ", userSnapshot)
+        if (userSnapshot.empty) {
+            logger.log("Error: User not found");
+            return { success: false, message: "Error: User not found" };
         }
 
-        const userData = userSnapshot.data();
+        const userDoc = userSnapshot.docs[0];
+        const userData = userDoc.data();
         const dislikedRecipes = userData.dislikedRecipes || [];
 
-        dislikedRecipes.push(id);
-
-        await userQuery.update({
-            dislikedRecipes: dislikedRecipes,
-        });
-
-        const recipeSnapshot = await recipeRef.get();
-        if (!recipeSnapshot.exists) {
-            return { success: false, message: "Error: recipe not found" };
+        if (!dislikedRecipes.includes(id)) {
+            dislikedRecipes.push(id);
         }
 
+        await userDoc.ref.update({
+            dislikedRecipes: dislikedRecipes,
+        });
+        
+        const recipeSnapshot = await recipeRef.get();
         const recipeData = recipeSnapshot.data();
         const likedBy = recipeData.likedBy || [];
         const dislikedBy = recipeData.dislikedBy || [];
@@ -391,7 +397,6 @@ exports.addDislikeRecipe = onCall(async (req, res) => {
             likedBy: likedBy,
             dislikedBy: dislikedBy,
         });
-
 
         logger.log("Recipe disliked successfully and updated in user document");
         return { success: true, message: "Recipe disliked" };
