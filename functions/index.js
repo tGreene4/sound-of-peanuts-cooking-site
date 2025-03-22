@@ -7,7 +7,7 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 const { getFirestore } = require('firebase-admin/firestore');
-const { getStorage, getDownloadURL, uploadBytes, ref } = require('firebase-admin/storage');
+const { getStorage, getDownloadURL, uploadBytes } = require('firebase-admin/storage');
 const { onCall } = require("firebase-functions/v2/https");
 
 const logger = require("firebase-functions/logger");
@@ -58,7 +58,7 @@ exports.getDbRecipeSingle = onCall(async(req,res)=>{
         throw new Error("id not found")
     }
 
-    const snapshot = await (db.doc("/Recipe/" + id)).select('name', 'ingredients', 'instructions', 'authorId', 
+    const snapshot = await db.doc("/Recipe/" + id).select('name', 'ingredients', 'instructions', 'authorId', 
         'cookTimeMins', 'likes', 'dislikes', 'equipment').get();
 
     if(snapshot.empty){
@@ -177,7 +177,7 @@ exports.getDbUser = onCall(async(req,res)=>{
     }
 });
 
-exports.verifyUser = onCall(async (req, res) => {
+exports.verifyUser = onCall(async (req) => {
     const { token } = req.data;
 
     if (!token) {
@@ -192,29 +192,17 @@ exports.verifyUser = onCall(async (req, res) => {
     }
 });
 
-exports.createDbUser = onCall(async(req,res)=>{
-    const{uName,pfpFile,uId} = req.data
+exports.createDbUser = onCall(async(req)=>{
+    const{uName,pfpDownloadURL,uId} = req.data
     if(!uName || !pfpFile || !uId){
-        throw new Error("Name, pfp, or UID not found");
+        throw new Error("Name, pfp, or UID not found")
     }
 
-    let pfpDownloadURL = "";
-
-    try{
-        const pfpRef = store.bucket().file(uId+"/pfp.png");
-        await pfpRef.save(pfpFile,{public:true},function(){pfpDownloadURL = pfpRef.publicUrl();});
-    }
-    catch(error){
-        logger.log("Failed to upload profile picture:"+error);
-        return{success:false,message:"Failed to upload profile picture"}
-
-    }
-    
     const complete = await db.collection('Users').add({
+        biography:"",
         name: uName,
         pfpUrl: pfpDownloadURL,
-        uId: uId,
-        biography:""
+        uId: uId
     })
 
     if(complete){

@@ -1,11 +1,14 @@
 <script setup>
     import {onMounted, ref} from 'vue'
-    import {auth,functions} from '../api/firebase'
+    import {auth,functions,storage} from '../api/firebase'
     import { createUserWithEmailAndPassword, deleteUser, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
-    import { httpsCallable } from 'firebase/functions';
+    import { httpsCallable} from 'firebase/functions';
+    import { uploadBytes,getDownloadURL, deleteObject } from 'firebase/storage';
 
     var signUpUsername,signUpEmail,signUpPassword,signUpConfirmPassword;
     var loginEmail,loginPassword;
+    var pfpFile;
+    var pfpRef;
 
     function authCheck(){
         if(auth.currentUser!=null){
@@ -15,18 +18,19 @@
     }
 
     onMounted(()=>{
-        authCheck()
+        authCheck();
     })
     
-    const pfpImgSrc = ref("../assets/images/User Icon.png")
-
+    const pfpImgSrc = ref("../assets/images/User icon.png");
+    
     function changeImg(event){
-        pfpImgSrc.value = URL.createObjectURL(event.target.files[0])
+        pfpFile = event.target.files[0];
+        pfpImgSrc.value = URL.createObjectURL(event.target.files[0]);
     }
 
     const userCreate = async()=>{
         if(!(signUpEmail.search("/@/") && signUpEmail.length > 3)){
-            alert("Invalid Email")
+            alert("Invalid Email");
             return;
         }
         if(!(signUpPassword.length>5 && /\d/.test(signUpPassword))){
@@ -39,16 +43,27 @@
         }
         let createSuccess = await createUserWithEmailAndPassword(auth,signUpEmail,signUpPassword)
         if(!createSuccess){
-            alert("Failed to create account")
+            alert("Failed to create account");
             return;
         }
         console.log("Account created");
-        console.log(createSuccess)
-        let signUpUser = auth.currentUser
-        console.log(signUpUser)
+        console.log(createSuccess);
+        let signUpUser = auth.currentUser;
+        console.log(signUpUser);
+        try{
+            pfpRef = ref(storage,uId+"/pfp.png");
+            uploadBytes(pfpRef,pfpFile).then((snapshot)=>{
+                pfpDownloadURL = getDownloadURL(snapshot.ref);
+            })
+        }
+        catch(error){
+            console.log("Failed to upload profile picture image")
+            console.log(error.message);
+            deleteUser(signUpUser);
+        }
         const createFun = httpsCallable(functions,"createDbUser")
         try{
-            const result = await createFun({uName:signUpUsername,pfpFile:pfpImgSrc.value,uId:signUpUser.uid})
+            const result = await createFun({uName:signUpUsername,pfpFile:pfpDownloadURL,uId:signUpUser.uid})
             if(result.data.success==true){
                 console.log("Added User to database")
             }
@@ -61,6 +76,7 @@
         catch(error){
             console.error(error.message)
             deleteUser(signUpUser)
+            deleteObject(pfpRef)
         }
             
     }
