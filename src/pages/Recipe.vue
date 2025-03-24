@@ -116,7 +116,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="container-fluid bg-secondary min-vh-100" style="padding-top: 20px;">
+  <div class="container-fluid bg-secondary gradient-custom min-vh-100" style="padding-top: 20px;">
     <div v-if="loading" class="spinner-border" role="status">
       <span class="visually-hidden">Loading...</span>
     </div>
@@ -124,31 +124,46 @@ onMounted(() => {
       <NotFound />
     </div>
     <div v-else class="row d-flex justify-content-center">
-      <div class="col-md-8">
-        <div class="card shadow-sm">
-          <div class="card-body">
+      <div class="col-md-8 ">
+        <div class="card vh-80 shadow-sm">
+          <div class="card-body d-flex flex-column h-100">
             <div class="row">
-              <div class="col-md-6 d-flex justify-content-center align-items-center">
+              <div class="col-md-6 d-flex justify-content-center align-items-center border">
                 <img class="img-fluid rounded" src="../assets/images/coconut.png" alt="Recipe default"
                   style="max-width: 100%; height: auto;">
               </div>
               <div class="col-md-6">
-                <h2 class="card-title mb-4">{{ recipe.name }}</h2>
-                <div class="mb-4">
+                <h2 class="card-title mb-1">{{ recipe.name }}</h2>
+                <p>Preparation Time: <b>{{ recipe.preparationTime }} mins</b> &emsp; {{ recipe.authorRef }} &emsp; {{ recipe.publishDate }}</p>
+                <hr class="my-1"/>
+                <div class="m-4">
                   <h5>Ingredients:</h5>
-                  <p class="card-text">{{ recipe.ingredients }}</p>
+                  <p class="card-text">
+                    <li v-for="item in recipe.ingredients">
+                    {{ item }}
+                    </li>
+                  </p>
                 </div>
-                <div class="mb-4">
+                <hr class="my-1"/>
+                <div class="m-2">
                   <h5>Instructions:</h5>
-                  <p class="card-text">{{ recipe.instructions }}</p>
+                  <p class="card-text">
+                    <ol>
+                    <li v-for="item in recipe.instructions">
+                    {{ item }}
+                    </li>
+                    </ol>
+                  </p>
                 </div>
-                <div class="d-flex gap-2">
-                  <button class="btn btn-primary" @click="likeRecipe">Like</button>
-                  <button class="btn btn-primary" @click="dislikeRecipe">Dislike</button>
-                  <button class="btn btn-secondary" @click="getHelloWorld">Hello World</button>
-                </div>
+                
               </div>
             </div>
+              <div class="d-flex gap-2 mt-auto justify-content-end border-top py-3">
+                
+                <button class="btn btn-outline-success" @click="likeRecipe">Like {{ recipe.likes }}</button>
+                <button class="btn btn-outline-danger" @click="dislikeRecipe">Dislike {{ recipe.dislikes }}</button>
+                <button class="btn btn-secondary" @click="getHelloWorld">Hello World</button>
+              </div>
           </div>
         </div>
       </div>
@@ -159,7 +174,8 @@ onMounted(() => {
 <style scoped>
 .card {
   border-radius: 15px;
-  background-color: lightblue;
+  background-color: rgb(245, 247, 248);
+  min-height: 750px;
 }
 
 .card-title {
@@ -175,5 +191,8 @@ onMounted(() => {
 .btn {
   font-size: 1rem;
   padding: 0.5rem 1rem;
+}
+.gradient-custom {
+  background: linear-gradient(to right, rgba(242, 233, 126, 75%), rgba(255, 121, 0, 50%));
 }
 </style>
