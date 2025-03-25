@@ -1,12 +1,9 @@
-<script>
-import Card from "@/components/Card.vue";
-</script>
 
 <script setup>
+import Card from "@/components/Card.vue";
 import { functions } from '../api/firebase';
 import { httpsCallable } from 'firebase/functions';
 import { ref, onMounted } from 'vue';
-
 
 const mostRecent = ref([]);
 const mostLiked = ref([]);
@@ -79,21 +76,21 @@ onMounted(async () => {
       mostRecent.value = mostRecentRecipes;
     }
     else {
-      mostRecent = [];
+      mostRecent.value = [];
     }
     const mostLikedRecipes = await getRecipeByField('likes', 'desc');
     if (mostLikedRecipes.length > 0) {
       mostLiked.value = mostLikedRecipes;
     }
     else {
-      mostLiked = [];
+      mostLiked.value = [];
     }
     const moreRecipes = await getMoreRecipe();
     if (mostLikedRecipes.length > 0) {
       more.value = moreRecipes;
     }
     else {
-      more = [];
+      more.value = [];
     }
 
   } catch (error) {
@@ -106,8 +103,8 @@ onMounted(async () => {
   <div class="container-fluid align-self-center gradient-custom w-100 min-vh-100">
 
     <h1 class="sectionHeader">Most Recent</h1>
-    <div class="row" id="mostRecentField">
-      <div class="col-sm-auto" id="MostRecent" v-for="item in mostRecent">
+    <div class="row justify-content-center" id="mostRecentField">
+      <div class="col-auto" id="MostRecent" v-for="item in mostRecent">
         <div class="cardContainer">
           <Card :thisRecipeId="item.id" :thisRecipeName="item.name" :thisAuthor="item.author"
             :thisCookTime="item.preparationTime" :thisLikes="item.likes" :thisImgStorageSrc="item.cardImgReg" />
@@ -116,8 +113,8 @@ onMounted(async () => {
     </div>
 
     <h1 class="sectionHeader">Most Liked</h1>
-    <div class="row" id="mostLikedField">
-      <div class="col-sm-auto" id="MostLiked" v-for="item in mostLiked">
+    <div class="row justify-content-center" id="mostLikedField">
+      <div class="col-auto" id="MostLiked" v-for="item in mostLiked">
         <div class="cardContainer">
           <Card :thisRecipeId="item.id" :thisRecipeName="item.name" :thisAuthor="item.author"
             :thisCookTime="item.preparationTime" :thisLikes="item.likes" :thisImgStorageSrc="item.cardImgReg" />
@@ -126,16 +123,18 @@ onMounted(async () => {
     </div>
 
     <h1 class="sectionHeader">More</h1>
-    <div class="row" id="moreField">
-      <div class="col-sm-auto" id="More" v-for="item in more">
+    <div class="row justify-content-center" id="moreField">
+      <div class="col-auto" id="More" v-for="item in more">
         <div class="cardContainer">
           <Card :thisRecipeId="item.id" :thisRecipeName="item.name" :thisAuthor="item.author"
             :thisCookTime="item.preparationTime" :thisLikes="item.likes" :thisImgStorageSrc="item.cardImgReg" />
         </div>
       </div>
-      <button @click="tryGetMoreRecipes">Load More</button>  <!--If more fails to return more recipes, remove this button and functionality(script bool)-->
-      <button @click="$router.push('/createRecipe')"></button>
     </div>
+    <div class="row justify-content-center">
+    <button @click="tryGetMoreRecipes">Load More</button><!--If more fails to return more recipes, remove this button and functionality(script bool)-->
+      </div>
+    <br>
   </div>
 </template>
 
@@ -153,17 +152,27 @@ onMounted(async () => {
   box-shadow: 5px 5px 5px black;
   position: relative;
   top: 5px;
-  left: -15px;
+  left: -20px;
   width: 15%;
   min-width: 250px;
   text-align: center;
   background: rgba(255, 183, 77, 50%);
 }
 
-.row {
-  position: relative;
-  align-self: center;
+button {
+  height: 50px;
+  width: 250px;
+  position: sticky;
+  background: rgb(240, 240, 240);
+  border: black 2px solid;
+  border-radius: 15px;
+  Box-shadow: 3px 3px 5px black;
+  text-align: center;
+  font-size: 30px;
+  font-weight: bold;
 }
+
+
 
 .cardContainer {
   padding-top: 5px;
