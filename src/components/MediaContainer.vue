@@ -17,7 +17,6 @@ const getRecipeByField = async (queryType = 'likes', order = 'desc') => {
     console.log(`Calling getDbRecipesByField with queryType: ${queryType}, order: ${order}, docLimit: ${docLimit}`);
     const result = await getDbRecipesByField({ queryType, order, docLimit });
     console.log("Response from getDbRecipesByField:", result.data);
-
     if (result.data.success) {
       console.log("Recipes found:", result.data.recipeList);
       return result.data.recipeList;
@@ -57,6 +56,7 @@ const getMoreRecipe = async () => {
 };
 
 const tryGetMoreRecipes = async () => {
+  moreloading.value = true;
   try {
     const moreRecipes = await getMoreRecipe();
     if (moreRecipes.length > 0) {
@@ -66,6 +66,8 @@ const tryGetMoreRecipes = async () => {
     }
   } catch (error) {
     console.error("Error in tryGetMoreRecipes: ", error);
+  } finally {
+    moreloading.value = false;
   }
 };
 
@@ -78,6 +80,7 @@ onMounted(async () => {
     else {
       mostRecent.value = [];
     }
+    newloading.value = false;
     const mostLikedRecipes = await getRecipeByField('likes', 'desc');
     if (mostLikedRecipes.length > 0) {
       mostLiked.value = mostLikedRecipes;
@@ -85,6 +88,7 @@ onMounted(async () => {
     else {
       mostLiked.value = [];
     }
+    likeloading.value = false;
     const moreRecipes = await getMoreRecipe();
     if (mostLikedRecipes.length > 0) {
       more.value = moreRecipes;
@@ -92,43 +96,56 @@ onMounted(async () => {
     else {
       more.value = [];
     }
-
+    moreloading.value = false;
   } catch (error) {
     console.error("Critical error onMounted: ", error);
   }
 });
 
+const newloading = ref(true);
+const likeloading = ref(true);
+const moreloading = ref(true);
+const extraloading = ref(true);
+
 </script>
 <template>
   <div class="container-fluid align-self-center gradient-custom w-100 min-vh-100">
-
     <h1 class="sectionHeader">Most Recent</h1>
     <div class="row justify-content-center" id="mostRecentField">
-      <div class="col-auto" id="MostRecent" v-for="item in mostRecent">
+      <div v-if="!newloading" class="col-auto" id="MostRecent" v-for="item in mostRecent">
         <div class="cardContainer">
           <Card :thisRecipeId="item.id" :thisRecipeName="item.name" :thisAuthor="item.author"
             :thisCookTime="item.preparationTime" :thisLikes="item.likes" :thisImgStorageSrc="item.cardImgReg" />
         </div>
+      </div>
+      <div v-if="newloading" class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
       </div>
     </div>
 
     <h1 class="sectionHeader">Most Liked</h1>
     <div class="row justify-content-center" id="mostLikedField">
-      <div class="col-auto" id="MostLiked" v-for="item in mostLiked">
+      <div v-if="!likeloading" class="col-auto" id="MostLiked" v-for="item in mostLiked">
         <div class="cardContainer">
           <Card :thisRecipeId="item.id" :thisRecipeName="item.name" :thisAuthor="item.author"
             :thisCookTime="item.preparationTime" :thisLikes="item.likes" :thisImgStorageSrc="item.cardImgReg" />
         </div>
       </div>
+      <div v-if="likeloading" class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
     </div>
 
     <h1 class="sectionHeader">More</h1>
     <div class="row justify-content-center" id="moreField">
-      <div class="col-auto" id="More" v-for="item in more">
+      <div v-if="!moreloading" class="col-auto" id="More" v-for="item in more">
         <div class="cardContainer">
           <Card :thisRecipeId="item.id" :thisRecipeName="item.name" :thisAuthor="item.author"
             :thisCookTime="item.preparationTime" :thisLikes="item.likes" :thisImgStorageSrc="item.cardImgReg" />
         </div>
+      </div>
+      <div v-if="moreloading" class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
       </div>
     </div>
     <div class="row justify-content-center">
@@ -171,8 +188,6 @@ button {
   font-size: 30px;
   font-weight: bold;
 }
-
-
 
 .cardContainer {
   padding-top: 5px;

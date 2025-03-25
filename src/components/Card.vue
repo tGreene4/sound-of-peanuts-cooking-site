@@ -8,7 +8,8 @@
             type: Object,
             default: () => ({ 
                 name: "Unknown", //add default pfp and no link, like a deleted reddit profile
-                pfpUrl: "@/assets/images/coconut.png",
+                pfpUrl: "",
+                uId: 0
             })
         },
         thisCookTime: Number,
@@ -16,7 +17,7 @@
         thisImgStorageSrc: String
     });
     const recipeLink = ref("/recipe/"+props.thisRecipeId)
-    const authorLink = ref("/user/")
+    const authorLink = ref("/user/"+props.thisAuthor.uId)
 </script>
 
 <template>
@@ -33,7 +34,7 @@
             <div class="col-6" style="padding-bottom: 10px">
               <!--TO DO: Make the author Link actually link to the author, get the author's pfp and set it as the image here-->
               <a :href="authorLink" style="float: right">
-                <img id="Avatar" class="card-img-top img-thumbnail" :src="placeholderImg" alt="Avatar">
+                <img id="Avatar" class="card-img-top img-thumbnail" :src="thisAuthor.pfpUrl || placeholderImg" alt="Avatar">
                 <h6 class = "card-text">by {{thisAuthor.name}}</h6>
               </a>
             </div>
