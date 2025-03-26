@@ -3,13 +3,13 @@
 
 <template>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=ComicNeue">
-    <div class="container-fluid justify-content-center"  id="headerContainer">
+    <div class="container-fluid justify-content-around"  id="headerContainer">
             <a class = "navbar-brand col-xs-10" href="/">
                 <img src = "../assets/images/Potluck Logo.png" height="50vh" class="d-inline-block align-text-bottom">
                 <h1 class="">Potluck</h1>
             </a>
             <a href="/account"><img src="../assets/images/User icon.png" height="50vh" style="float: right;"></a>
-            <button @click="$router.push('/CreateRecipe')" class="btn btn-primary" type="button">Create Recipe</button>
+            <a href="/CreateRecipe"><img src="../assets/images/Create icon.png" height="50vh" style="float: right;margin-right: 1vw;"></a>
     </div>
 </template>
 
