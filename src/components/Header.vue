@@ -2,7 +2,7 @@
 </script>
 
 <template>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=ComicNeue"></link>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=ComicNeue">
     <div class="container-fluid justify-content-center"  id="headerContainer">
             <a class = "navbar-brand col-xs-10" href="/">
                 <img src = "../assets/images/Potluck Logo.png" height="50vh" class="d-inline-block align-text-bottom">

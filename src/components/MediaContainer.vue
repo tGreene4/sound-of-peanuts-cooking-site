@@ -105,7 +105,6 @@ onMounted(async () => {
 const newloading = ref(true);
 const likeloading = ref(true);
 const moreloading = ref(true);
-const extraloading = ref(true);
 
 </script>
 <template>

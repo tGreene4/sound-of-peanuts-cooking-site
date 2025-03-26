@@ -1,5 +1,6 @@
 <script setup>
     import { ref } from 'vue'
+    import placeholderPfp from '@/assets/images/User icon.png';
     import placeholderImg from '@/assets/images/coconut.png';
     const props = defineProps({
         thisRecipeId: String,
@@ -31,10 +32,11 @@
               <p class="card-text" style="display: inline;float: left;">{{thisCookTime}} Minutes</p>
               <p class="card-text" style="display: inline;float: left;">{{thisLikes}} Likes</p>
             </div>
-            <div class="col-6" style="padding-bottom: 10px">
-              <!--TO DO: Pfps still broken -->
+            <div class="col-2 "></div>
+            <div class="col-4" style="padding-bottom: 1px">
+              <!--TO DO: Pfps still broken? -->
               <a :href="authorLink" style="float: right">
-                <img id="Avatar" class="card-img-top img-thumbnail" :src="thisAuthor.pfpUrl || placeholderImg" alt="Avatar">
+                <img id="Avatar" class="card-img-top img-thumbnail" :src="thisAuthor.pfpUrl || placeholderPfp" alt="Avatar">
                 <h6 class = "card-text">by {{thisAuthor.name}}</h6>
               </a>
             </div>
@@ -54,8 +56,12 @@
 
 #Avatar{
   border-radius: 50%;
-  max-height: 70px;
-  max-width: 70px;
+  height: 3rem;
+  width: 3rem;
+  max-height: 3rem;
+  max-width: 3rem;
+  background: lightgray;
+  border: 1px solid black;
 }
 .card{
   box-shadow: 2px 5px 5px black;
