@@ -1,13 +1,14 @@
 <script setup>
 import { functions, auth } from '../api/firebase';
 import { httpsCallable } from 'firebase/functions';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 
 import IngredientList from '@/components/IngredientList.vue';
 import NotFound from '@/components/NotFound.vue';
 
 const recipeNotFound = ref(false);
 const loading = ref(true);
+const readableDate = ref('');
 
 const getHelloWorld = async () => { //remove before final deployment
   console.log("Calling helloWorld");
@@ -56,9 +57,15 @@ const getDbRecipeSingle = async () => {
         author: recipeData.authorRef || '',
         preparationTime: recipeData.preparationTime || 0,
         equipment: recipeData.equipment || '',
-        publishDate: recipeData.publishDate || ''
+        publishDate: recipeData.publishDate|| ''
       };
-    } else {
+      if (recipeData.publishDate && recipeData.publishDate._seconds) {
+        const date = new Date(recipeData.publishDate._seconds * 1000);
+        readableDate.value = date.toLocaleDateString();
+      }
+      console.log(recipeData.publishDate._seconds);
+    } 
+    else {
       console.log("Recipe not found: ", result.data.message);
       recipeNotFound.value = true;
     }
@@ -69,6 +76,9 @@ const getDbRecipeSingle = async () => {
     loading.value = false;
   }
 };
+
+
+
 
 const likeRecipe = async () => {
   const user = auth.currentUser;
@@ -115,6 +125,13 @@ onMounted(() => {
 });
 </script>
 
+<!-- TODO: 
+Add the popup to ask for authentication on like+dislike buttons
+Show author name (hyperlinked) and PFP near the title
+Add a script to +1 or -1 like number locally
+-->
+
+
 <template>
   <div class="container-fluid bg-secondary gradient-custom min-vh-100" style="padding-top: 20px;">
     <div v-if="loading" class="spinner-border" role="status">
@@ -134,7 +151,8 @@ onMounted(() => {
               </div>
               <div class="col-md-6">
                 <h2 class="card-title mb-1">{{ recipe.name }}</h2>
-                <p>Preparation Time: <b>{{ recipe.preparationTime }} mins</b> &emsp; {{ recipe.authorRef }} &emsp; {{ recipe.publishDate }}</p>
+                <p>Preparation Time: <b>{{ recipe.preparationTime }} mins</b> &emsp; {{ recipe.authorRef }}
+                 &emsp; Published: {{ readableDate }}</p>
                 <hr class="my-1"/>
                 <div class="m-4">
                   <h5>Ingredients:</h5>
@@ -162,7 +180,7 @@ onMounted(() => {
                 
                 <button class="btn btn-outline-success" @click="likeRecipe">Like {{ recipe.likes }}</button>
                 <button class="btn btn-outline-danger" @click="dislikeRecipe">Dislike {{ recipe.dislikes }}</button>
-                <button class="btn btn-secondary" @click="getHelloWorld">Hello World</button>
+               <!---<button class="btn btn-secondary" @click="getHelloWorld">Hello World</button> --> 
               </div>
           </div>
         </div>
