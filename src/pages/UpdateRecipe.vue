@@ -231,42 +231,39 @@ onMounted(() => {
                                         <span class="input-group-text" id="inputGroup-sizing-sm">Step # {{ index + 1
                                             }}</span>
                                     </div>
-                                    <input type="text" class="form-control" v-model="step.value">
-                                    <div class="input-group-append">
-                                        <button class="btn" type="button"
-                                            @click="deleteField('instructions', index)">X</button>
-                                    </div>
+                                  <input type="text" class="form-control" v-model="step.value" @keyup.enter="addField('instructions')">
+                                  <div class="input-group-append">
+                                    <button class="btn" type="button" @click="deleteField('instructions', index)" tabindex="-1">X</button>
+                                  </div>
                                 </div>
                             </div>
-                            <br><button type="button" @click="addField('instructions')">Add new step</button><br>
+                          <br><button type="button" @click="addField('instructions')" tabindex="-1">Add new step</button><br>
                         </div>
 
                         <div class="col-xxl-2 col-xl-5 form-group">
                             <label for="ingredientFields" class="form-label">Ingredients</label>
                             <div id="ingredientFields" v-for="(ingredient, index) in recipe.ingredients" :key="index">
                                 <div class="input-group mb-3">
-                                    <input type="text" class="form-control" v-model="ingredient.value">
-                                    <div class="input-group-append">
-                                        <button class="btn" type="button"
-                                            @click="deleteField('ingredients', index)">X</button>
-                                    </div>
+                                  <input type="text" class="form-control" v-model="ingredient.value" @keyup.enter="addField('ingredients')">
+                                  <div class="input-group-append">
+                                    <button class="btn" type="button" @click="deleteField('ingredients', index)" tabindex="-1">X</button>
+                                  </div>
                                 </div>
                             </div>
-                            <br><button type="button" @click="addField('ingredients')">Add new Ingredient</button><br>
+                          <br><button type="button" @click="addField('ingredients')" tabindex="-1">Add new Ingredient</button><br>
                         </div>
                         <div class="col-xxl-2 col-xl-5 form-group">
                             <label for="equipmentFields" class="form-label">Equipment</label>
                             <div id="equipmentFields" v-for="(item, index) in recipe.equipment" :key="index">
                                 <div class="input-group mb-3">
-                                    <input type="text" class="form-control" v-model="item.value">
-                                    <div class="input-group-append">
-                                        <button class="btn" type="button"
-                                            @click="deleteField('equipment', index)">X</button>
-                                    </div>
+                                  <input type="text" class="form-control" v-model="item.value" @keyup.enter="addField('equipment')">
+                                  <div class="input-group-append">
+                                    <button class="btn" type="button" @click="deleteField('equipment', index)" tabindex="-1">X</button>
+                                  </div>
                                 </div>
                             </div>
-                            <button type="button" class="align-self-start" @click="addField('equipment')">Add new
-                                Equipment</button><br><br>
+                          <button type="button" class="align-self-start" @click="addField('equipment')" tabindex="-1">Add new
+                            Equipment</button><br><br>
                         </div>
                     </div>
 
