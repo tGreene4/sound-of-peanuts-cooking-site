@@ -8,7 +8,6 @@ import NotFound from '@/components/NotFound.vue';
 
 // Props
 const routeProp = defineProps(['id']);
-
 // Reactive variables
 const recipe = ref({
     name: '',
@@ -67,7 +66,7 @@ const getDbRecipeSingle = async () => {
                 instructions: (recipeData.instructions || []).map((instruction) => ({ value: instruction })),
                 equipment: (recipeData.equipment || []).map((equipment) => ({ value: equipment })),
                 preparationTime: recipeData.preparationTime || 0,
-                image: recipeData.image || '',
+                image: recipeData.cardImgReg || '',
             };
             downloadURL.value = recipeData.image || '';
         } else {
@@ -137,7 +136,6 @@ const deleteRecipe = async () => {
         alert("You must be authenticated to delete this recipe.");
         return;
     }
-
     const deleteDbRecipe = httpsCallable(functions, 'deleteDbRecipe');
     try {
         console.log(`Calling deleteDbRecipe`);
@@ -188,8 +186,8 @@ onMounted(() => {
         <div v-else class="flex-d flex-column align-self-center" id="flexWrapper">
             <form class="align-self-center" id="content">
                 <div class="container-fluid align-self-center">
-                    <div class="row">
-                        <div class="col-lg-3">
+                    <div class="row justify-content-center">
+                        <div class="col-xl-3">
                             <br>
                             <div style="width:40%;align-self:center;">
                                 <button class="form-control" type="button" @click="updateRecipe"
@@ -202,23 +200,29 @@ onMounted(() => {
                             <input class="form-control" v-model="recipe.preparationTime" id="timeField">
                             <br><br><br><br>
                         </div>
-                        <div class="col-lg-3"></div>
-                        <div class="col-lg-2">
+                        <div class="col-xl-3">
+                          <br>
+                          <div style="width:40%;align-self:center;">
+                            <button class="form-control" type="button" @click="deleteRecipe" style="width:200px;">Delete
+                              Recipe</button>
+                          </div>
+                        </div>
+                        <div class="col-xl-2">
                             <a>Upload Image</a><br>
                             <input type="file" id="media" accept="image/*" multiple
                                 @change="(event) => handleFileUpload(event)" />
                             <br><br>
                         </div>
-                        <div class="col-lg-3">
+                        <div class="col-xl-3">
                             <img class="card-img-top img-thumbnail img-fluid align-self-center"
-                                :src="downloadURL || placeholderImg" alt="Card image cap"
+                                :src="downloadURL ||recipe.image || placeholderImg" alt="Card image cap"
                                 style="max-height:90%;max-width:90%;position: relative; top:10px">
                             <br>
                         </div>
                     </div>
 
-                    <div class="row">
-                        <div class="col-lg-6 form-group">
+                    <div class="row justify-content-center">
+                        <div class="col-xxl-4 col-xl-12 form-group">
                             <label for="instructionsField" class="form-label">Instructions</label>
                             <div class="container-fluid" id="instructionsFields"
                                 v-for="(step, index) in recipe.instructions" :key="index">
@@ -236,8 +240,8 @@ onMounted(() => {
                             </div>
                             <br><button type="button" @click="addField('instructions')">Add new step</button><br>
                         </div>
-                        <div class="col-lg-1"></div>
-                        <div class="col-lg-2 form-group">
+
+                        <div class="col-xxl-2 col-xl-5 form-group">
                             <label for="ingredientFields" class="form-label">Ingredients</label>
                             <div id="ingredientFields" v-for="(ingredient, index) in recipe.ingredients" :key="index">
                                 <div class="input-group mb-3">
@@ -250,8 +254,7 @@ onMounted(() => {
                             </div>
                             <br><button type="button" @click="addField('ingredients')">Add new Ingredient</button><br>
                         </div>
-                        <div class="col-lg-1"></div>
-                        <div class="col-lg-2 form-group">
+                        <div class="col-xxl-2 col-xl-5 form-group">
                             <label for="equipmentFields" class="form-label">Equipment</label>
                             <div id="equipmentFields" v-for="(item, index) in recipe.equipment" :key="index">
                                 <div class="input-group mb-3">
@@ -268,10 +271,6 @@ onMounted(() => {
                     </div>
 
                     <br>
-                    <div style="width:40%;align-self:center;">
-                        <button class="form-control" type="button" @click="deleteRecipe" style="width:200px;">Delete
-                            Recipe</button>
-                    </div>
                     <br>
                 </div>
             </form>
@@ -282,86 +281,72 @@ onMounted(() => {
 
 <style scoped>
 #flexWrapper {
-    background: radial-gradient(rgba(242, 233, 126, 50%), rgba(255, 121, 0, 25%));
-    min-height: 99vh;
-    height: 100%;
-    align-items: center;
-    border: 2px solid black;
-    border-top: 0;
-    border-bottom-left-radius: 20px;
-    border-bottom-right-radius: 20px;
-    margin-left: 20px;
-    margin-right: 20px;
-    position: relative;
+  background: radial-gradient(rgba(242, 233, 126, 50%), rgba(255, 121, 0, 25%));
+  min-height: 99vh;
+  height: 100%;
+  align-items: center;
+  border: 2px solid black;
+  border-top: 0;
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+  margin-left: 20px;
+  margin-right: 20px;
+  position: relative;
 }
 
 #content {
-    width: 100%;
-    position: relative;
-    left: 5px;
+  width: 100%;
+  position: relative;
 }
 
 .form-label {
-    font-family: 'Segoe UI', Tahoma, Verdana, sans-serif;
-    font-weight: bold;
-}
-
-.col-lg-2 {
-    width: 15%;
-}
-
-.col-lg-6 {
-    width: 50%;
-    position: relative;
-    left: 10px
+  font-family: 'Segoe UI', Tahoma, Verdana, sans-serif;
+  font-weight: bold;
+  min-width: 50px;
 }
 
 .form-group {
-    border: 2px solid;
-    border-radius: 5px;
-    padding-bottom: 10px;
-    padding-left: 10px;
-    min-width: 300px;
-    min-height: 50vh;
-    Box-shadow: 3px 3px 5px black;
-    background-color: rgba(255, 183, 77, 35%);
+  border: 2px solid;
+  border-radius: 5px;
+  min-width: 400px;
+  margin: 5px;
+  min-height: 50vh;
+  Box-shadow: 3px 3px 5px black;
+  background-color: rgba(255, 183, 77, 35%);
 }
 
 .main {
-    background: radial-gradient(rgba(242, 233, 126, 75%), rgba(255, 121, 0, 50%));
-    min-height: 100vh;
-    height: 100%;
-    padding: 0;
-    margin: 0;
-    position: relative;
+  background: radial-gradient(rgba(242, 233, 126, 75%), rgba(255, 121, 0, 50%));
+  min-height: 100vh;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  position: relative;
 }
 
 .btn {
-    color: red;
-    border: none;
-    border-radius: 0;
+  color: red;
+  border: none;
+  border-radius: 0;
 }
 
 button {
-    background: rgb(240, 240, 240);
-    border: black 2px solid;
-    border-radius: 15px;
-    Box-shadow: 3px 3px 5px black;
+  background: rgb(240, 240, 240);
+  border: black 2px solid;
+  border-radius: 15px;
+  Box-shadow: 3px 3px 5px black;
 }
 
+
 img {
-    border: 2px dashed black;
-    border-radius: 20px;
+  border: 2px dashed black;
+  border-radius: 20px;
+  align-self: center;
 }
 
 #media {
-    background: linear-gradient(to left, rgba(255, 121, 0, 0%), rgba(255, 121, 0, 100%));
-    border-radius: 2px;
-    width: 100%;
-}
-
-
-#field {
-    width: 100%;
+  background: linear-gradient(to left, rgba(255, 121, 0, 0%), rgba(255, 121, 0, 100%));
+  border-radius: 2px;
+  width: 100%;
 }
 </style>
