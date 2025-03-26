@@ -9,7 +9,7 @@
             default: () => ({ 
                 name: "Unknown", //add default pfp and no link, like a deleted reddit profile
                 pfpUrl: "",
-                uId: 0
+                id: 0
             })
         },
         thisCookTime: Number,
@@ -17,7 +17,7 @@
         thisImgStorageSrc: String
     });
     const recipeLink = ref("/recipe/"+props.thisRecipeId)
-    const authorLink = ref("/user/"+props.thisAuthor.uId)
+    const authorLink = ref("/user/"+props.thisAuthor.id)
 </script>
 
 <template>
@@ -32,7 +32,7 @@
               <p class="card-text" style="display: inline;float: left;">{{thisLikes}} Likes</p>
             </div>
             <div class="col-6" style="padding-bottom: 10px">
-              <!--TO DO: Make the author Link actually link to the author, get the author's pfp and set it as the image here-->
+              <!--TO DO: Pfps still broken -->
               <a :href="authorLink" style="float: right">
                 <img id="Avatar" class="card-img-top img-thumbnail" :src="thisAuthor.pfpUrl || placeholderImg" alt="Avatar">
                 <h6 class = "card-text">by {{thisAuthor.name}}</h6>
