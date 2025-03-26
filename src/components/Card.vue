@@ -33,11 +33,13 @@
 <style scoped>
 .img-fluid {
     max-width: 100%;
-    max-height: 100%;
+    max-height: 16rem;
+    object-fit:cover;
 }
 .card{
   box-shadow: 2px 5px 5px black;
   width: 18rem;
+  height: 24rem;
   background-color: rgba(255, 183, 77,50% );
   position: relative;
 }

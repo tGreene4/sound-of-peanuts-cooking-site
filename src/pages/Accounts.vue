@@ -1,30 +1,35 @@
 <script setup>
 import { onMounted, ref } from 'vue'
-import { auth, functions } from '../api/firebase'
-import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
+import { auth, functions,storage } from '../api/firebase'
+import { createUserWithEmailAndPassword, deleteUser, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
 import { httpsCallable } from 'firebase/functions';
-import { getStorage, ref as storageRef ,uploadBytes, getDownloadURL } from "firebase/storage";
-import placeholderImg from '@/assets/images/User icon.png'
+import { ref as storageRef ,uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+console.log(router);
 
 const signUp = {
     username: ref(""),
     email: ref(""),
     password: ref(""),
     confirmPassword: ref(""),
-    downloadURL: ref(placeholderImg)
+    downloadURL: ""
 }
-
 
 const login = {
     email: ref(""),
     password: ref("")
 }
 
+var file;
+
+var pfpRef = ref("https://firebasestorage.googleapis.com/v0/b/sound-of-peanuts-cooking-site.appspot.com/o/User%20icon%20Clear.png?alt=media&token=02ef6aea-e4bd-4c39-a65a-f00acea43188")
 
 function authCheck() {
     if (auth.currentUser != null) {
         const id = auth.currentUser.uid;
-        $router.push("/user/" + id);
+        router.push("/user/" + id);
     }
 }
 
@@ -33,18 +38,9 @@ onMounted(() => {
 })
 
 
-const handleFileUpload = async (event) => {
-    try {
-        const storage = getStorage();
-        const file = event.target.files[0];
-        const storageReference = storageRef(storage, 'images/' + file.name);
-        const snapshot = await uploadBytes(storageReference, file); 
-        const url = await getDownloadURL(snapshot.ref); 
-        console.log("Image uploaded successfully. Download URL:", url);
-        signUp.downloadURL.value = url; 
-    } catch (error) {
-        console.error("Error uploading image:", error);
-    }
+const handleFileUpload = function(event){
+    file = event.target.files[0];
+    pfpRef.value = URL.createObjectURL(file);
 };
 
 const userCreate = async () => {
@@ -65,22 +61,37 @@ const userCreate = async () => {
     }
 
     try {
+        console.log("Attempting to create account");
         const createSuccess = await createUserWithEmailAndPassword(auth, signUp.email.value, signUp.password.value);
         if (!createSuccess) {
             alert("Failed to create account");
             return;
         }
-
-        console.log("Attempting to create account");
         console.log(createSuccess);
+    }catch(error){
+        console.log("Failed to create user:"+error.message);
+    }
 
-        const signUpUser = auth.currentUser;
-        console.log(signUpUser);
+    const signUpUser = auth.currentUser;
+    console.log(signUpUser);
+    
+    try {
+        const storageReference = storageRef(storage, 'images/' + signUpUser.uid);
+        const snapshot = await uploadBytes(storageReference, file); 
+        const url = await getDownloadURL(snapshot.ref); 
+        console.log("Image uploaded successfully. Download URL:", url);
+        signUp.downloadURL = url; 
+    } catch (error) {
+        console.error("Error uploading image:", error);
+        deleteUser(signUpUser);
 
+    }
+    
+    try{
         const createUser = httpsCallable(functions, "createDbUser");
         const result = await createUser({
             uName: signUp.username.value,
-            pfpFile: signUp.downloadURL.value,
+            pfpFile: signUp.downloadURL,
             uId: signUpUser.uid
         });
 
@@ -90,9 +101,13 @@ const userCreate = async () => {
             console.log("Could not add user to database");
         }
     } catch (error) {
-        console.error("Error during user creation:", error.message);
+        console.error("Error adding user to db:", error.message);
+        deleteObject(storageRef(storage, 'images/' + signUpUser.uid))
+        deleteUser(signUpUser);
         alert("An error occurred while creating the account. Please try again.");
     }
+
+    authCheck();
 };
 
 function userLogin(event) {
@@ -101,6 +116,7 @@ function userLogin(event) {
     signInWithEmailAndPassword(auth, login.email.value, login.password.value)
         .then(() => {
             console.log("Login successful");
+            authCheck();
         })
         .catch((error) => {
             console.error("Error during login:", error.message);
@@ -143,7 +159,7 @@ function userLogin(event) {
                             placeholder="Enter the same password as above" v-model="signUp.confirmPassword.value">
 
                         <label for="pfpInput" class="form-label">Upload your Profile Picture</label>
-                        <img :src="signUp.downloadURL" style="width:100%;height:30vh;display:block;object-fit: cover;"
+                        <img :src="pfpRef" style="width:100%;height:30vh;display:block;object-fit: cover;"
                             id="pfpPreviewImg">
                         <input type="file" :value="null" class="form-control" id="pfpInput"
                             accept="image/png,image/jpeg" multiple @change="(event) => handleFileUpload(event)">
@@ -189,6 +205,6 @@ function userLogin(event) {
 
 #flexWrapper {
     background-color: rgb(255, 243, 224);
-    height: 100vh;
+    height: 110vh;
 }
 </style>

@@ -1,16 +1,23 @@
 <script setup>
+    import { onMounted } from 'vue';
     import { functions } from '../api/firebase'
     import { httpsCallable } from 'firebase/functions';
+    import { useRoute } from 'vue-router';
     
-
-    const props = defineProps({
-        thisUserId:String
-    });
-
-    const dbUserRequest = httpsCallable(funcs,'getDbUser');
-    dbUserRequest({ uid: props.thisUserId})
-        .then((res)=>{const output = result.data.text;console.log(output);})
-        .catch((error)=>{console.log(error)})
+    const route = useRoute();
+    const getThisUser = async()=>{
+        const dbUserRequest = httpsCallable(functions,'getDbUser');
+        try{
+            const output = await dbUserRequest({uid:route.params.id});
+        }catch(error){
+            console.log("Failed to get user:"+error.message);
+        }
+        
+    }
+    
+    onMounted(()=>{
+        getThisUser();
+    })
 
 </script>
 
