@@ -48,10 +48,10 @@
 
 <style scoped>
 .img-fluid {
-    width: 100%;
-    height: 100%;
-    max-width: 18rem;
-    max-height: 22rem;
+
+    max-width: 100%;
+    max-height: 16rem;
+    object-fit:cover;
 }
 
 #Avatar{
@@ -62,11 +62,15 @@
   max-width: 3rem;
   background: lightgray;
   border: 1px solid black;
+
 }
 .card{
   box-shadow: 2px 5px 5px black;
   width: 18rem;
-  background-color: rgba(255, 183, 77, 75% );
+
+  height: 24rem;
+  background-color: rgba(255, 183, 77,50% );
+
   position: relative;
 }
 </style>

@@ -6,13 +6,14 @@
  *
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
-const { getFirestore, query, orderBy, limit, getDocs, Timestamp } = require('firebase-admin/firestore');
+const { getFirestore, Timestamp} = require('firebase-admin/firestore');
 const { getStorage, getDownloadURL, uploadBytes, ref } = require('firebase-admin/storage');
 const { onCall } = require("firebase-functions/v2/https");
 const { initializeApp } = require('firebase-admin/app');
 
 const logger = require("firebase-functions/logger");
-const { user } = require('firebase-functions/v1/auth');
+//const { user ,getAuth} = require('firebase-functions/v1/auth');
+const { getAuth } = require('firebase-admin/auth');
 
 initializeApp({
     storageBucket: 'sound-of-peanuts-cooking-site.appspot.com'
@@ -20,8 +21,9 @@ initializeApp({
 
 const db = getFirestore();
 const store = getStorage();
+const auth = getAuth();
 
-exports.helloWorld = onCall(async (req, res) => {
+exports.helloWorld = onCall(async (req) => {
     logger.info("Hello logs!", { structuredData: true });
 
     try {
@@ -32,7 +34,7 @@ exports.helloWorld = onCall(async (req, res) => {
     }
 });
 
-exports.getDbRecipesByField = onCall(async (req, res) => {
+exports.getDbRecipesByField = onCall(async (req) => {
     const docLimit = req.data.docLimit || 6;
     if (!docLimit || typeof docLimit !== 'number') {
         logger.log("Error: docLimit not found or invalid: ", docLimit);
@@ -540,14 +542,14 @@ exports.addDislikeRecipe = onCall(async (req, res) => {
     }
 });
 
-exports.getDbUser = onCall(async (req, res) => {
+exports.getDbUser = onCall(async (req) => {
     const { uId } = req.data
     if (!uId) {
         logger.log("Error: uId not found or invalid ", uId);
         return { success: false, message: "uId not found or invalid" }
     }
 
-    const snapshot = await db.collection('User').where('uId', '==', uId).limit(1).get();
+    const snapshot = await db.collection('Users').where('uId', '==', uId).limit(1).get();
 
     if (snapshot.empty) {
         logger.log("Error: no user found with the uId", uId);
@@ -559,7 +561,7 @@ exports.getDbUser = onCall(async (req, res) => {
     }
 });
 
-exports.verifyUser = onCall(async (req, res) => {
+exports.verifyUser = onCall(async (req) => {
     const { token } = req.data;
 
     if (!token) {
@@ -567,7 +569,7 @@ exports.verifyUser = onCall(async (req, res) => {
     }
 
     try {
-        const decodedToken = await getAuth().verifyIdToken(token);
+        const decodedToken = await auth.verifyIdToken(token);
         return { success: true, uId: decodedToken.uId };
     } catch (error) {
         return { success: false, message: "Invalid token" };
@@ -575,21 +577,9 @@ exports.verifyUser = onCall(async (req, res) => {
 });
 
 exports.createDbUser = onCall(async (req, res) => {
-    const { uName, pfpFile, uId } = req.data
-    if (!uName || !pfpFile || !uId) {
+    const { uName, pfpDownloadURL, uId } = req.data
+    if (!uName || !pfpDownloadURL || !uId) {
         throw new Error("Name, pfp, or UID not found");
-    }
-
-    let pfpDownloadURL = "";
-
-    try {
-        const pfpRef = store.bucket().file(uId + "/pfp.png");
-        logger.log("Uploading profile picture to: " + pfpRef);
-        await pfpRef.save(pfpFile, { public: true }, function () { pfpDownloadURL = pfpRef.publicUrl(); });
-    }
-    catch (error) {
-        logger.log("Failed to upload profile picture:" + error);
-        return { success: false, message: "Failed to upload profile picture" }
     }
 
     logger.log("Attempting to add user : " + uName + " with uId: " + uId + " and pfp url: " + pfpDownloadURL);
@@ -617,18 +607,23 @@ exports.createDbUser = onCall(async (req, res) => {
     }
 });
 
-exports.updateDbUser = onCall(async (req, res) => {
-    const { uName, pfpFile, uId } = req.data
-    const pfpRef = ref(store, uId + "/pfp.png")
-    uploadBytes(pfpRef, pfpFile).then((snapshot) => {
-        pfpDownloadURL = getDownloadURL(snapshot.ref);
-    })
-
-    const complete = await db.collection('User').doc(uId).update({
-        name: uName,
-        pfpUrl: pfpDownloadURL
-    })
-
+exports.updateDbUser = onCall(async (req) => {
+    const { uName, pfpDownloadURL, uId, } = req.data
+    if(req.auth.uid == uId){
+        try{
+            const toBeUpdated = await db.collection('Users').where("uId","==",uId).limit(1).get();
+            const upUser = toBeUpdated.docs[0];
+            const complete = await (db.collection('Users').doc(upUser.id).update({
+                name: uName,
+                pfpUrl: pfpDownloadURL
+                })
+            )
+        }catch(error){
+            logger.error(error);
+            return{success: false,message: "Could not update user:"+error}
+        }
+    }
+    
     if (complete) {
         return { success: true, message: "User updated" }
     }
@@ -637,13 +632,36 @@ exports.updateDbUser = onCall(async (req, res) => {
     }
 });
 
-exports.deleteDbUser = onCall(async (req, res) => {
+exports.deleteDbUser = onCall(async (req) => {
     const { uId } = req.data
+    var complete = false;
     if (!uId) {
         throw new Error("UID not found")
     }
+    if(req.auth.uid == uId){
+        try{
+            const toBeDeleted = await db.collection('Users').where("uId","==",uId).limit(1).get();
+            const rmUser = toBeDeleted.docs[0];
+            const dbDelComplete = await db.collection('Users').doc(rmUser.id).delete();
+            if(dbDelComplete){
+                logger.info("Deleted user from database");
 
-    const complete = await db.collection('User').doc(uId).delete()
+            }
+            auth.deleteUser(uId);
+            const deletedUserRecipes = await db.collection('Recipe').where("authorUid","==",uId).get();
+            deletedUserRecipes.docs.forEach((thisDoc)=>{
+                thisDoc.ref.update({
+                    uId:"",
+                    authorRef:"/Users/aLsEiyAU2DPPajSJdZ0f"
+                })
+        
+            })
+        }
+        catch(error){
+            logger.error(error);
+            console.log();
+        }  
+    }
 
     if (complete) {
         return { success: true, message: "User deleted" }
