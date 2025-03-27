@@ -25,13 +25,26 @@ export default {
     addField(type) {
       switch (type) {
         case 'ingredients':
-          this.ingredients.push({ value: '' });
+          this.ingredients.push({value: ''});
           break;
         case 'equipment':
-          this.equipment.push({ value: '' });
+          this.equipment.push({value: ''});
           break;
         case 'steps':
-          this.steps.push({ value: '' });
+          this.steps.push({value: ''});
+          break;
+      }
+    },
+    deleteField(type,index) {
+      switch (type) {
+        case 'ingredients':
+          this.ingredients.splice(index,1);
+          break;
+        case 'equipment':
+          this.equipment.splice(index,1);
+          break;
+        case 'steps':
+          this.steps.splice(index,1);
           break;
       }
     },
@@ -98,8 +111,8 @@ export default {
     <div class="flex-d flex-column align-self-center" id="flexWrapper">
       <form class="align-self-center" id="content">
         <div class="container-fluid align-self-center">
-          <div class="row">
-            <div class="col-lg-3">
+          <div class="row justify-content-center">
+            <div class="col-xl-3">
               <br>
               <div style="width:40%;align-self:center;">
                 <button class="form-control" type="button" @click="postRecipe" style="width:200px;">Publish
@@ -112,60 +125,59 @@ export default {
               <input class="form-control" v-model="time" id="timeField">
               <br><br><br><br>
             </div>
-            <div class="col-lg-3"></div>
-            <div class="col-lg-2">
+            <div class="col-xl-3"></div>
+            <div class="col-xl-2 justify-content-center">
               <a>Upload Image</a><br>
               <input type="file" id="media" accept="image/*" multiple @change="(event) => handleFileUpload(event)" />
               <br><br>
             </div>
-            <div class="col-lg-3">
+            <div class="col-xl-3">
               <img class="card-img-top img-thumbnail img-fluid align-self-center" :src="downloadURL || placeholderImg"
                 alt="Card image cap" style="max-height:90%;max-width:90%;position: relative; top:10px">
               <br>
             </div>
 
-            <div class="row">
-              <div class="col-lg-6 form-group">
+            <div class="row justify-content-center">
+              <div class="col-xxl-4 col-xl-12 form-group">
                 <label for="instructionsField" class="form-label">Instructions</label>
                 <div class="container-fluid" id="instructionsFields" v-for="(step, index) in steps">
                   <div class="input-group mb-3">
                     <div class="input-group-prepend">
                       <span class="input-group-text" id="inputGroup-sizing-sm">Step # {{ index + 1 }}</span>
                     </div>
-                    <input type="text" class="form-control" v-model="step.value">
+                    <input type="text" class="form-control" v-model="step.value" @keyup.enter="addField('steps')">
                     <div class="input-group-append">
-                      <button class="btn" type="button" @click="deleteField('steps', index)">X</button>
+                      <button class="btn" type="button" @click="deleteField('steps', index)" tabindex="-1">X</button>
                     </div>
                   </div>
                 </div>
-                <br><button type="button" @click="addField('steps')">Add new step</button><br>
+                <br><button type="button" @click="addField('steps')" tabindex="-1">Add new step</button><br>
               </div>
-              <div class="col-lg-1"></div>
-              <div class="col-lg-2 form-group">
+
+              <div class="col-xxl-2 col-xl-5 form-group">
                 <label for="ingredientFields" class="form-label">Ingredients</label>
                 <div id="ingredientFields" v-for="(ingredient, index) in ingredients">
                   <div class="input-group mb-3">
-                    <input type="text" class="form-control" v-model="ingredient.value">
+                    <input type="text" class="form-control" v-model="ingredient.value" @keyup.enter="addField('ingredients')">
                     <div class="input-group-append">
-                      <button class="btn" type="button" @click="deleteField('ingredients', index)">X</button>
+                      <button class="btn" type="button" @click="deleteField('ingredients', index)" tabindex="-1">X</button>
                     </div>
                   </div>
                 </div>
-                <br><button type="button" @click="addField('ingredients')">Add new Ingredient</button><br>
+                <br><button type="button" @click="addField('ingredients')" tabindex="-1">Add new Ingredient</button><br>
 
               </div>
-              <div class="col-lg-1"></div>
-              <div class="col-lg-2 form-group">
+              <div class="col-xxl-2 col-xl-5 form-group">
                 <label for="equipmentFields" class="form-label">Equipment</label>
                 <div id="equipmentFields" v-for="(item, index) in equipment">
                   <div class="input-group mb-3">
-                    <input type="text" class="form-control" v-model="item.value">
+                    <input type="text" class="form-control" v-model="item.value" @keyup.enter="addField('equipment')">
                     <div class="input-group-append">
-                      <button class="btn" type="button" @click="deleteField('equipment', index)">X</button>
+                      <button class="btn" type="button" @click="deleteField('equipment', index)" tabindex="-1">X</button>
                     </div>
                   </div>
                 </div>
-                <button type="button" class="align-self-start" @click="addField('equipment')">Add new
+                <button type="button" class="align-self-start" @click="addField('equipment')" tabindex="-1">Add new
                   Equipment</button><br><br>
               </div>
             </div>
@@ -195,30 +207,19 @@ export default {
 #content {
   width: 100%;
   position: relative;
-  left: 5px;
 }
 
 .form-label {
   font-family: 'Segoe UI', Tahoma, Verdana, sans-serif;
   font-weight: bold;
-}
-
-.col-lg-2 {
-  width: 15%;
-}
-
-.col-lg-6 {
-  width: 50%;
-  position: relative;
-  left: 10px
+  min-width: 50px;
 }
 
 .form-group {
   border: 2px solid;
   border-radius: 5px;
-  padding-bottom: 10px;
-  padding-left: 10px;
-  min-width: 300px;
+  min-width: 400px;
+  margin: 5px;
   min-height: 50vh;
   Box-shadow: 3px 3px 5px black;
   background-color: rgba(255, 183, 77, 35%);
@@ -246,9 +247,11 @@ button {
   Box-shadow: 3px 3px 5px black;
 }
 
+
 img {
   border: 2px dashed black;
   border-radius: 20px;
+  align-self: center;
 }
 
 #media {
@@ -257,8 +260,4 @@ img {
   width: 100%;
 }
 
-
-#field {
-  width: 100%;
-}
 </style>

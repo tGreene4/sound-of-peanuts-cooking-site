@@ -1,5 +1,6 @@
 <script setup>
     import { ref } from 'vue'
+    import placeholderPfp from '@/assets/images/User icon.png';
     import placeholderImg from '@/assets/images/coconut.png';
     const props = defineProps({
         thisRecipeId: String,
@@ -7,7 +8,9 @@
         thisAuthor: {
             type: Object,
             default: () => ({ 
-                name: "Unknown" //add default pfp and no link, like a deleted reddit profile
+                name: "Unknown", //add default pfp and no link, like a deleted reddit profile
+                pfpUrl: "",
+                id: 0
             })
         },
         thisCookTime: Number,
@@ -15,36 +18,59 @@
         thisImgStorageSrc: String
     });
     const recipeLink = ref("/recipe/"+props.thisRecipeId)
+    const authorLink = ref("/user/"+props.thisAuthor.id)
 </script>
 
 <template>
     <div class="card" id="card">
-        <a :href="recipeLink"><img class="card-img-top img-thumbnail img-fluid align-self-center" 
+        <a :href="recipeLink"><img class="card-img-top img-thumbnail img-fluid align-self-center"
             :src= "thisImgStorageSrc || placeholderImg" alt="Card image cap"></a>
         <div class="card-body">
-            <h5 class="card-title"><a :href="recipeLink">{{thisRecipeName}}</a></h5>
-            <h6 class = "card-text">by {{thisAuthor.name}}</h6>
-            <p class="card-text" style="display: inline;float: left;">{{thisCookTime}} Minutes</p>
-            <p class="card-text" style="display: inline;float: right;">{{thisLikes}} Likes</p>
+          <h5 class="card-title"><a :href="recipeLink">{{thisRecipeName}}</a></h5>
+          <div class="row justify-content-center">
+            <div class="col-6">
+              <p class="card-text" style="display: inline;float: left;">{{thisCookTime}} Minutes</p>
+              <p class="card-text" style="display: inline;float: left;">{{thisLikes}} Likes</p>
+            </div>
+            <div class="col-2 "></div>
+            <div class="col-4" style="padding-bottom: 1px">
+              <!--TO DO: Pfps still broken? -->
+              <a :href="authorLink" style="float: right">
+                <img id="Avatar" class="card-img-top img-thumbnail" :src="thisAuthor.pfpUrl || placeholderPfp" alt="Avatar">
+                <h6 class = "card-text">by {{thisAuthor.name}}</h6>
+              </a>
+            </div>
+
+          </div>
         </div>
     </div>
 </template>
 
 <style scoped>
 .img-fluid {
+
     max-width: 100%;
     max-height: 16rem;
     object-fit:cover;
 }
+
+#Avatar{
+  border-radius: 50%;
+  height: 3rem;
+  width: 3rem;
+  max-height: 3rem;
+  max-width: 3rem;
+  background: lightgray;
+  border: 1px solid black;
+
+}
 .card{
   box-shadow: 2px 5px 5px black;
   width: 18rem;
+
   height: 24rem;
   background-color: rgba(255, 183, 77,50% );
-  position: relative;
-}
 
-.card-body{
-  background: linear-gradient(to bottom, rgba(255, 183, 77,50% ),rgba(255, 183, 77,0% ));
+  position: relative;
 }
 </style>

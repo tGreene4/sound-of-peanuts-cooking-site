@@ -3,8 +3,15 @@ import Header from './components/Header.vue';
 </script>
 
 <template>
-  <Header />
-  <router-view />
+  <div id="body">
+    <Header />
+    <router-view />
+  </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+#body{
+  min-height: 100%;
+  min-width: 720px;
+}
+</style>

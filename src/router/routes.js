@@ -21,5 +21,6 @@ export default [
     { path: '/user/:id', component: loadPage('User')},
     { path: '/account', component: loadPage('Accounts')},
     { path: '/createRecipe', component: loadPage('CreateRecipe') },
+    { path: '/updateRecipe/:id', component: loadPage('UpdateRecipe'), props:true},
     { path: '/secure', component: loadPage('Secure'), beforeEnter: isAuth },
 ]

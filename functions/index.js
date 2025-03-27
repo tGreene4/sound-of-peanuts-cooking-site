@@ -296,6 +296,106 @@ exports.postDbRecipe = onCall(async (req, res) => {
     }
 });
 
+exports.updateDbRecipe = onCall(async (req, res) => {
+    const { name, preparationTime, instructions, ingredients, equipment, cardImgReg, id ,uid } = req.data
+    if (!name || !preparationTime || !instructions || !ingredients || !equipment || !cardImgReg || !uid) {
+        logger.log("Error: Recipe data not found or invalid: ", req.data);
+        return { success: false, message: "Recipe data not found or invalid" }
+    }
+
+    if(!req.auth){
+        return{ success:false, message: "Error: User is not authenticated"}
+    }
+
+    try {
+        const recipeRef = db.collection("Recipe").doc(id);
+        const recipeSnapshot = await recipeRef.get();
+
+        if (!recipeSnapshot.exists) {
+            logger.log("Error: Recipe not found");
+            return { success: false, message: "Error: Recipe not found" };
+        }
+
+        const recipeData = recipeSnapshot.data();
+
+        if (recipeData.authorUid !== uid) {
+            logger.log("Error: Authenticated user is not the author of the recipe");
+            return { success: false, message: "Error: Authenticated user is not the author of the recipe" };
+        }
+
+
+        logger.log("Attempting to update recipe with: ", req.data);
+
+        await recipeRef.update({
+            name: name,
+            preparationTime: preparationTime,
+            instructions: instructions,
+            ingredients: ingredients,
+            equipment: equipment,
+            cardImgReg: cardImgReg,
+        });
+
+        logger.log("Recipe updated");
+        return { success: true, message: "Recipe updated successfully", recipeId: recipeRef.id };
+    } catch (error) {
+        logger.error("Error updating recipe:", error);
+        return { success: false, message: "Error updating recipe" };
+    }
+});
+
+exports.deleteDbRecipe = onCall(async (req, res) => {
+    const { id, uid } = req.data;
+
+    if (!id || !uid || !req.auth) {
+        logger.log("Error: Recipe ID or User ID not found");
+        return { success: false, message: "Recipe ID or User ID not found" };
+    }
+
+    logger.log("Attempting to delete recipe with ID: " + id + " and user ID: " + uid)
+    try{
+        const recipePath = "/Recipe/" + id;
+        const recipeSnapshot = await db.doc(recipePath).get();
+
+        if (!recipeSnapshot.exists) {
+            logger.log("Error: Recipe not found");
+            return { success: false, message: "Error: Recipe not found" };
+        }
+
+        const recipeData = recipeSnapshot.data();
+
+        if(uid === recipeData.authorUid){
+            logger.log("uId match, attempting to delete recipe");
+
+            db.doc(recipePath).delete();
+            console.log("Document successfully deleted!");
+
+                
+            const userQuery = db.collection("Users").where('uId', '==', uid).limit(1);
+            const userSnapshot = await userQuery.get();
+                
+            const userDoc = userSnapshot.docs[0];
+            const userData = userDoc.data();
+            const madeRecipes = userData.madeRecipes || [];
+            
+            if (madeRecipes.includes(id)) {
+                madeRecipes.splice(madeRecipes.indexOf(id), 1);
+            }
+
+            logger.log("Recipe deleted");
+            return { success: true, message: "Successfully deleted recipe"}
+        }
+        else{
+            logger.log("Error: uId do not match");
+            return { success: false, message: "Error: uId does not match recipe" };
+        }
+
+
+    }catch(error){
+        logger.error("Error deleting recipe:", error);
+        return { success: false, message: "Error deleting recipe" };
+    }
+});
+
 exports.addLikeRecipe = onCall(async (req, res) => {
     const { id, uid } = req.data;
 
@@ -306,7 +406,7 @@ exports.addLikeRecipe = onCall(async (req, res) => {
     }
 
     try {
-            
+
         const recipeRef = db.doc("/Recipe/" + id);
         
         const userQuery = db.collection("Users").where('uId', '==', uid).limit(1);
