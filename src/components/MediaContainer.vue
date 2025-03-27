@@ -8,6 +8,10 @@ import { ref, onMounted } from 'vue';
 const mostRecent = ref([]);
 const mostLiked = ref([]);
 const more = ref([]);
+const newloading = ref(true);
+const likeloading = ref(true);
+const moreloading = ref(true);
+const noMoreRecipes = ref(false);
 
 const getRecipeByField = async (queryType = 'likes', order = 'desc') => {
   console.log("Calling getDbRecipesByField");
@@ -29,7 +33,6 @@ const getRecipeByField = async (queryType = 'likes', order = 'desc') => {
     return [];
   }
 };
-
 let lastDocId = ref(null);
 const getMoreRecipe = async () => {
   console.log("Calling getDbMoreRecipes");
@@ -63,6 +66,7 @@ const tryGetMoreRecipes = async () => {
       more.value.push(...moreRecipes);
     } else {
       console.log("No more recipes to load.");
+      noMoreRecipes.value = true;
     }
   } catch (error) {
     console.error("Error in tryGetMoreRecipes: ", error);
@@ -102,10 +106,6 @@ onMounted(async () => {
   }
 });
 
-const newloading = ref(true);
-const likeloading = ref(true);
-const moreloading = ref(true);
-
 </script>
 <template>
   <div class="container-fluid align-self-center gradient-custom w-100 min-vh-100">
@@ -116,6 +116,9 @@ const moreloading = ref(true);
           <Card :thisRecipeId="item.id" :thisRecipeName="item.name" :thisAuthor="item.author"
             :thisCookTime="item.preparationTime" :thisLikes="item.likes" :thisImgStorageSrc="item.cardImgReg" />
         </div>
+      </div>
+      <div v-if="(mostRecent == '') & (!newloading)" id="noRecWarning">
+        No recipes found
       </div>
       <div v-if="newloading" class="spinner-border" role="status">
         <span class="visually-hidden">Loading...</span>
@@ -130,6 +133,9 @@ const moreloading = ref(true);
             :thisCookTime="item.preparationTime" :thisLikes="item.likes" :thisImgStorageSrc="item.cardImgReg" />
         </div>
       </div>
+      <div v-if="(mostLiked == '') & (!likeloading)" id="noRecWarning">
+        No recipes found
+      </div>
       <div v-if="likeloading" class="spinner-border" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
@@ -143,12 +149,15 @@ const moreloading = ref(true);
             :thisCookTime="item.preparationTime" :thisLikes="item.likes" :thisImgStorageSrc="item.cardImgReg" />
         </div>
       </div>
+      <div v-if="(more == '') & (!moreloading)" id="noRecWarning">
+        No recipes found
+      </div>
       <div v-if="moreloading" class="spinner-border" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
     </div>
-    <div class="row justify-content-center">
-    <button @click="tryGetMoreRecipes">Load More</button><!--If more fails to return more recipes, remove this button and functionality(script bool)-->
+    <div class="row justify-content-center" v-if="!noMoreRecipes">
+    <button @click="tryGetMoreRecipes">Load More</button>
       </div>
     <br>
   </div>
@@ -194,4 +203,11 @@ button {
   position: relative;
   align-self: center;
 }
+
+#noRecWarning{
+  top: 10px;
+  font-weight: bolder;
+  color: red;
+}
+
 </style>

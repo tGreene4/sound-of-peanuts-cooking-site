@@ -26,21 +26,19 @@
         <a :href="recipeLink"><img class="card-img-top img-thumbnail img-fluid align-self-center"
             :src= "thisImgStorageSrc || placeholderImg" alt="Card image cap"></a>
         <div class="card-body">
-          <h5 class="card-title"><a :href="recipeLink">{{thisRecipeName}}</a></h5>
+          <h5 class="card-title truncate"><a :href="recipeLink">{{thisRecipeName}}</a></h5>
           <div class="row justify-content-center">
-            <div class="col-6">
+            <div class="col-5">
               <p class="card-text" style="display: inline;float: left;">{{thisCookTime}} Minutes</p>
               <p class="card-text" style="display: inline;float: left;">{{thisLikes}} Likes</p>
             </div>
-            <div class="col-2 "></div>
-            <div class="col-4" style="padding-bottom: 1px">
+            <div class="col-7" style="padding-bottom: 1px">
               <!--TO DO: Pfps still broken? -->
-              <a :href="authorLink" style="float: right">
+              <a :href="authorLink" >
                 <img id="Avatar" class="card-img-top img-thumbnail" :src="thisAuthor.pfpUrl || placeholderPfp" alt="Avatar">
-                <h6 class = "card-text">by {{thisAuthor.name}}</h6>
+                <h6 class = "card-text truncate" >by {{thisAuthor.name}}</h6>
               </a>
             </div>
-
           </div>
         </div>
     </div>
@@ -48,10 +46,10 @@
 
 <style scoped>
 .img-fluid {
-
     max-width: 100%;
-    max-height: 16rem;
-    object-fit:cover;
+    min-height: 100%;
+    object-fit: cover;
+    height: 18rem;
 }
 
 #Avatar{
@@ -67,10 +65,16 @@
 .card{
   box-shadow: 2px 5px 5px black;
   width: 18rem;
-
-  height: 24rem;
+  height: 27rem;
   background-color: rgba(255, 183, 77,50% );
 
   position: relative;
+}
+
+.truncate{
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  max-width: 100%;
 }
 </style>
