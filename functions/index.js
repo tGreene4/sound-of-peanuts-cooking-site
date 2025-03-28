@@ -6,7 +6,7 @@
  *
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
-const { getFirestore, Timestamp} = require('firebase-admin/firestore');
+const { getFirestore, Timestamp } = require('firebase-admin/firestore');
 const { getStorage, getDownloadURL, uploadBytes, ref } = require('firebase-admin/storage');
 const { onCall } = require("firebase-functions/v2/https");
 const { initializeApp } = require('firebase-admin/app');
@@ -101,7 +101,7 @@ exports.getDbRecipesByField = onCall(async (req) => {
     }
 });
 
-exports.getDbMoreRecipes = onCall(async (req, res) => {
+exports.getDbMoreRecipes = onCall(async (req) => {
     const docLimit = req.data.docLimit || 6;
     const lastDocId = req.data.lastDocId || null;
 
@@ -178,7 +178,7 @@ exports.getDbMoreRecipes = onCall(async (req, res) => {
     }
 });
 
-exports.getDbRecipeSingle = onCall(async (req, res) => {
+exports.getDbRecipeSingle = onCall(async (req) => {
     const { id } = req.data
     if (!id) {
         throw new Error("id not found")
@@ -234,15 +234,15 @@ exports.getDbRecipeSingle = onCall(async (req, res) => {
     }
 });
 
-exports.postDbRecipe = onCall(async (req, res) => {
+exports.postDbRecipe = onCall(async (req) => {
     const { name, preparationTime, instructions, ingredients, equipment, cardImgReg, uid } = req.data
     if (!name || !preparationTime || !instructions || !ingredients || !equipment || !cardImgReg || !uid) {
         logger.log("Error: Recipe data not found or invalid: ", req.data);
         return { success: false, message: "Recipe data not found or invalid" }
     }
 
-    if(!req.auth){
-        return{ success:false, message: "Error: User is not authenticated"}
+    if (!req.auth) {
+        return { success: false, message: "Error: User is not authenticated" }
     }
     logger.log("Auth info", req.auth);
 
@@ -258,7 +258,7 @@ exports.postDbRecipe = onCall(async (req, res) => {
         }
 
         const userDoc = userSnapshot.docs[0];
-        const userRef = userDoc.ref; 
+        const userRef = userDoc.ref;
         const userData = userDoc.data();
         const madeRecipes = userData.madeRecipes || [];
 
@@ -280,7 +280,7 @@ exports.postDbRecipe = onCall(async (req, res) => {
         });
 
         madeRecipes.push(recipeRef.id);
-        
+
         await userRef.update({
             madeRecipes: madeRecipes,
         });
@@ -296,15 +296,15 @@ exports.postDbRecipe = onCall(async (req, res) => {
     }
 });
 
-exports.updateDbRecipe = onCall(async (req, res) => {
-    const { name, preparationTime, instructions, ingredients, equipment, cardImgReg, id ,uid } = req.data
+exports.updateDbRecipe = onCall(async (req) => {
+    const { name, preparationTime, instructions, ingredients, equipment, cardImgReg, id, uid } = req.data
     if (!name || !preparationTime || !instructions || !ingredients || !equipment || !cardImgReg || !uid) {
         logger.log("Error: Recipe data not found or invalid: ", req.data);
         return { success: false, message: "Recipe data not found or invalid" }
     }
 
-    if(!req.auth){
-        return{ success:false, message: "Error: User is not authenticated"}
+    if (!req.auth) {
+        return { success: false, message: "Error: User is not authenticated" }
     }
 
     try {
@@ -343,7 +343,7 @@ exports.updateDbRecipe = onCall(async (req, res) => {
     }
 });
 
-exports.deleteDbRecipe = onCall(async (req, res) => {
+exports.deleteDbRecipe = onCall(async (req) => {
     const { id, uid } = req.data;
 
     if (!id || !uid || !req.auth) {
@@ -352,7 +352,7 @@ exports.deleteDbRecipe = onCall(async (req, res) => {
     }
 
     logger.log("Attempting to delete recipe with ID: " + id + " and user ID: " + uid)
-    try{
+    try {
         const recipePath = "/Recipe/" + id;
         const recipeSnapshot = await db.doc(recipePath).get();
 
@@ -363,40 +363,40 @@ exports.deleteDbRecipe = onCall(async (req, res) => {
 
         const recipeData = recipeSnapshot.data();
 
-        if(uid === recipeData.authorUid){
+        if (uid === recipeData.authorUid) {
             logger.log("uId match, attempting to delete recipe");
 
             db.doc(recipePath).delete();
             console.log("Document successfully deleted!");
 
-                
+
             const userQuery = db.collection("Users").where('uId', '==', uid).limit(1);
             const userSnapshot = await userQuery.get();
-                
+
             const userDoc = userSnapshot.docs[0];
             const userData = userDoc.data();
             const madeRecipes = userData.madeRecipes || [];
-            
+
             if (madeRecipes.includes(id)) {
                 madeRecipes.splice(madeRecipes.indexOf(id), 1);
             }
 
             logger.log("Recipe deleted");
-            return { success: true, message: "Successfully deleted recipe"}
+            return { success: true, message: "Successfully deleted recipe" }
         }
-        else{
+        else {
             logger.log("Error: uId do not match");
             return { success: false, message: "Error: uId does not match recipe" };
         }
 
 
-    }catch(error){
+    } catch (error) {
         logger.error("Error deleting recipe:", error);
         return { success: false, message: "Error deleting recipe" };
     }
 });
 
-exports.addLikeRecipe = onCall(async (req, res) => {
+exports.addLikeRecipe = onCall(async (req) => {
     const { id, uid } = req.data;
 
     logger.log("Attempting to like recipe with ID: " + id + " and user ID: " + uid);
@@ -408,7 +408,7 @@ exports.addLikeRecipe = onCall(async (req, res) => {
     try {
 
         const recipeRef = db.doc("/Recipe/" + id);
-        
+
         const userQuery = db.collection("Users").where('uId', '==', uid).limit(1);
         const userSnapshot = await userQuery.get();
 
@@ -426,7 +426,7 @@ exports.addLikeRecipe = onCall(async (req, res) => {
         if (!likedRecipes.includes(id)) {
             likedRecipes.push(id);
         }
-        
+
         if (dislikedRecipes.includes(id)) {
             dislikedRecipes.splice(dislikedRecipes.indexOf(id), 1);
         }
@@ -435,7 +435,7 @@ exports.addLikeRecipe = onCall(async (req, res) => {
             likedRecipes: likedRecipes,
             dislikedRecipes: dislikedRecipes,
         });
-        
+
         const recipeSnapshot = await recipeRef.get();
         const recipeData = recipeSnapshot.data();
         const likedBy = recipeData.likedBy || [];
@@ -469,7 +469,7 @@ exports.addLikeRecipe = onCall(async (req, res) => {
     }
 });
 
-exports.addDislikeRecipe = onCall(async (req, res) => {
+exports.addDislikeRecipe = onCall(async (req) => {
     const { id, uid } = req.data;
 
     logger.log("Attempting to dislike recipe with ID: " + id + " and user ID: " + uid);
@@ -479,9 +479,9 @@ exports.addDislikeRecipe = onCall(async (req, res) => {
     }
 
     try {
-            
+
         const recipeRef = db.doc("/Recipe/" + id);
-        
+
         const userQuery = db.collection("Users").where('uId', '==', uid).limit(1);
         const userSnapshot = await userQuery.get();
 
@@ -499,7 +499,7 @@ exports.addDislikeRecipe = onCall(async (req, res) => {
         if (!dislikedRecipes.includes(id)) {
             dislikedRecipes.push(id);
         }
-        
+
         if (likedRecipes.includes(id)) {
             likedRecipes.splice(likedRecipes.indexOf(id), 1);
         }
@@ -508,7 +508,7 @@ exports.addDislikeRecipe = onCall(async (req, res) => {
             dislikedRecipes: dislikedRecipes,
             likedRecipes: likedRecipes,
         });
-        
+
         const recipeSnapshot = await recipeRef.get();
         const recipeData = recipeSnapshot.data();
         const likedBy = recipeData.likedBy || [];
@@ -561,6 +561,95 @@ exports.getDbUser = onCall(async (req) => {
     }
 });
 
+exports.getDbUserRecipes = onCall(async (req) => {
+    const id = req.data.id;
+
+    if (!id) {
+        logger.log("Error: User ID not found");
+        return { success: false, message: "User ID not found" };
+    }
+
+    try {
+        const userQuery = db.doc('/Users/' + id);
+        const userSnapshot = await userQuery.get();
+
+        if (!userSnapshot.exists) {
+            logger.log("Error: No user found");
+            return { success: false, message: "No user found" };
+        }
+
+        const userData = userSnapshot.data();
+        const madeRecipesIds = userData.madeRecipes || [];
+        const likedRecipesIds = userData.likedRecipes || [];
+
+        const madeRecipes = [];
+        const likedRecipes = [];
+
+        for (const recipeId of madeRecipesIds) {
+            const recipeRef = db.doc('/Recipe/' + recipeId);
+            const recipeSnapshot = await recipeRef.get();
+
+            if (recipeSnapshot.exists) {
+                const recipeData = recipeSnapshot.data();
+                madeRecipes.push({
+                    id: recipeSnapshot.id,
+                    name: recipeData.name || "",
+                    likes: recipeData.likes || 0,
+                    preparationTime: recipeData.preparationTime || 0,
+                    cardImgReg: recipeData.cardImgReg || "",
+                });
+            } else {
+                logger.log(`Made recipe with ID ${recipeId} not found`);
+            }
+        }
+
+        for (const recipeId of likedRecipesIds) {
+            const recipeRef = db.doc('/Recipe/' + recipeId);
+            const recipeSnapshot = await recipeRef.get();
+
+            if (recipeSnapshot.exists) {
+                const recipeData = recipeSnapshot.data();
+
+                let author = null;
+                if (recipeData.authorRef) {
+                    logger.log("Author ref found");
+                    const aSnapshot = await recipeData.authorRef.get();
+                    if (aSnapshot.exists) {
+                        logger.log("Author found: ", aSnapshot.data());
+                        author = {
+                            id: aSnapshot.id,
+                            name: aSnapshot.data().name,
+                            pfpUrl: aSnapshot.data().pfpUrl,
+                        };
+                    } else {
+                        logger.log("Author not found: ", recipeData.authorRef);
+                        author = {
+                            id: null,
+                            name: "Deleted User",
+                        };
+                    }
+                }
+
+                likedRecipes.push({
+                    id: recipeSnapshot.id,
+                    name: recipeData.name || "",
+                    likes: recipeData.likes || 0,
+                    preparationTime: recipeData.preparationTime || 0,
+                    cardImgReg: recipeData.cardImgReg || "",
+                    author: author,
+                });
+            } else {
+                logger.log(`Liked recipe with ID ${recipeId} not found`);
+            }
+        }
+
+        return { success: true, madeRecipes: madeRecipes, likedRecipes: likedRecipes };
+    } catch (error) {
+        logger.error("Error fetching user recipes:", error);
+        return { success: false, message: "Error fetching user recipes" };
+    }
+});
+
 exports.verifyUser = onCall(async (req) => {
     const { token } = req.data;
 
@@ -576,7 +665,7 @@ exports.verifyUser = onCall(async (req) => {
     }
 });
 
-exports.createDbUser = onCall(async (req, res) => {
+exports.createDbUser = onCall(async (req) => {
     const { uName, pfpDownloadURL, uId } = req.data
     if (!uName || !pfpDownloadURL || !uId) {
         throw new Error("Name, pfp, or UID not found");
@@ -609,21 +698,21 @@ exports.createDbUser = onCall(async (req, res) => {
 
 exports.updateDbUser = onCall(async (req) => {
     const { uName, pfpDownloadURL, uId, } = req.data
-    if(req.auth.uid == uId){
-        try{
-            const toBeUpdated = await db.collection('Users').where("uId","==",uId).limit(1).get();
+    if (req.auth.uid == uId) {
+        try {
+            const toBeUpdated = await db.collection('Users').where("uId", "==", uId).limit(1).get();
             const upUser = toBeUpdated.docs[0];
             const complete = await (db.collection('Users').doc(upUser.id).update({
                 name: uName,
                 pfpUrl: pfpDownloadURL
-                })
+            })
             )
-        }catch(error){
+        } catch (error) {
             logger.error(error);
-            return{success: false,message: "Could not update user:"+error}
+            return { success: false, message: "Could not update user:" + error }
         }
     }
-    
+
     if (complete) {
         return { success: true, message: "User updated" }
     }
@@ -638,29 +727,29 @@ exports.deleteDbUser = onCall(async (req) => {
     if (!uId) {
         throw new Error("UID not found")
     }
-    if(req.auth.uid == uId){
-        try{
-            const toBeDeleted = await db.collection('Users').where("uId","==",uId).limit(1).get();
+    if (req.auth.uid == uId) {
+        try {
+            const toBeDeleted = await db.collection('Users').where("uId", "==", uId).limit(1).get();
             const rmUser = toBeDeleted.docs[0];
             const dbDelComplete = await db.collection('Users').doc(rmUser.id).delete();
-            if(dbDelComplete){
+            if (dbDelComplete) {
                 logger.info("Deleted user from database");
 
             }
             auth.deleteUser(uId);
-            const deletedUserRecipes = await db.collection('Recipe').where("authorUid","==",uId).get();
-            deletedUserRecipes.docs.forEach((thisDoc)=>{
+            const deletedUserRecipes = await db.collection('Recipe').where("authorUid", "==", uId).get();
+            deletedUserRecipes.docs.forEach((thisDoc) => {
                 thisDoc.ref.update({
-                    uId:"",
-                    authorRef:"/Users/aLsEiyAU2DPPajSJdZ0f"
+                    uId: "",
+                    authorRef: "/Users/aLsEiyAU2DPPajSJdZ0f"
                 })
-        
+
             })
         }
-        catch(error){
+        catch (error) {
             logger.error(error);
             console.log();
-        }  
+        }
     }
 
     if (complete) {

@@ -24,6 +24,7 @@ export default {
 .header {
     background: #2242cf;
     background: linear-gradient(to right, #2233cf 0%, #CF2AA6 100%);
+    background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }

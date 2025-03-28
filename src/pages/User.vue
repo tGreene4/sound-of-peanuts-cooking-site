@@ -18,9 +18,41 @@
         }
         
     }
-    
+            
+    const liked = ref([]);
+    const userRecipes = ref([]);
+    const likedLoading = ref(true);
+    const userRecipeLoading = ref(true);
+
+    const getUserRecipe = async () => {
+      console.log("Calling getDbUserRecipes");
+      const getDbUserRecipes = httpsCallable(functions, 'getDbUserRecipes');
+      try {
+        const userId = route.params.id;
+        console.log("Fetching recipes for user ID: ", userId);
+        const result = await getDbUserRecipes({ id: userId });
+        console.log("Response from getDbUserRecipes:", result.data);
+
+        if (result.data.success) {
+          liked.value = result.data.likedRecipes || [];
+          userRecipes.value = result.data.madeRecipes || [];
+          
+          console.log("Liked Recipes:", liked.value);
+          console.log("User Recipes:", userRecipes.value);
+        } else {
+          console.warn("Error fetching user recipes:", result.data.message);
+        }
+      } catch (error) {
+        console.error("Error calling getDbUserRecipes:", error);
+      } finally {
+        likedLoading.value = false;
+        userRecipeLoading.value = false;
+      }
+    };
+
     onMounted(()=>{
         getThisUser();
+        getUserRecipe();
     })
 
     var file;
@@ -31,12 +63,7 @@
       pfpRef.value = URL.createObjectURL(file);
     };
     
-    const liked = ref([]);
-    const userRecipes = ref([]);
-    const likedLoading = ref(true);
-    const userRecipeLoading = ref(true);
-    const nameLabel = ref("Your ");
-    const ownPage = ref(true);
+    const ownPage = ref(false);
 </script>
 
 <template>
