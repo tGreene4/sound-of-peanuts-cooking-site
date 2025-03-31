@@ -1,9 +1,10 @@
 <script setup>
 import { onMounted, ref } from 'vue';
-import { functions } from '../api/firebase'
+import {auth, functions } from '../api/firebase'
 import { httpsCallable } from 'firebase/functions';
 import { useRoute, useRouter } from 'vue-router';
 import Card from "@/components/Card.vue";
+import placeholderImg from "@/assets/images/coconut.png";
 
 const router = useRouter();
 const route = useRoute();
@@ -55,10 +56,34 @@ const getThisUser = async () => {
     userLoading.value = false;
   }
 };
+    function userCheck() {
+      if (auth.currentUser != null) {
+        console.log(route.params.id + " and " + auth.currentUser);
+        //Doesn't work very well, I think auth is returning the Uid while route.params is returning the docid
+        if(auth.currentUser.uid == route.params.id){
+          console.log("This User owns this user page");
+          ownPage.value = true;
+          nameLabel.value = "Your";
+        }
+        else{
+          console.log("This User doesn't own this user page");
+          ownPage.value = false;
+          //Change this to the User Page Owner's Name
+          nameLabel.value = userName.value + "'s";
+        }
+      }
+      else{
+        console.log("No User logged in");
+        ownPage.value = false;
+        //Change this to the User Page Owner's Name
+        nameLabel.value = userName.value + "'s";
+      }
+    }
 
-onMounted(() => {
-  getThisUser();
-})
+    onMounted(()=>{
+        getThisUser();
+        userCheck();
+    })
 
 var file;
 const handleFileUpload = function (event) {
@@ -73,6 +98,7 @@ const handleFileUpload = function (event) {
 
 <template>
   <div class="main container-fluid align-self-center min-vh-100">
+
 
     <div v-if="userLoading" class="d-flex justify-content-center align-items-center min-vh-100">
       <div class="spinner-border" role="status">
@@ -114,6 +140,7 @@ const handleFileUpload = function (event) {
                       <div class="input-group-append">
                         <button style="border-radius: 0;">Save profile picture</button>
                       </div>
+
                     </div>
                   </div>
                 </div>
@@ -155,6 +182,7 @@ const handleFileUpload = function (event) {
               <br>
               <div v-if="userRecipeLoading" class="spinner-border" role="status">
                 <span class="visually-hidden">Loading...</span>
+
               </div>
             </div>
 
@@ -173,13 +201,35 @@ const handleFileUpload = function (event) {
                       :thisImgStorageSrc="item.cardImgReg" />
                   </div>
                 </div>
-                <div v-if="(liked == '') & (!likedLoading)" id="noRecWarning">
-                  No recipes found
-                </div>
-                <br>
-                <br>
-                <div v-if="likedLoading" class="spinner-border" role="status">
-                  <span class="visually-hidden">Loading...</span>
+
+              </div>
+            </div>
+            <div v-if="(userRecipes == '') & (!userRecipeLoading)" id="noRecWarning">
+              No recipes found
+            </div>
+            <br>
+            <div v-if="userRecipeLoading" class="spinner-border" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+
+          <div class="row justify-content-end">
+            <!--Connect this to delete User-->
+            <button v-if="ownPage" style="width: 10%;min-width: 200px">Delete User Profile</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane align-self-center" role="tabpanel" id="likedContent">
+        <div class="container-fluid align-self-center">
+          <div class="row justify-content-center">
+            <h1 class="sectionHeader" style="top:5px">{{ nameLabel }} Liked Recipes</h1>
+            <div class="row justify-content-center" id="moreField">
+              <div v-if="!likedLoading" class="col-auto" id="" v-for="item in liked">
+                <div class="cardContainer">
+                  <Card :thisRecipeId="item.id" :thisRecipeName="item.name" :thisAuthor="item.author"
+                    :thisCookTime="item.preparationTime" :thisLikes="item.likes" :thisImgStorageSrc="item.cardImgReg" />
+
                 </div>
               </div>
             </div>
@@ -222,6 +272,7 @@ const handleFileUpload = function (event) {
   max-width: 30rem;
   object-fit: cover;
 }
+
 
 .nav-link {
   background: darkgray;

@@ -3,6 +3,7 @@ import { functions, auth } from '../api/firebase';
 import { httpsCallable } from 'firebase/functions';
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import placeholderImg from '@/assets/images/coconut.png';
+import {useRouter} from "vue-router";
 
 export default {
   data() {
@@ -14,6 +15,8 @@ export default {
       time: '',
       downloadURL: '',
       placeholderImg,
+      loading: false,
+      router: useRouter(),
     };
   },
   mounted() {
@@ -66,6 +69,7 @@ export default {
       }
     },
     async postRecipe() {
+      this.loading = true;
       if (!this.name || !this.time || !this.steps.length || !this.ingredients.length || !this.equipment.length || !this.downloadURL) {
         console.error("Error: Missing required fields");
         alert("Please fill in all fields before publishing the recipe.");
@@ -95,11 +99,15 @@ export default {
 
         if (result.data.success) {
           console.log("Recipe posted successfully", result.data.message);
+          console.log("Routing to recipe ",result.data.recipeId)
+          await this.router.push("/recipe/"+result.data.recipeId);
         } else {
           console.warn("Recipes failed to post", result.data.message);
         }
       } catch (error) {
         console.error("Error calling postDbRecipe:", error);
+      } finally{
+        this.loading=false;
       }
     },
   },
@@ -108,7 +116,10 @@ export default {
 
 <template>
   <div class="main container-fluid align-self-center min-vh-100">
-    <div class="flex-d flex-column align-self-center" id="flexWrapper">
+    <div v-if="false" class="spinner-border" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <div v-else class="flex-d flex-column align-self-center" id="flexWrapper">
       <form class="align-self-center" id="content">
         <div class="container-fluid align-self-center">
           <div class="row justify-content-center">
@@ -258,6 +269,11 @@ img {
   background: linear-gradient(to left, rgba(255, 121, 0, 0%), rgba(255, 121, 0, 100%));
   border-radius: 2px;
   width: 100%;
+}
+
+button:hover{
+  background: rgb(0, 0, 0);
+  color: white;
 }
 
 </style>
