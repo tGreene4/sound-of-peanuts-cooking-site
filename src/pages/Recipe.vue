@@ -5,10 +5,13 @@ import { ref, onMounted, computed } from 'vue';
 
 import IngredientList from '@/components/IngredientList.vue';
 import NotFound from '@/components/NotFound.vue';
+import {useRouter} from "vue-router";
 
+const router = useRouter();
 const recipeNotFound = ref(false);
 const loading = ref(true);
 const readableDate = ref('');
+const ownsRecipe = ref(false);
 
 const getHelloWorld = async () => { //remove before final deployment
   console.log("Calling helloWorld");
@@ -177,7 +180,7 @@ Add a script to +1 or -1 like number locally
               </div>
             </div>
               <div class="d-flex gap-2 mt-auto justify-content-end border-top py-3">
-                
+                <button v-if="ownsRecipe" class="btn btn-outline-dark" @click="router.push('/updaterecipe/'+routeProp.id)">Edit</button>
                 <button class="btn btn-outline-success" @click="likeRecipe">Like {{ recipe.likes }}</button>
                 <button class="btn btn-outline-danger" @click="dislikeRecipe">Dislike {{ recipe.dislikes }}</button>
                <!---<button class="btn btn-secondary" @click="getHelloWorld">Hello World</button> --> 
