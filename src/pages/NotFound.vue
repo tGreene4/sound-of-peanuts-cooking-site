@@ -16,9 +16,14 @@ export default {
 </script>
 
 <style scoped>
-.btn {
-    font-size: 1rem;
-    padding: 0.5rem 1rem;
+
+button {
+  background: rgb(240, 240, 240);
+  border: black 2px solid;
+  border-radius: 15px;
+  Box-shadow: 3px 3px 5px black;
+  max-width: 20rem;
+  min-width: 5rem;
 }
 
 .header {

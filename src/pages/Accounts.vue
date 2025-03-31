@@ -1,10 +1,11 @@
 <script setup>
 import { onMounted, ref } from 'vue'
-import { auth, functions,storage } from '../api/firebase'
+import { auth, functions, storage } from '../api/firebase'
 import { createUserWithEmailAndPassword, deleteUser, onAuthStateChanged, signInWithEmailAndPassword, updateCurrentUser, updateProfile } from 'firebase/auth';
 import { httpsCallable } from 'firebase/functions';
-import { ref as storageRef ,uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { useRouter } from 'vue-router';
+import placeholderPFP from '../assets/images/User icon.png'
 
 const router = useRouter();
 console.log(router);
@@ -22,9 +23,7 @@ const login = {
     password: ref("")
 }
 
-var file;
-
-
+var file = placeholderPFP;
 var pfpRef = ref("https://firebasestorage.googleapis.com/v0/b/sound-of-peanuts-cooking-site.appspot.com/o/User%20icon%20Clear.png?alt=media&token=02ef6aea-e4bd-4c39-a65a-f00acea43188")
 
 function authCheck() {
@@ -33,27 +32,40 @@ function authCheck() {
     if (auth.currentUser != null) {
         console.log("User verified")
         const id = auth.currentUser.uid;
-        const getDocIdFromUserId = httpsCallable(functions,"getUDocIdFromUId");
-        const getDocId = async()=>{
-            console.log("Getting doc ID from user ID "+id)
-            const res = await getDocIdFromUserId({uId:id});
+        const getDocIdFromUserId = httpsCallable(functions, "getUDocIdFromUId");
+        const getDocId = async () => {
+            console.log("Getting doc ID from user ID " + id)
+            const res = await getDocIdFromUserId({ uId: id });
             console.log(res.data)
-            if(res.data.uDocId){
+            if (res.data.uDocId) {
                 router.push("/user/" + res.data.uDocId);
-            }else{
+            } else {
                 console.log("Could not get doc ID")
             }
         }
         getDocId()
     }
-    
+
 }
 
 auth.authStateReady().then(authCheck)
 
+// async handleFileUpload(event) {
+//       try {
+//         const storage = getStorage();
+//         const file = event.target.files[0];
+//         console.log(downloadURL);
+//         this.downloadURL = downloadURL;
+//         const imageElement = this.$refs.image;
+//         if (imageElement) {
+//           imageElement.setAttribute("src", downloadURL);
+//         }
+//       } catch (error) {
+//         console.error("Error uploading image:", error);
+//       }
+//     },
 
-
-const handleFileUpload = function(event){
+const handleFileUpload = function (event) {
     file = event.target.files[0];
     pfpRef.value = URL.createObjectURL(file);
 };
@@ -83,26 +95,26 @@ const userCreate = async () => {
             return;
         }
         console.log(createSuccess);
-    }catch(error){
-        console.log("Failed to create user:"+error.message);
+    } catch (error) {
+        console.log("Failed to create user:" + error.message);
     }
 
     const signUpUser = auth.currentUser;
     console.log(signUpUser);
     try {
         const storageReference = storageRef(storage, 'images/' + signUpUser.uid);
-        const snapshot = await uploadBytes(storageReference, file); 
-        const url = await getDownloadURL(snapshot.ref); 
+        const snapshot = await uploadBytes(storageReference, file);
+        const url = await getDownloadURL(snapshot.ref);
         console.log("Image uploaded successfully. Download URL:", url);
         signUp.downloadURL = url;
-        updateProfile(signUpUser,{photoURL:url})
+        updateProfile(signUpUser, { photoURL: url })
     } catch (error) {
         console.error("Error uploading image:", error);
         deleteUser(signUpUser);
 
     }
-    
-    try{
+
+    try {
         const createUser = httpsCallable(functions, "createDbUser");
         const result = await createUser({
             uName: signUp.username.value,
@@ -178,7 +190,7 @@ function userLogin(event) {
                             id="pfpPreviewImg">
                         <input type="file" :value="null" class="form-control" id="pfpInput"
                             accept="image/png,image/jpeg" multiple @change="(event) => handleFileUpload(event)">
-              <br>
+                        <br>
 
                         <button class="form-control" @click="userCreate" type="button">Sign Up</button>
                     </form>
