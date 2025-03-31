@@ -7,7 +7,15 @@
     import placeholderPfp from "@/assets/images/User icon.png";
 
     const router = useRouter();
-    
+
+    const liked = ref([]);
+    const userRecipes = ref([]);
+    const likedLoading = ref(true);
+    const userRecipeLoading = ref(true);
+
+    const nameLabel = ref("Your");
+    const ownPage = ref(false);
+
     const route = useRoute();
     const getThisUser = async()=>{
         const dbUserRequest = httpsCallable(functions,'getDbUser');
@@ -18,11 +26,6 @@
         }
         
     }
-            
-    const liked = ref([]);
-    const userRecipes = ref([]);
-    const likedLoading = ref(true);
-    const userRecipeLoading = ref(true);
 
     const getUserRecipe = async () => {
       console.log("Calling getDbUserRecipes");
@@ -36,7 +39,7 @@
         if (result.data.success) {
           liked.value = result.data.likedRecipes || [];
           userRecipes.value = result.data.madeRecipes || [];
-          
+
           console.log("Liked Recipes:", liked.value);
           console.log("User Recipes:", userRecipes.value);
         } else {
@@ -62,12 +65,14 @@
       file = event.target.files[0];
       pfpRef.value = URL.createObjectURL(file);
     };
-    
-    const ownPage = ref(false);
+
+
+
 </script>
 
 <template>
   <div class="main container-fluid align-self-center min-vh-100">
+
     <ul class="nav nav-tabs" style="justify-content: center;">
       <li class="nav-item">
         <button class="nav-link active" id="userTab" data-bs-toggle="tab"
@@ -79,41 +84,54 @@
                 role="tab" aria-controls="like tab" aria-selected="false">{{nameLabel}} Liked Recipes</button>
       </li>
     </ul>
-    <div class="flex-d flex-column tab-content align-self-center" id="flexWrapper">
 
+    <div class="flex-d flex-column tab-content align-self-center" id="flexWrapper">
       <div class="tab-pane show active align-self-center"  role="tabpanel" id="userContent">
         <div class="container-fluid align-self-center">
           <div class="row justify-content-center">
             <div class="col-xxl-6 col-xl-12 form-group align-content-start">
               <h1>Name goes here</h1>
               <div class="row justify-content-center">
-                <img :src="pfpRef" id="Avatar">
+                <img :src="pfpRef" id="Avatar" alt="">
+                <div v-if="ownPage">
+                  <a> Profile Picture Upload</a><br>
+                  <div class="input-group">
+                    <input type="file" :value="null" class="form-control" id="pfpInput" style="width:2rem"
+                           accept="image/png,image/jpeg" multiple @change="(event) => handleFileUpload(event)">
+                    <div class="input-group-append">
+                      <button style="border-radius: 0;">Save profile picture</button>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div v-if="ownPage">
-                <a> Profile Picture Upload</a><br>
-                <input type="file" :value="null" class="form-control" id="pfpInput" title="iajf"
-                       accept="image/png,image/jpeg" multiple @change="(event) => handleFileUpload(event)">
-              </div>
-              </div>
+
+            </div>
+
             <div class="col-xxl-6 col-xl-12 form-group">
               <h3>{{nameLabel}} Bio</h3>
-              <div v-if="ownPage" style="margin: 0;padding:0; height:80%;width: 80%;">
-                <textarea id="bio">"User Bio"</textarea>
-                <button> Upload Bio</button>
+              <div v-if="ownPage" style="height:100%;width: 100%;">
+                <div class="row justify-content-center" style="height: 60%; min-height: 200px; width:100%">
+                  <textarea id="bio" style="border: dashed">"User Bio"</textarea>
+                  <button style="width: 25%"> Upload Bio</button>
+                </div>
               </div>
               <div v-else id="bio">
                 "Bio Goes Here"
               </div>
             </div>
-            <h1 class="sectionHeader">{{nameLabel}} Recipes</h1>
-            <div class="row justify-content-center" id="likeField">
+
+          </div>
+            <div class="row justify-content-center" style="margin-top:50px">
+                <h1 class="sectionHeader">{{nameLabel}} Recipes</h1>
               <div class="col-xxl-12">
-                <div v-if="!userRecipeLoading" class="col-auto" id="" v-for="item in userRecipes">
-                  <div class="cardContainer">
-                    <Card :thisRecipeId="item.id" :thisRecipeName="item.name" :thisAuthor="item.author"
-                          :thisCookTime="item.preparationTime" :thisLikes="item.likes" :thisImgStorageSrc="item.cardImgReg" />
+                <div class = "row justify-content-center">
+                  <div v-if="!userRecipeLoading" class="col-auto" id="" v-for="item in userRecipes">
+                    <div class="cardContainer">
+                      <button v-if="ownPage" @click="router.push('/updaterecipe/' + item.id)" style="border-radius: 0"> Edit</button>
+                      <Card :thisRecipeId="item.id" :thisRecipeName="item.name" :thisAuthor="item.author"
+                            :thisCookTime="item.preparationTime" :thisLikes="item.likes" :thisImgStorageSrc="item.cardImgReg" />
+                    </div>
                   </div>
-                  <button v-if="ownPage" @click="router.push('/updaterecipe/' + item.id)";> Edit</button>
                 </div>
               </div>
               <div v-if="(userRecipes == '') & (!userRecipeLoading)" id="noRecWarning">
@@ -125,7 +143,6 @@
               </div>
             </div>
           </div>
-        </div>
       </div>
 
         <div class="tab-pane align-self-center" role="tabpanel" id="likedContent">
@@ -201,14 +218,13 @@
 }
 
 #bio{
-  height: 80%;
-  width: 80%;
-  border: 2px solid black;
+  height: 100%;
+  width: 100%;
+  border: 4px solid black;
   border-radius: 20px;
-  margin-bottom: 15px;
-  margin-left: 40px;
   background: whitesmoke;
-  padding: 15px;
+  padding: 20px;
+  margin-bottom: 10px;
 
 }
 .sectionHeader {
@@ -217,7 +233,6 @@
   border-radius: 5px;
   box-shadow: 5px 5px 5px black;
   position: relative;
-  top: 20px;
   width: 25%;
   min-width: 400px;
   text-align: center;
@@ -226,7 +241,24 @@
 
 #pfpInput{
   width: 25%;
-  min-width: 400px;
+  min-width: 100px;
+  max-width: 300px;
+}
+
+button {
+  background: rgb(240, 240, 240);
+  border: black 2px solid;
+  border-radius: 15px;
+  Box-shadow: 3px 3px 5px black;
+  max-width: 20rem;
+  min-width:5rem;
+}
+
+.cardContainer {
+  padding-top: 5px;
+  padding-bottom: 5px;
+  position: relative;
+  align-self: center;
 }
 
 
