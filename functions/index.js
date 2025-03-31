@@ -543,25 +543,6 @@ exports.addDislikeRecipe = onCall(async (req) => {
 });
 
 exports.getDbUser = onCall(async (req) => {
-    const { uId } = req.data
-    if (!uId) {
-        logger.log("Error: uId not found or invalid ", uId);
-        return { success: false, message: "uId not found or invalid" }
-    }
-
-    const snapshot = await db.collection('Users').where('uId', '==', uId).limit(1).get();
-
-    if (snapshot.empty) {
-        logger.log("Error: no user found with the uId", uId);
-        return { success: false, message: 'Error:no user with this UID' }
-
-    } else {
-        return { success: true, user: snapshot.data() }
-
-    }
-});
-
-exports.getDbUserRecipes = onCall(async (req) => {
     const id = req.data.id;
 
     if (!id) {
@@ -582,6 +563,9 @@ exports.getDbUserRecipes = onCall(async (req) => {
         const madeRecipesIds = userData.madeRecipes || [];
         const likedRecipesIds = userData.likedRecipes || [];
 
+        const name = userData.name;
+        const pfpUrl = userData.pfpUrl;
+        const biography = userData.biography;
         const madeRecipes = [];
         const likedRecipes = [];
 
@@ -638,12 +622,13 @@ exports.getDbUserRecipes = onCall(async (req) => {
                     cardImgReg: recipeData.cardImgReg || "",
                     author: author,
                 });
+                
             } else {
                 logger.log(`Liked recipe with ID ${recipeId} not found`);
             }
         }
 
-        return { success: true, madeRecipes: madeRecipes, likedRecipes: likedRecipes };
+        return { success: true, madeRecipes: madeRecipes, likedRecipes: likedRecipes , name:name, pfpUrl:pfpUrl, biography:biography};
     } catch (error) {
         logger.error("Error fetching user recipes:", error);
         return { success: false, message: "Error fetching user recipes" };
