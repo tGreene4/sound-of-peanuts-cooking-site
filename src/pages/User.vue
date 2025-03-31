@@ -15,7 +15,7 @@ const pfpRef = ref("https://firebasestorage.googleapis.com/v0/b/sound-of-peanuts
 const likedLoading = ref(true);
 const userRecipeLoading = ref(true);
 
-const nameLabel = ref("Your");
+const nameLabel = ref(userName);
 const ownPage = ref(false);
 
 const route = useRoute();
@@ -24,9 +24,9 @@ const getThisUser = async () => {
   console.log("Calling getDbUser");
   const dbUserRequest = httpsCallable(functions, 'getDbUser');
   try {
-    const userId = route.params.id;
-    console.log("Fetching recipes for user ID: ", userId);
-    const result = await dbUserRequest({ id: userId });
+    const userDocId = route.params.id;
+    console.log("Fetching recipes for user ID: ", userDocId);
+    const result = await dbUserRequest({ id: userDocId });
     console.log("Response from getDbUser:", result.data);
 
     if (result.data.success) {
@@ -35,6 +35,7 @@ const getThisUser = async () => {
       pfpRef.value = result.data.pfpUrl;
       liked.value = result.data.likedRecipes || [];
       userRecipes.value = result.data.madeRecipes || [];
+      ownPage.value = result.data.ownPage || false;
 
       console.log("Liked Recipes:", liked.value);
       console.log("User Recipes:", userRecipes.value);
@@ -85,7 +86,7 @@ const handleFileUpload = function (event) {
         <div class="container-fluid align-self-center">
           <div class="row justify-content-center">
             <div class="col-xxl-6 col-xl-12 form-group align-content-start">
-              <h1>Name goes here</h1>
+              <h1>{{ userName }}</h1>
               <div class="row justify-content-center">
                 <img :src="pfpRef" id="Avatar" alt="">
                 <div v-if="ownPage">
@@ -114,7 +115,6 @@ const handleFileUpload = function (event) {
                 "Bio Goes Here"
               </div>
             </div>
-
           </div>
           <div class="row justify-content-center" style="margin-top:50px">
             <h1 class="sectionHeader">{{ nameLabel }} Recipes</h1>

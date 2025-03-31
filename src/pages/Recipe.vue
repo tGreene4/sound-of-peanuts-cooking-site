@@ -2,8 +2,6 @@
 import { functions, auth } from '../api/firebase';
 import { httpsCallable } from 'firebase/functions';
 import { ref, onMounted, computed } from 'vue';
-
-import IngredientList from '@/components/IngredientList.vue';
 import NotFound from '@/components/NotFound.vue';
 
 const recipeNotFound = ref(false);

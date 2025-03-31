@@ -5,6 +5,7 @@ import { createUserWithEmailAndPassword, deleteUser, onAuthStateChanged, signInW
 import { httpsCallable } from 'firebase/functions';
 import { ref as storageRef ,uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { useRouter } from 'vue-router';
+import placeholderPfp from "@/assets/images/User icon.png";
 
 const router = useRouter();
 console.log(router);
@@ -22,7 +23,7 @@ const login = {
     password: ref("")
 }
 
-var file;
+var file = placeholderPfp;
 
 
 var pfpRef = ref("https://firebasestorage.googleapis.com/v0/b/sound-of-peanuts-cooking-site.appspot.com/o/User%20icon%20Clear.png?alt=media&token=02ef6aea-e4bd-4c39-a65a-f00acea43188")
@@ -99,14 +100,13 @@ const userCreate = async () => {
     } catch (error) {
         console.error("Error uploading image:", error);
         deleteUser(signUpUser);
-
     }
     
     try{
         const createUser = httpsCallable(functions, "createDbUser");
         const result = await createUser({
             uName: signUp.username.value,
-            pfpFile: signUp.downloadURL,
+            pfpDowloadURL: signUp.downloadURL,
             uId: signUpUser.uid
         });
 
