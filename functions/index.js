@@ -96,7 +96,7 @@ exports.getDbRecipesByField = onCall(async (req) => {
             return { success: true, recipeList: recipes };
         }
     } catch (error) {
-        logger.error("Error fetching recipes by " + req.data.queryType  + ": ", error);
+        logger.error("Error fetching recipes by " + req.data.queryType + ": ", error);
         return { success: false, message: "Error fetching recipes" };
     }
 });
@@ -590,7 +590,6 @@ exports.getDbUser = onCall(async (req) => {
         for (const recipeId of likedRecipesIds) {
             const recipeRef = db.doc('/Recipe/' + recipeId);
             const recipeSnapshot = await recipeRef.get();
-
             if (recipeSnapshot.exists) {
                 const recipeData = recipeSnapshot.data();
 
@@ -622,13 +621,13 @@ exports.getDbUser = onCall(async (req) => {
                     cardImgReg: recipeData.cardImgReg || "",
                     author: author,
                 });
-                
+
             } else {
                 logger.log(`Liked recipe with ID ${recipeId} not found`);
             }
         }
 
-        return { success: true, madeRecipes: madeRecipes, likedRecipes: likedRecipes , name:name, pfpUrl:pfpUrl, biography:biography};
+        return { success: true, madeRecipes: madeRecipes, likedRecipes: likedRecipes, name: name, pfpUrl: pfpUrl, biography: biography };
     } catch (error) {
         logger.error("Error fetching user recipes:", error);
         return { success: false, message: "Error fetching user recipes" };
@@ -651,47 +650,52 @@ exports.verifyUser = onCall(async (req) => {
 });
 
 exports.createDbUser = onCall(async (req) => {
-    const { uName, pfpDownloadURL, uId } = req.data
-    if (!uName || !pfpDownloadURL || !uId) {
+    const { uName, pfpFile, uId } = req.data
+    logger.log(req.data)
+    if (!uName || !pfpFile || !uId) {
         throw new Error("Name, pfp, or UID not found");
     }
 
-    logger.log("Attempting to add user : " + uName + " with uId: " + uId + " and pfp url: " + pfpDownloadURL);
+    logger.log("Attempting to add user : " + uName + " with uId: " + uId + " and pfp url: " + pfpFile);
 
     let madeRecipes = []
     let likedRecipes = []
     let dislikedRecipes = []
-    const complete = await db.collection('Users').add({
-        name: uName,
-        pfpUrl: pfpDownloadURL,
-        uId: uId,
-        biography: "",
-        madeRecipes,
-        likedRecipes,
-        dislikedRecipes
-    })
+    try {
+        const complete = await db.collection('Users').add({
+            name: uName,
+            pfpUrl: pfpFile,
+            uId: uId,
+            biography: "",
+            madeRecipes,
+            likedRecipes,
+            dislikedRecipes
+        })
 
-    if (complete) {
-        logger.log("User successfully added")
-        return { success: true, message: "User added" }
+        if (complete) {
+            logger.log("User successfully added")
+            return { success: true, message: "User added" }
+        }
+        else {
+            logger.log("User failed to be added")
+            return { success: false, message: "Error: could not create user" }
+        }
+    } catch (error) {
+        logger.log("Error: ", error);
+        return { success: false, message: "Error: ", error }
     }
-    else {
-        logger.log("User failed to be added")
-        return { success: false, message: "Error: could not create user" }
-    }
+
 });
 
 exports.updateDbUser = onCall(async (req) => {
-    const { uName, pfpDownloadURL, uId, } = req.data
-    if (req.auth.uid == uId) {
+    const { uName, pfpDownloadURL, uBiography, uDocId, } = req.data
+    const dbUser = await db.collection('Users').doc(uDocId).get();
+    if (req.auth.uid == dbUser.data.uId) {
         try {
-            const toBeUpdated = await db.collection('Users').where("uId", "==", uId).limit(1).get();
-            const upUser = toBeUpdated.docs[0];
-            const complete = await (db.collection('Users').doc(upUser.id).update({
+            const complete = await dbUser.ref.update({
                 name: uName,
                 pfpUrl: pfpDownloadURL
             })
-            )
         } catch (error) {
             logger.error(error);
             return { success: false, message: "Could not update user:" + error }
@@ -707,19 +711,19 @@ exports.updateDbUser = onCall(async (req) => {
 });
 
 exports.deleteDbUser = onCall(async (req) => {
-    const { uId } = req.data
+    const { uDocId } = req.data;
     var complete = false;
-    if (!uId) {
-        throw new Error("UID not found")
+    if (!uDocId) {
+        throw new Error("UDocID not found");
     }
+
+    const dbUser = await db.collection('Users').doc(uDocId).get();
+    const uId = dbUser.data.uId;
     if (req.auth.uid == uId) {
         try {
-            const toBeDeleted = await db.collection('Users').where("uId", "==", uId).limit(1).get();
-            const rmUser = toBeDeleted.docs[0];
-            const dbDelComplete = await db.collection('Users').doc(rmUser.id).delete();
+            const dbDelComplete = await dbUser.ref.delete();
             if (dbDelComplete) {
                 logger.info("Deleted user from database");
-
             }
             auth.deleteUser(uId);
             const deletedUserRecipes = await db.collection('Recipe').where("authorUid", "==", uId).get();
@@ -736,7 +740,6 @@ exports.deleteDbUser = onCall(async (req) => {
             console.log();
         }
     }
-
     if (complete) {
         return { success: true, message: "User deleted" }
     }
@@ -744,3 +747,26 @@ exports.deleteDbUser = onCall(async (req) => {
         return { success: false, message: "Error: could not delete user" }
     }
 });
+
+exports.getUDocIdFromUId = onCall(async (req) => {
+
+    logger.info("Getting user ID: ");
+    const { uId } = req.data;
+    logger.info("Getting user with ID: " + uId);
+    try {
+        const uDoc = await db.collection('Users').where("uId", "==", uId).limit(1).get();
+        if (uDoc != null) {
+            logger.info("Returned uDocId", uDoc.docs[0].id)
+            return { success: true, uDocId: uDoc.docs[0].id }
+        } else {
+            logger.error("Could not get user doc ID")
+            return { success: false, message: "Could not get user doc ID" }
+        }
+    }
+    catch (error) {
+        logger.error("Error in getting doument from user ID:", error);
+    }
+
+
+
+})
