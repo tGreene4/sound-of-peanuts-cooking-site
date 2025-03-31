@@ -568,6 +568,11 @@ exports.getDbUser = onCall(async (req) => {
         const biography = userData.biography;
         const madeRecipes = [];
         const likedRecipes = [];
+        let ownPage = false;
+        if(req.auth){
+            ownPage = (req.auth.uid == userData.uId);
+        }
+        
 
         for (const recipeId of madeRecipesIds) {
             const recipeRef = db.doc('/Recipe/' + recipeId);
@@ -627,7 +632,8 @@ exports.getDbUser = onCall(async (req) => {
             }
         }
 
-        return { success: true, madeRecipes: madeRecipes, likedRecipes: likedRecipes, name: name, pfpUrl: pfpUrl, biography: biography };
+        return { success: true, madeRecipes: madeRecipes, likedRecipes: likedRecipes , name:name, pfpUrl:pfpUrl, biography:biography, ownPage:ownPage};
+
     } catch (error) {
         logger.error("Error fetching user recipes:", error);
         return { success: false, message: "Error fetching user recipes" };
@@ -693,6 +699,7 @@ exports.updateDbUser = onCall(async (req) => {
     if (req.auth.uid == dbUser.data.uId) {
         try {
             const complete = await dbUser.ref.update({
+                biography:uBiography,
                 name: uName,
                 pfpUrl: pfpDownloadURL
             })

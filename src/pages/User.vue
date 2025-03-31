@@ -18,7 +18,7 @@ const pfpRef = ref("https://firebasestorage.googleapis.com/v0/b/sound-of-peanuts
 const likedLoading = ref(true);
 const userRecipeLoading = ref(true);
 
-const nameLabel = ref("Your");
+const nameLabel = ref(userName);
 const ownPage = ref(false);
 
 const userLoading = ref(true);
@@ -28,9 +28,9 @@ const getThisUser = async () => {
   console.log("Calling getDbUser");
   const dbUserRequest = httpsCallable(functions, 'getDbUser');
   try {
-    const userId = route.params.id;
-    console.log("Fetching recipes for user ID: ", userId);
-    const result = await dbUserRequest({ id: userId });
+    const userDocId = route.params.id;
+    console.log("Fetching recipes for user ID: ", userDocId);
+    const result = await dbUserRequest({ id: userDocId });
     console.log("Response from getDbUser:", result.data);
 
     if (result.data.success) {
@@ -39,6 +39,7 @@ const getThisUser = async () => {
       pfpRef.value = result.data.pfpUrl;
       liked.value = result.data.likedRecipes || [];
       userRecipes.value = result.data.madeRecipes || [];
+      ownPage.value = result.data.ownPage || false;
 
       console.log("Liked Recipes:", liked.value);
       console.log("User Recipes:", userRecipes.value);
@@ -141,6 +142,21 @@ const handleFileUpload = function (event) {
                         <button style="border-radius: 0;">Save profile picture</button>
                       </div>
 
+      <div class="tab-pane show active align-self-center" role="tabpanel" id="userContent">
+        <div class="container-fluid align-self-center">
+          <div class="row justify-content-center">
+            <div class="col-xxl-6 col-xl-12 form-group align-content-start">
+              <h1>{{ userName }}</h1>
+              <div class="row justify-content-center">
+                <img :src="pfpRef" id="Avatar" alt="">
+                <div v-if="ownPage">
+                  <a> Profile Picture Upload</a><br>
+                  <div class="input-group">
+                    <input type="file" :value="null" class="form-control" id="pfpInput" style="width:2rem"
+                      accept="image/png,image/jpeg" multiple @change="(event) => handleFileUpload(event)">
+                    <div class="input-group-append">
+                      <button style="border-radius: 0;">Save profile picture</button>
+
                     </div>
                   </div>
                 </div>
@@ -185,7 +201,6 @@ const handleFileUpload = function (event) {
 
               </div>
             </div>
-
           </div>
         </div>
 
