@@ -1,7 +1,7 @@
 <script setup>
 import { functions, auth } from '../api/firebase';
 import { httpsCallable } from 'firebase/functions';
-import {useRouter} from "vue-router";
+import { useRouter } from "vue-router";
 import { ref, onMounted } from 'vue';
 
 const router = useRouter();
@@ -53,7 +53,7 @@ const getDbRecipeSingle = async () => {
         instructions: recipeData.instructions || "No instructions provided",
         likes: recipeData.likes || 0,
         dislikes: recipeData.dislikes || 0,
-        image: recipeData.image || '',
+        image: recipeData.cardImgReg || '',
         author: recipeData.authorRef || '',
         preparationTime: recipeData.preparationTime || 0,
         equipment: recipeData.equipment || '',
@@ -144,7 +144,7 @@ Add a script to +1 or -1 like number locally
           <div class="card-body d-flex flex-column h-100">
             <div class="row">
               <div class="col-md-6 d-flex justify-content-center align-items-center border">
-                <img class="img-fluid rounded" src="../assets/images/coconut.png" alt="Recipe default"
+                <img class="img-fluid rounded" :src="recipe.image || '../assets/images/coconut.png'" alt="Recipe Image"
                   style="max-width: 100%; height: auto;">
               </div>
               <div class="col-md-6">
@@ -155,7 +155,7 @@ Add a script to +1 or -1 like number locally
                 <div class="m-4">
                   <h5>Ingredients:</h5>
                   <p class="card-text">
-                    <li v-for="item in recipe.ingredients">
+                    <li v-for="item in recipe.ingredients" :key="item">
                       {{ item }}
                     </li>
                   </p>
@@ -165,22 +165,29 @@ Add a script to +1 or -1 like number locally
                   <h5>Instructions:</h5>
                   <p class="card-text">
                   <ol>
-                    <li v-for="item in recipe.instructions">
+                    <li v-for="item in recipe.instructions" :key="item">
                       {{ item }}
                     </li>
                   </ol>
                   </p>
                 </div>
-
+                <hr class="my-1" />
+                <div class="m-2">
+                  <h5>Equipment:</h5>
+                  <p class="card-text">
+                    <li v-for="item in recipe.equipment" :key="item">
+                      {{ item }}
+                    </li>
+                  </p>
+                </div>
               </div>
             </div>
-              <div class="d-flex gap-2 mt-auto justify-content-end border-top py-3">
-                <button v-if="ownsRecipe" class="btn btn-outline-dark" @click="router.push('/updaterecipe/'+routeProp.id)">Edit</button>
-                <button class="btn btn-outline-success" @click="likeRecipe">Like {{ recipe.likes }}</button>
-                <button class="btn btn-outline-danger" @click="dislikeRecipe">Dislike {{ recipe.dislikes }}</button>
-               <!---<button class="btn btn-secondary" @click="getHelloWorld">Hello World</button> --> 
-              </div>
-
+            <div class="d-flex gap-2 mt-auto justify-content-end border-top py-3">
+              <button v-if="ownsRecipe" class="btn btn-outline-dark"
+                @click="router.push('/updaterecipe/' + routeProp.id)">Edit</button>
+              <button class="btn btn-outline-success" @click="likeRecipe">Like {{ recipe.likes }}</button>
+              <button class="btn btn-outline-danger" @click="dislikeRecipe">Dislike {{ recipe.dislikes }}</button>
+            </div>
           </div>
         </div>
       </div>
