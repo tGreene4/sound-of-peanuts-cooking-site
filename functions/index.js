@@ -590,7 +590,6 @@ exports.getDbUser = onCall(async (req) => {
         for (const recipeId of likedRecipesIds) {
             const recipeRef = db.doc('/Recipe/' + recipeId);
             const recipeSnapshot = await recipeRef.get();
-
             if (recipeSnapshot.exists) {
                 const recipeData = recipeSnapshot.data();
 
@@ -682,17 +681,15 @@ exports.createDbUser = onCall(async (req) => {
 });
 
 exports.updateDbUser = onCall(async (req) => {
-    const { uName, pfpDownloadURL, uId, } = req.data
-    if (req.auth.uid == uId) {
-        try {
-            const toBeUpdated = await db.collection('Users').where("uId", "==", uId).limit(1).get();
-            const upUser = toBeUpdated.docs[0];
-            const complete = await (db.collection('Users').doc(upUser.id).update({
+    const { uName, pfpDownloadURL,uBiography, uDocId, } = req.data
+    const dbUser = await db.collection('Users').doc(uDocId).get();
+    if(req.auth.uid == dbUser.data.uId){
+        try{
+            const complete = await dbUser.ref.update({
                 name: uName,
                 pfpUrl: pfpDownloadURL
-            })
-            )
-        } catch (error) {
+                })
+        }catch(error){
             logger.error(error);
             return { success: false, message: "Could not update user:" + error }
         }
@@ -707,19 +704,19 @@ exports.updateDbUser = onCall(async (req) => {
 });
 
 exports.deleteDbUser = onCall(async (req) => {
-    const { uId } = req.data
+    const { uDocId } = req.data;
     var complete = false;
-    if (!uId) {
-        throw new Error("UID not found")
+    if (!uDocId) {
+        throw new Error("UDocID not found");
     }
-    if (req.auth.uid == uId) {
-        try {
-            const toBeDeleted = await db.collection('Users').where("uId", "==", uId).limit(1).get();
-            const rmUser = toBeDeleted.docs[0];
-            const dbDelComplete = await db.collection('Users').doc(rmUser.id).delete();
-            if (dbDelComplete) {
-                logger.info("Deleted user from database");
 
+    const dbUser = await db.collection('Users').doc(uDocId).get();
+    const uId  = dbUser.data.uId;
+    if(req.auth.uid == uId){
+        try{
+            const dbDelComplete = await dbUser.ref.delete();
+            if(dbDelComplete){
+                logger.info("Deleted user from database");
             }
             auth.deleteUser(uId);
             const deletedUserRecipes = await db.collection('Recipe').where("authorUid", "==", uId).get();
@@ -736,7 +733,6 @@ exports.deleteDbUser = onCall(async (req) => {
             console.log();
         }
     }
-
     if (complete) {
         return { success: true, message: "User deleted" }
     }
@@ -744,3 +740,26 @@ exports.deleteDbUser = onCall(async (req) => {
         return { success: false, message: "Error: could not delete user" }
     }
 });
+
+exports.getUDocIdFromUId = onCall(async(req)=>{
+    
+    logger.info("Getting user ID: ");
+    const {uId} = req.data;
+    logger.info("Getting user with ID: "+uId);
+    try{
+        const uDoc = await db.collection('Users').where("uId","==",uId).limit(1).get();
+        if(uDoc!=null){
+            logger.info("Returned uDocId", uDoc.docs[0].id)
+            return{success:true,uDocId:uDoc.docs[0].id}
+        }else{
+            logger.error("Could not get user doc ID")
+            return{success:false,message:"Could not get user doc ID"}
+        }
+    }
+    catch(error){
+        logger.error("Error in getting doument from user ID:",error);
+    }
+    
+    
+
+})

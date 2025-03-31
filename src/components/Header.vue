@@ -1,4 +1,15 @@
 <script setup>
+import {auth} from "../api/firebase"
+import { ref } from "vue";
+import placeholderPfp from "@/assets/images/User icon.png";
+    const pfpImgRef = ref(placeholderPfp);
+    auth.authStateReady().then(()=>{
+        if(auth.currentUser.photoURL!=null){
+            pfpImgRef.value = auth.currentUser.photoURL
+        }
+        
+    })
+    
 </script>
 
 <template>
@@ -8,7 +19,7 @@
                 <img src = "../assets/images/Potluck Logo.png" height="50vh" class="d-inline-block align-text-bottom">
                 <h1 class="">Potluck</h1>
             </a>
-            <a href="/account"><img src="../assets/images/User icon.png" height="50vh" style="float: right;"
+            <a href="/account"><img :src="pfpImgRef" height="50vh" style="float: right;"
                                     data-toggle="tooltip" data-placement="left" title="Account"></a>
             <a href="/CreateRecipe"><img src="../assets/images/Create icon.png" height="50vh" style="float: right;margin-right: 1vw;"
                                          data-toggle="tooltip" data-placement="left" title="Create Recipe"></a>
