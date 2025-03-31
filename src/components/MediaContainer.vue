@@ -209,5 +209,9 @@ button {
   font-weight: bolder;
   color: red;
 }
+button:hover{
+  background: rgb(0, 0, 0);
+  color: white;
+}
 
 </style>

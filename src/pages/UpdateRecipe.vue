@@ -5,6 +5,8 @@ import { ref, onMounted } from 'vue';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import placeholderImg from '@/assets/images/coconut.png';
 import NotFound from '@/components/NotFound.vue';
+import {useRouter} from "vue-router";
+const router = useRouter();
 
 // Props
 const routeProp = defineProps(['id']);
@@ -20,6 +22,9 @@ const recipe = ref({
 const recipeNotFound = ref(false);
 const loading = ref(true);
 const downloadURL = ref('');
+
+const deleteWarning = ref(false);
+const updateWarning = ref(false);
 
 const addField = (type) => {
     switch (type) {
@@ -83,6 +88,7 @@ const getDbRecipeSingle = async () => {
 
 // Update recipe
 const updateRecipe = async () => {
+    loading.value = true;
     if (!recipe.value.name || !recipe.value.preparationTime || !recipe.value.instructions.length || !recipe.value.ingredients.length || !recipe.value.equipment.length || !downloadURL.value) {
         console.error("Error: Missing required fields");
         alert("Please fill in all fields before updating the recipe.");
@@ -118,6 +124,7 @@ const updateRecipe = async () => {
         if (result.data.success) {
             console.log("Recipe updated successfully", result.data.message);
             alert("Recipe updated successfully!");
+            await router.push("/recipe/" + routeProp.id);
         } else {
             console.warn("Recipe failed to update", result.data.message);
             alert("Failed to update the recipe. Please try again.");
@@ -125,11 +132,14 @@ const updateRecipe = async () => {
     } catch (error) {
         console.error("Error calling updateDbRecipe:", error);
         alert("An error occurred while updating the recipe. Please try again.");
+    } finally {
+      loading.value = false;
     }
 };
 
 // Delete recipe
 const deleteRecipe = async () => {
+    loading.value=true;
     const user = auth.currentUser;
     if (!user) {
         console.error("Error: User is not authenticated");
@@ -146,6 +156,7 @@ const deleteRecipe = async () => {
         if (result.data.success) {
             console.log("Recipe deleted successfully", result.data.message);
             alert("Recipe deleted successfully!");
+            await router.push("/");
         } else {
             console.warn("Recipe failed to delete", result.data.message);
             alert("Failed to delete the recipe. Please try again.");
@@ -153,6 +164,8 @@ const deleteRecipe = async () => {
     } catch (error) {
         console.error("Error calling deleteDbRecipe:", error);
         alert("An error occurred while deleting the recipe. Please try again.");
+    } finally{
+      loading.value = false;
     }
 };
 
@@ -186,27 +199,58 @@ onMounted(() => {
         <div v-else class="flex-d flex-column align-self-center" id="flexWrapper">
             <form class="align-self-center" id="content">
                 <div class="container-fluid align-self-center">
+
                     <div class="row justify-content-center">
+
+                      <div id="warning" class="container" v-if="deleteWarning" >
+                        <div class="box">
+                          <h3>
+                            Are You Sure That You Want To Delete This Recipe?
+                          </h3>
+                          <div class="row justify-content-center">
+                            <button class="form-control" type="button" @click="deleteRecipe" style="width:200px;"> Yes, Delete
+                              Recipe</button>
+                            <button class="form-control" type="button" @click="deleteWarning=false;" style="width:100px;">No</button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div id="warning" class="container" v-if="updateWarning" >
+                        <div class="box">
+                          <h3>
+                            Are You Sure That You Want To Update This Recipe?
+                          </h3>
+                          <div class="row justify-content-center">
+                            <button class="form-control" type="button" @click="updateRecipe" style="width:200px;"> Yes, Update
+                              Recipe</button>
+                            <button class="form-control" type="button" @click="updateWarning=false;" style="width:100px;">No</button>
+                          </div>
+                        </div>
+                      </div>
+
                         <div class="col-xl-3">
                             <br>
                             <div style="width:40%;align-self:center;">
-                                <button class="form-control" type="button" @click="updateRecipe"
+                                <button class="form-control" type="button" @click="updateWarning=true"
                                     style="width:200px;">Update Recipe</button>
                             </div>
                             <br>
+
                             <label for="nameField" class="form-label">Name</label>
                             <input class="form-control" v-model="recipe.name" id="nameField"><br><br><br><br>
                             <label for="timeField" class="form-label">Cooking Time (in minutes)</label>
                             <input class="form-control" v-model="recipe.preparationTime" id="timeField">
                             <br><br><br><br>
                         </div>
+
                         <div class="col-xl-3">
                           <br>
                           <div style="width:40%;align-self:center;">
-                            <button class="form-control" type="button" @click="deleteRecipe" style="width:200px;">Delete
+                            <button class="form-control" type="button" @click="deleteWarning=true;" style="width:200px;">Delete
                               Recipe</button>
                           </div>
                         </div>
+
                         <div class="col-xl-2">
                             <a>Upload Image</a><br>
                             <input type="file" id="media" accept="image/*" multiple
@@ -334,11 +378,38 @@ button {
   Box-shadow: 3px 3px 5px black;
 }
 
+button:hover{
+  background: rgb(0, 0, 0);
+  color: white;
+}
+
 
 img {
   border: 2px dashed black;
   border-radius: 20px;
   align-self: center;
+}
+
+#warning{
+  position: fixed;
+  align-content: center;
+  top: 25%;
+  left: 50%;
+  margin-top: -100px;
+  margin-left: -200px;
+  width: 400px;
+  height: 200px;
+  z-index: 100;
+}
+
+.box {
+  border: 2px solid;
+  border-radius: 5px;
+  padding: 10px;
+  min-width: 18rem;
+  min-height: 5rem;
+  Box-shadow: 3px 3px 5px black;
+  background-color: rgba(255, 183, 77, 100%);
 }
 
 #media {

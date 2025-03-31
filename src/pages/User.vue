@@ -1,10 +1,9 @@
 <script setup>
     import { onMounted, ref } from 'vue';
-    import { functions } from '../api/firebase'
+    import {auth, functions} from '../api/firebase'
     import { httpsCallable } from 'firebase/functions';
     import { useRoute, useRouter } from 'vue-router';
     import Card from "@/components/Card.vue";
-    import placeholderPfp from "@/assets/images/User icon.png";
 
     const router = useRouter();
 
@@ -17,10 +16,12 @@
     const ownPage = ref(false);
 
     const route = useRoute();
+
     const getThisUser = async()=>{
         const dbUserRequest = httpsCallable(functions,'getDbUser');
         try{
             const output = await dbUserRequest({uid:route.params.id});
+            console.log(output);
         }catch(error){
             console.log("Failed to get user:"+error.message);
         }
@@ -53,9 +54,34 @@
       }
     };
 
+    function userCheck() {
+      if (auth.currentUser != null) {
+        console.log(route.params.id + " and " + auth.currentUser);
+        //Doesn't work very well, I think auth is returning the Uid while route.params is returning the docid
+        if(auth.currentUser.uid == route.params.id){
+          console.log("This User owns this user page");
+          ownPage.value = true;
+          nameLabel.value = "Your";
+        }
+        else{
+          console.log("This User doesn't own this user page");
+          ownPage.value = false;
+          //Change this to the User Page Owner's Name
+          nameLabel.value = "Skibidi"+ "'s";
+        }
+      }
+      else{
+        console.log("No User logged in");
+        ownPage.value = false;
+        //Change this to the User Page Owner's Name
+        nameLabel.value = "Skibidi" + "'s";
+      }
+    }
+
     onMounted(()=>{
         getThisUser();
         getUserRecipe();
+        userCheck();
     })
 
     var file;
@@ -142,6 +168,11 @@
                 <span class="visually-hidden">Loading...</span>
               </div>
             </div>
+
+          <div class="row justify-content-end">
+            <!--Connect this to delete User-->
+            <button v-if="ownPage" style="width: 10%;min-width: 200px">Delete User Profile</button>
+          </div>
           </div>
       </div>
 
