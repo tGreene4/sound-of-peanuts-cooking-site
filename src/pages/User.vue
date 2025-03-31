@@ -4,6 +4,7 @@ import {auth, functions } from '../api/firebase'
 import { httpsCallable } from 'firebase/functions';
 import { useRoute, useRouter } from 'vue-router';
 import Card from "@/components/Card.vue";
+import placeholderImg from "@/assets/images/coconut.png";
 const router = useRouter();
 
 const liked = ref([]);
@@ -48,10 +49,6 @@ const getThisUser = async () => {
     userRecipeLoading.value = false;
   }
 };
-
-onMounted(() => {
-  getThisUser();
-})
     function userCheck() {
       if (auth.currentUser != null) {
         console.log(route.params.id + " and " + auth.currentUser);
@@ -65,14 +62,14 @@ onMounted(() => {
           console.log("This User doesn't own this user page");
           ownPage.value = false;
           //Change this to the User Page Owner's Name
-          nameLabel.value = "Skibidi"+ "'s";
+          nameLabel.value = userName.value + "'s";
         }
       }
       else{
         console.log("No User logged in");
         ownPage.value = false;
         //Change this to the User Page Owner's Name
-        nameLabel.value = "Skibidi" + "'s";
+        nameLabel.value = userName.value + "'s";
       }
     }
 
@@ -108,11 +105,15 @@ const handleFileUpload = function (event) {
     <div class="flex-d flex-column tab-content align-self-center" id="flexWrapper">
       <div class="tab-pane show active align-self-center" role="tabpanel" id="userContent">
         <div class="container-fluid align-self-center">
+          <div class="row justify-content-start">
+            <button v-if="ownPage" style="width: 10%;min-width: 200px">Log out</button>
+          </div>
           <div class="row justify-content-center">
             <div class="col-xxl-6 col-xl-12 form-group align-content-start">
-              <h1>Name goes here</h1>
+              <h1>{{userName.value}}</h1>
               <div class="row justify-content-center">
-                <img :src="pfpRef" id="Avatar" alt="">
+                <a class="align-content-center"><img class="d align-self-center" id="Avatar"
+                                           :src= "placeholderImg" alt="Avatar"></a>
                 <div v-if="ownPage">
                   <a> Profile Picture Upload</a><br>
                   <div class="input-group">
@@ -131,12 +132,12 @@ const handleFileUpload = function (event) {
               <h3>{{ nameLabel }} Bio</h3>
               <div v-if="ownPage" style="height:100%;width: 100%;">
                 <div class="row justify-content-center" style="height: 60%; min-height: 200px; width:100%">
-                  <textarea id="bio" style="border: dashed">"User Bio"</textarea>
+                  <textarea id="bio" style="border: dashed">{{userBiography.value}}</textarea>
                   <button style="width: 25%"> Upload Bio</button>
                 </div>
               </div>
               <div v-else id="bio">
-                "Bio Goes Here"
+                {{userBiography.value}}
               </div>
             </div>
 
@@ -232,6 +233,7 @@ const handleFileUpload = function (event) {
   max-width: 30rem;
   object-fit: cover;
 }
+
 
 .nav-link {
   background: darkgray;
