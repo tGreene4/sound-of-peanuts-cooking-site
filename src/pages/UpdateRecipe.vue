@@ -92,6 +92,7 @@ const updateRecipe = async () => {
     if (!recipe.value.name || !recipe.value.preparationTime || !recipe.value.instructions.length || !recipe.value.ingredients.length || !recipe.value.equipment.length || !downloadURL.value) {
         console.error("Error: Missing required fields");
         alert("Please fill in all fields before updating the recipe.");
+        loading.value = false;
         return;
     }
 
@@ -99,6 +100,7 @@ const updateRecipe = async () => {
     if (!user) {
         console.error("Error: User is not authenticated");
         alert("You must be logged in to update a recipe.");
+        loading.value = false;
         return;
     }
     const parsedInstructions = recipe.value.instructions.map((step) => step.value);
