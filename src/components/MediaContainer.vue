@@ -1,4 +1,3 @@
-
 <script setup>
 import Card from "@/components/Card.vue";
 import { functions } from '../api/firebase';
@@ -7,9 +6,11 @@ import { ref, onMounted } from 'vue';
 
 const mostRecent = ref([]);
 const mostLiked = ref([]);
+const quickest = ref([]);
 const more = ref([]);
 const newloading = ref(true);
 const likeloading = ref(true);
+const quickestLoading = ref(true);
 const moreloading = ref(true);
 const noMoreRecipes = ref(false);
 
@@ -40,11 +41,11 @@ const getMoreRecipe = async () => {
   try {
     const docLimit = 6;
     console.log("Calling getDbMoreRecipes with docLimit: ", docLimit);
-    const result = await getDbMoreRecipes({ docLimit, lastDocId: lastDocId.value});
+    const result = await getDbMoreRecipes({ docLimit, lastDocId: lastDocId.value });
     console.log("Response from getDbMoreRecipes:", result.data);
 
     if (result.data.success) {
-      console.log("Recipe found:" , result.data);
+      console.log("Recipe found:", result.data);
       console.log("Last Doc ID: ", result.data.lastDocId);
       lastDocId.value = result.data.lastDocId;
       return result.data.recipeList;
@@ -93,6 +94,17 @@ onMounted(async () => {
       mostLiked.value = [];
     }
     likeloading.value = false;
+
+    const quickRecipes = await getRecipeByField('preparationTime', 'asc');
+    if (quickRecipes.length > 0) {
+      quickest.value = quickRecipes;
+    }
+    else {
+      quickest.value = [];
+    }
+    quickestLoading.value = false;
+
+
     const moreRecipes = await getMoreRecipe();
     if (mostLikedRecipes.length > 0) {
       more.value = moreRecipes;
@@ -141,6 +153,22 @@ onMounted(async () => {
       </div>
     </div>
 
+    <h1 class="sectionHeader">Quickest</h1>
+    <div class="row justify-content-center" id="quickestField">
+      <div v-if="!quickestLoading" class="col-auto" id="Quickest" v-for="item in quickest">
+        <div class="cardContainer">
+          <Card :thisRecipeId="item.id" :thisRecipeName="item.name" :thisAuthor="item.author"
+            :thisCookTime="item.preparationTime" :thisLikes="item.likes" :thisImgStorageSrc="item.cardImgReg" />
+        </div>
+      </div>
+      <div v-if="(quickest == '') & (!quickestLoading)" id="noRecWarning">
+        No recipes found
+      </div>
+      <div v-if="quickestLoading" class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+
     <h1 class="sectionHeader">More</h1>
     <div class="row justify-content-center" id="moreField">
       <div v-if="!moreloading" class="col-auto" id="More" v-for="item in more">
@@ -157,8 +185,8 @@ onMounted(async () => {
       </div>
     </div>
     <div class="row justify-content-center" v-if="!noMoreRecipes">
-    <button @click="tryGetMoreRecipes">Load More</button>
-      </div>
+      <button @click="tryGetMoreRecipes">Load More</button>
+    </div>
     <br>
   </div>
 </template>
@@ -204,10 +232,9 @@ button {
   align-self: center;
 }
 
-#noRecWarning{
+#noRecWarning {
   top: 10px;
   font-weight: bolder;
   color: red;
 }
-
 </style>

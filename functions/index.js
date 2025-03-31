@@ -45,7 +45,7 @@ exports.getDbRecipesByField = onCall(async (req) => {
 
     try {
         const queryType = req.data.queryType || 'likes';
-        const order = req.data.order || 'desc';
+        const order = req.data.order;
         logger.log("Query type: " + queryType + " Order: " + order);
 
         const q = db.collection('Recipe').orderBy(queryType, order).limit(docLimit);
@@ -96,7 +96,7 @@ exports.getDbRecipesByField = onCall(async (req) => {
             return { success: true, recipeList: recipes };
         }
     } catch (error) {
-        logger.error("Error fetching recipes by most likes:", error);
+        logger.error("Error fetching recipes by " + req.data.queryType  + ": ", error);
         return { success: false, message: "Error fetching recipes" };
     }
 });
