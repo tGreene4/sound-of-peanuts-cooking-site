@@ -10,6 +10,8 @@ import placeholderPFP from '../assets/images/User icon.png'
 const router = useRouter();
 console.log(router);
 
+const loading = ref(true);
+
 const signUp = {
     username: ref(""),
     email: ref(""),
@@ -44,6 +46,9 @@ function authCheck() {
             }
         }
         getDocId()
+    }
+    else {
+        loading.value = false;
     }
 
 }
@@ -153,8 +158,14 @@ function userLogin(event) {
 </script>
 
 <template>
-    <div id="flexWrapper" class="d-flex flex-column align-self-center">
-        <div id="accountPageDiv" class="align-self-center">
+
+    <div id="flexWrapper" class="d-flex flex-column gradient-custom align-self-center">
+        <div v-if="loading" class="d-flex justify-content-center align-items-center min-vh-100">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+        <div v-else id="accountPageDiv" class="align-self-center">
             <ul class="nav nav-tabs">
                 <li class="nav-item">
                     <button class="nav-link active" id="newAccountTab" data-bs-toggle="tab"
@@ -215,6 +226,10 @@ function userLogin(event) {
 </template>
 
 <style scoped>
+.gradient-custom {
+    background: linear-gradient(to right, rgba(242, 233, 126, 75%), rgba(255, 121, 0, 50%));
+}
+
 #accountPageDiv {
     align-items: center;
     width: max-content;
@@ -228,10 +243,5 @@ function userLogin(event) {
 #emailInput,
 #emailLoginInput {
     width: 35ch;
-}
-
-#flexWrapper {
-    background-color: rgb(255, 243, 224);
-    height: 110vh;
 }
 </style>

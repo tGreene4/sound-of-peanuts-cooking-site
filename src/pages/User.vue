@@ -74,8 +74,10 @@ const handleFileUpload = function (event) {
 <template>
   <div class="main container-fluid align-self-center min-vh-100">
 
-    <div v-if="userLoading" class="spinner-border" role="status">
-      <span class="visually-hidden">Loading...</span>
+    <div v-if="userLoading" class="d-flex justify-content-center align-items-center min-vh-100">
+      <div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
     </div>
     <div v-else-if="userNotFound" class="text-center">
       <h1>User Not Found</h1>
