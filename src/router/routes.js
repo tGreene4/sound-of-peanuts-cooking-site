@@ -23,4 +23,5 @@ export default [
     { path: '/createRecipe', component: loadPage('CreateRecipe') },
     { path: '/updateRecipe/:id', component: loadPage('UpdateRecipe'), props:true},
     { path: '/secure', component: loadPage('Secure'), beforeEnter: isAuth },
+    { path: '/:pathMatch(.*)*', component: loadPage('NotFound') },
 ]
