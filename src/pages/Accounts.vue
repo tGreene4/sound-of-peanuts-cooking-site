@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { auth, functions,storage } from '../api/firebase'
-import { createUserWithEmailAndPassword, deleteUser, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, deleteUser, onAuthStateChanged, signInWithEmailAndPassword, updateCurrentUser, updateProfile } from 'firebase/auth';
 import { httpsCallable } from 'firebase/functions';
 import { ref as storageRef ,uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { useRouter } from 'vue-router';
@@ -24,18 +24,33 @@ const login = {
 
 var file;
 
+
 var pfpRef = ref("https://firebasestorage.googleapis.com/v0/b/sound-of-peanuts-cooking-site.appspot.com/o/User%20icon%20Clear.png?alt=media&token=02ef6aea-e4bd-4c39-a65a-f00acea43188")
 
 function authCheck() {
+    console.log("Auth check")
+    console.log("auth.currentUser:", auth.currentUser)
     if (auth.currentUser != null) {
+        console.log("User verified")
         const id = auth.currentUser.uid;
-        router.push("/user/" + id);
+        const getDocIdFromUserId = httpsCallable(functions,"getUDocIdFromUId");
+        const getDocId = async()=>{
+            console.log("Getting doc ID from user ID "+id)
+            const res = await getDocIdFromUserId({uId:id});
+            console.log(res.data)
+            if(res.data.uDocId){
+                router.push("/user/" + res.data.uDocId);
+            }else{
+                console.log("Could not get doc ID")
+            }
+        }
+        getDocId()
     }
+    
 }
 
-onMounted(() => {
-    authCheck()
-})
+auth.authStateReady().then(authCheck)
+
 
 
 const handleFileUpload = function(event){
@@ -74,13 +89,13 @@ const userCreate = async () => {
 
     const signUpUser = auth.currentUser;
     console.log(signUpUser);
-    
     try {
         const storageReference = storageRef(storage, 'images/' + signUpUser.uid);
         const snapshot = await uploadBytes(storageReference, file); 
         const url = await getDownloadURL(snapshot.ref); 
         console.log("Image uploaded successfully. Download URL:", url);
-        signUp.downloadURL = url; 
+        signUp.downloadURL = url;
+        updateProfile(signUpUser,{photoURL:url})
     } catch (error) {
         console.error("Error uploading image:", error);
         deleteUser(signUpUser);

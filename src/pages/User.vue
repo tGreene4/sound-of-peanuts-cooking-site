@@ -61,6 +61,7 @@ const handleFileUpload = function (event) {
 
 
 
+
 </script>
 
 <template>
@@ -74,10 +75,12 @@ const handleFileUpload = function (event) {
       <li class="nav-item">
         <button class="nav-link" id="likedTab" data-bs-toggle="tab" data-bs-target="#likedContent" type="button"
           role="tab" aria-controls="like tab" aria-selected="false">{{ nameLabel }} Liked Recipes</button>
+
       </li>
     </ul>
 
     <div class="flex-d flex-column tab-content align-self-center" id="flexWrapper">
+
       <div class="tab-pane show active align-self-center" role="tabpanel" id="userContent">
         <div class="container-fluid align-self-center">
           <div class="row justify-content-center">
@@ -136,6 +139,7 @@ const handleFileUpload = function (event) {
               <span class="visually-hidden">Loading...</span>
             </div>
           </div>
+
         </div>
       </div>
 

@@ -1,7 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getFirestore } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { browserSessionPersistence, getAuth } from 'firebase/auth';
 import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
 
 import { getStorage } from 'firebase/storage';
@@ -25,6 +25,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
+
 const storage = getStorage(app);
 const functions = getFunctions(app);
 
