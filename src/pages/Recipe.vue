@@ -2,7 +2,9 @@
 import { functions, auth } from '../api/firebase';
 import { httpsCallable } from 'firebase/functions';
 import { useRouter } from "vue-router";
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, reactive } from 'vue';
+import { Modal } from 'bootstrap';
+
 
 const router = useRouter();
 const recipeNotFound = ref(false);
@@ -10,6 +12,10 @@ const loading = ref(true);
 const readableDate = ref('');
 const ownsRecipe = ref(false);
 let localLikes = ref(''); 
+
+const state = reactive({
+    authPopup: null,
+});
 
 const getHelloWorld = async () => { //remove before final deployment
   console.log("Calling helloWorld");
@@ -31,11 +37,21 @@ const recipe = ref({
   likes: 0,
   dislikes: 0,
   image: '',
-  author: [],
+  /*
+  thisAuthor: {
+            type: Object,
+            default: () => ({ 
+                name: "Unknown", //add default pfp and no link, like a deleted reddit profile
+                pfpUrl: "",
+                id: 0
+            })
+        },
+        */
   preparationTime: 0,
   equipment: '',
   publishDate: ''
 });
+//const authorLink = ref("/user/"+recipe.thisAuthor.id)
 
 const getDbRecipeSingle = async () => {
   console.log("Calling getDbRecipeSingle with ID:", routeProp.id);
@@ -84,6 +100,7 @@ const likeRecipe = async () => {
 
   if (!user) {
     console.error("User is not authenticated. Cannot like the recipe.");
+    state.authPopup.show();
     return;
   }
 
@@ -105,6 +122,7 @@ const dislikeRecipe = async () => {
 
   if (!user) {
     console.error("User is not authenticated. Cannot like the recipe.");
+    state.authPopup.show();
     return;
   }
 
@@ -119,9 +137,15 @@ const dislikeRecipe = async () => {
     console.error("Error calling addDislikeRecipe:", error);
   }
 };
+const closePopup = async () => {
+  console.log("closing popup")
+  state.authPopup.hide();
+}
+
 
 onMounted(() => {
   getDbRecipeSingle();
+  state.authPopup = new Modal('#authPopup', {})
 });
 </script>
 
@@ -131,6 +155,25 @@ Show author name (hyperlinked) and PFP near the title
 -->
 
 <template>
+<div class="modal fade" id="authPopup" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Not Logged In</h5>
+      </div>
+      <div class="modal-body">
+        Sorry! You're not logged in. Please log in and try again.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light"  @click="closePopup" >Close</button>
+        <router-link :to="{ path: '/account' }"><button type="button" class="btn btn-light" @click="closePopup" >Log in</button></router-link>
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+
   <div class="container-fluid bg-secondary gradient-custom min-vh-100" style="padding-top: 20px;">
     <div v-if="loading" class="spinner-border" role="status">
       <span class="visually-hidden">Loading...</span>
