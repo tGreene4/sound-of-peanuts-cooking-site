@@ -11,10 +11,10 @@ const recipeNotFound = ref(false);
 const loading = ref(true);
 const readableDate = ref('');
 const ownsRecipe = ref(false);
-let localLikes = ref(''); 
+let localLikes = ref('');
 
 const state = reactive({
-    authPopup: null,
+  authPopup: null,
 });
 
 const getHelloWorld = async () => { //remove before final deployment
@@ -69,7 +69,7 @@ const getDbRecipeSingle = async () => {
       };
 
       console.log("Author: ", recipe.value.author)
-      console.log("Recipe"+ recipe.value.author.name)
+      console.log("Recipe" + recipe.value.author.name)
       if (recipeData.publishDate && recipeData.publishDate._seconds) {
         const date = new Date(recipeData.publishDate._seconds * 1000);
         readableDate.value = date.toLocaleDateString();
@@ -149,22 +149,24 @@ Show author name (hyperlinked) and PFP near the title
 -->
 
 <template>
-<div class="modal fade" id="authPopup" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel">Not Logged In</h5>
-      </div>
-      <div class="modal-body">
-        Sorry! You're not logged in. Please log in and try again.
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-light"  @click="closePopup" >Close</button>
-        <router-link :to="{ path: '/account' }"><button type="button" class="btn btn-light" @click="closePopup" >Log in</button></router-link>
+  <div class="modal fade" id="authPopup" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Not Logged In</h5>
+        </div>
+        <div class="modal-body">
+          Sorry! You're not logged in. Please log in and try again.
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" @click="closePopup">Close</button>
+          <router-link :to="{ path: '/account' }"><button type="button" class="btn btn-light" @click="closePopup">Log
+              in</button></router-link>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
 
   <div class="container-fluid bg-secondary gradient-custom min-vh-100" style="padding-top: 20px;">
@@ -187,7 +189,9 @@ Show author name (hyperlinked) and PFP near the title
               </div>
               <div class="col-md-6">
                 <h2 class="card-title mb-1">{{ recipe.name }}</h2>
-                <p>Preparation Time: <b>{{ recipe.preparationTime }} mins</b> &emsp; {{ recipe.author.name }}
+                <p>
+                  Preparation Time: <b>{{ recipe.preparationTime }} mins</b> &emsp;
+                  By <a :href="'/user/' + recipe.author.id">{{ recipe.author.name }}</a>
                   &emsp; Published: {{ readableDate }}</p>
                 <hr class="my-1" />
                 <div class="m-4">
