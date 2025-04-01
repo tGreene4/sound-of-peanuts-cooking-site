@@ -632,6 +632,7 @@ exports.getDbUser = onCall(async (req) => {
             }
         }
 
+        logger.log("returning pfpUrl: ", pfpUrl);
         return { success: true, madeRecipes: madeRecipes, likedRecipes: likedRecipes , name:name, pfpUrl:pfpUrl, biography:biography, ownPage:ownPage};
 
     } catch (error) {

@@ -109,11 +109,11 @@ const userCreate = async () => {
     console.log(signUpUser);
     try {
         const storageReference = storageRef(storage, 'images/' + signUpUser.uid);
-        const snapshot = await uploadBytes(storageReference, file);
-        const url = await getDownloadURL(snapshot.ref);
-        console.log("Image uploaded successfully. Download URL:", url);
-        signUp.downloadURL = url;
-        updateProfile(signUpUser, { photoURL: url })
+            const snapshot = await uploadBytes(storageReference, file);
+            const url = await getDownloadURL(snapshot.ref);
+            console.log("Image uploaded successfully. Download URL:", url);
+            signUp.downloadURL = url;
+            await updateProfile(signUpUser, { photoURL: url });
     } catch (error) {
         console.error("Error uploading image:", error);
         deleteUser(signUpUser);
@@ -123,7 +123,7 @@ const userCreate = async () => {
         const createUser = httpsCallable(functions, "createDbUser");
         const result = await createUser({
             uName: signUp.username.value,
-            pfpDowloadURL: signUp.downloadURL,
+            pfpFile: signUp.downloadURL,
             uId: signUpUser.uid
         });
 

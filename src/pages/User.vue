@@ -1,36 +1,31 @@
 <script setup>
 import { onMounted, ref } from 'vue';
-import {auth, functions } from '../api/firebase'
+import { auth, functions } from '../api/firebase'
 import { httpsCallable } from 'firebase/functions';
 import { useRoute, useRouter } from 'vue-router';
 import Card from "@/components/Card.vue";
-import placeholderImg from "@/assets/images/coconut.png";
-
+import placeholderImg from "@/assets/images/User icon.png";
 const router = useRouter();
-const route = useRoute();
 
 const liked = ref([]);
 const userRecipes = ref([]);
 const userName = ref('');
 const userBiography = ref('');
-const pfpRef = ref("https://firebasestorage.googleapis.com/v0/b/sound-of-peanuts-cooking-site.appspot.com/o/User%20icon%20Clear.png?alt=media&token=02ef6aea-e4bd-4c39-a65a-f00acea43188")
+const pfpRef = ref(placeholderImg);
+const userLoading = ref(true);
 
-const likedLoading = ref(true);
-const userRecipeLoading = ref(true);
-
-const nameLabel = ref(userName);
+const nameLabel = ref("Your");
 const ownPage = ref(false);
 
-const userLoading = ref(true);
-const userNotFound = ref(false);
+const route = useRoute();
 
 const getThisUser = async () => {
   console.log("Calling getDbUser");
   const dbUserRequest = httpsCallable(functions, 'getDbUser');
   try {
-    const userDocId = route.params.id;
-    console.log("Fetching recipes for user ID: ", userDocId);
-    const result = await dbUserRequest({ id: userDocId });
+    const userId = route.params.id;
+    console.log("Fetching recipes for user ID: ", userId);
+    const result = await dbUserRequest({ id: userId });
     console.log("Response from getDbUser:", result.data);
 
     if (result.data.success) {
@@ -39,68 +34,57 @@ const getThisUser = async () => {
       pfpRef.value = result.data.pfpUrl;
       liked.value = result.data.likedRecipes || [];
       userRecipes.value = result.data.madeRecipes || [];
-      ownPage.value = result.data.ownPage || false;
 
       console.log("Liked Recipes:", liked.value);
       console.log("User Recipes:", userRecipes.value);
-      userNotFound.value = false;
     } else {
       console.warn("Error fetching user recipes:", result.data.message);
-      userNotFound.value = true;
     }
   } catch (error) {
-    console.error("Error calling getDbUser:", error);
-    userNotFound.value = true;
+    console.error("Error calling getDbUserRecipes:", error);
   } finally {
-    likedLoading.value = false;
-    userRecipeLoading.value = false;
+    console.log("PFPREFERENCE: ",pfpRef.value)
     userLoading.value = false;
   }
 };
-    function userCheck() {
-      if (auth.currentUser != null) {
-        console.log(route.params.id + " and " + auth.currentUser);
-        //Doesn't work very well, I think auth is returning the Uid while route.params is returning the docid
-        if(auth.currentUser.uid == route.params.id){
-          console.log("This User owns this user page");
-          ownPage.value = true;
-          nameLabel.value = "Your";
-        }
-        else{
-          console.log("This User doesn't own this user page");
-          ownPage.value = false;
-          //Change this to the User Page Owner's Name
-          nameLabel.value = userName.value + "'s";
-        }
-      }
-      else{
-        console.log("No User logged in");
-        ownPage.value = false;
-        //Change this to the User Page Owner's Name
-        nameLabel.value = userName.value + "'s";
-      }
+function userCheck() {
+  if (auth.currentUser != null) {
+    console.log(route.params.id + " and " + auth.currentUser);
+    //Doesn't work very well, I think auth is returning the Uid while route.params is returning the docid
+    if (auth.currentUser.uid == route.params.id) {
+      console.log("This User owns this user page");
+      ownPage.value = true;
+      nameLabel.value = "Your";
     }
+    else {
+      console.log("This User doesn't own this user page");
+      ownPage.value = false;
+      //Change this to the User Page Owner's Name
+      nameLabel.value = userName.value + "'s";
+    }
+  }
+  else {
+    console.log("No User logged in");
+    ownPage.value = false;
+    //Change this to the User Page Owner's Name
+    nameLabel.value = userName.value + "'s";
+  }
+}
 
-    onMounted(()=>{
-        getThisUser();
-        userCheck();
-    })
+onMounted(() => {
+  getThisUser();
+  userCheck();
+})
 
 var file;
 const handleFileUpload = function (event) {
   file = event.target.files[0];
   pfpRef.value = URL.createObjectURL(file);
 };
-
-
-
-
 </script>
 
 <template>
   <div class="main container-fluid align-self-center min-vh-100">
-
-
     <div v-if="userLoading" class="d-flex justify-content-center align-items-center min-vh-100">
       <div class="spinner-border" role="status">
         <span class="visually-hidden">Loading...</span>
@@ -120,25 +104,30 @@ const handleFileUpload = function (event) {
         <li class="nav-item">
           <button class="nav-link" id="likedTab" data-bs-toggle="tab" data-bs-target="#likedContent" type="button"
             role="tab" aria-controls="like tab" aria-selected="false">{{ nameLabel }} Liked Recipes</button>
-
         </li>
       </ul>
 
-      <div class="tab-pane show active align-self-center" role="tabpanel" id="userContent">
-        <div class="container-fluid align-self-center">
-          <div class="row justify-content-center">
-            <div class="col-xxl-6 col-xl-12 form-group align-content-start">
-              <h1>{{ userName }}</h1>
-              <div class="row justify-content-center">
-                <img :src="pfpRef" id="Avatar" alt="">
-                <div v-if="ownPage">
-                  <a> Profile Picture Upload</a><br>
-                  <div class="input-group">
-                    <input type="file" :value="null" class="form-control" id="pfpInput" style="width:2rem"
-                      accept="image/png,image/jpeg" multiple @change="(event) => handleFileUpload(event)">
-                    <div class="input-group-append">
-                      <button style="border-radius: 0;">Save profile picture</button>
-
+      <div class="flex-d flex-column tab-content align-self-center" id="flexWrapper">
+        <div class="tab-pane show active align-self-center" role="tabpanel" id="userContent">
+          <div class="container-fluid align-self-center">
+            <div class="row justify-content-start">
+              <button v-if="ownPage" style="width: 10%;min-width: 200px">Log out</button>
+            </div>
+            <div class="row justify-content-center">
+              <div class="col-xxl-6 col-xl-12 form-group align-content-start">
+                <h1>{{ userName.value }}</h1>
+                <div class="row justify-content-center">
+                  <a class="align-content-center">
+                    <img class="d align-self-center" id="Avatar" :src="pfpRef" alt="Avatar">
+                  </a>
+                  <div v-if="ownPage">
+                    <a> Profile Picture Upload</a><br>
+                    <div class="input-group">
+                      <input type="file" :value="null" class="form-control" id="pfpInput" style="width:2rem"
+                        accept="image/png,image/jpeg" multiple @change="(event) => handleFileUpload(event)">
+                      <div class="input-group-append">
+                        <button style="border-radius: 0;">Save profile picture</button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -149,12 +138,12 @@ const handleFileUpload = function (event) {
                 <h3>{{ nameLabel }} Bio</h3>
                 <div v-if="ownPage" style="height:100%;width: 100%;">
                   <div class="row justify-content-center" style="height: 60%; min-height: 200px; width:100%">
-                    <textarea id="bio" style="border: dashed">"User Bio"</textarea>
+                    <textarea id="bio" style="border: dashed">{{ userBiography.value }}</textarea>
                     <button style="width: 25%"> Upload Bio</button>
                   </div>
                 </div>
                 <div v-else id="bio">
-                  "Bio Goes Here"
+                  {{ userBiography.value }}
                 </div>
               </div>
 
@@ -180,8 +169,12 @@ const handleFileUpload = function (event) {
               <br>
               <div v-if="userRecipeLoading" class="spinner-border" role="status">
                 <span class="visually-hidden">Loading...</span>
-
               </div>
+            </div>
+
+            <div class="row justify-content-end">
+              <!--Connect this to delete User-->
+              <button v-if="ownPage" style="width: 10%;min-width: 200px">Delete User Profile</button>
             </div>
           </div>
         </div>
@@ -198,35 +191,13 @@ const handleFileUpload = function (event) {
                       :thisImgStorageSrc="item.cardImgReg" />
                   </div>
                 </div>
-
-              </div>
-            </div>
-            <div v-if="(userRecipes == '') & (!userRecipeLoading)" id="noRecWarning">
-              No recipes found
-            </div>
-            <br>
-            <div v-if="userRecipeLoading" class="spinner-border" role="status">
-              <span class="visually-hidden">Loading...</span>
-            </div>
-          </div>
-
-          <div class="row justify-content-end">
-            <!--Connect this to delete User-->
-            <button v-if="ownPage" style="width: 10%;min-width: 200px">Delete User Profile</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="tab-pane align-self-center" role="tabpanel" id="likedContent">
-        <div class="container-fluid align-self-center">
-          <div class="row justify-content-center">
-            <h1 class="sectionHeader" style="top:5px">{{ nameLabel }} Liked Recipes</h1>
-            <div class="row justify-content-center" id="moreField">
-              <div v-if="!likedLoading" class="col-auto" id="" v-for="item in liked">
-                <div class="cardContainer">
-                  <Card :thisRecipeId="item.id" :thisRecipeName="item.name" :thisAuthor="item.author"
-                    :thisCookTime="item.preparationTime" :thisLikes="item.likes" :thisImgStorageSrc="item.cardImgReg" />
-
+                <div v-if="(liked == '') & (!likedLoading)" id="noRecWarning">
+                  No recipes found
+                </div>
+                <br>
+                <br>
+                <div v-if="likedLoading" class="spinner-border" role="status">
+                  <span class="visually-hidden">Loading...</span>
                 </div>
               </div>
             </div>
