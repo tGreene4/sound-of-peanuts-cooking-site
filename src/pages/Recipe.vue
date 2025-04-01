@@ -1,11 +1,8 @@
 <script setup>
 import { functions, auth } from '../api/firebase';
 import { httpsCallable } from 'firebase/functions';
-import { ref, onMounted, computed } from 'vue';
-
-import IngredientList from '@/components/IngredientList.vue';
-import NotFound from '@/components/NotFound.vue';
-import {useRouter} from "vue-router";
+import { useRouter } from "vue-router";
+import { ref, onMounted } from 'vue';
 
 const router = useRouter();
 const recipeNotFound = ref(false);
@@ -56,18 +53,18 @@ const getDbRecipeSingle = async () => {
         instructions: recipeData.instructions || "No instructions provided",
         likes: recipeData.likes || 0,
         dislikes: recipeData.dislikes || 0,
-        image: recipeData.image || '',
+        image: recipeData.cardImgReg || '',
         author: recipeData.authorRef || '',
         preparationTime: recipeData.preparationTime || 0,
         equipment: recipeData.equipment || '',
-        publishDate: recipeData.publishDate|| ''
+        publishDate: recipeData.publishDate || ''
       };
       if (recipeData.publishDate && recipeData.publishDate._seconds) {
         const date = new Date(recipeData.publishDate._seconds * 1000);
         readableDate.value = date.toLocaleDateString();
       }
       console.log(recipeData.publishDate._seconds);
-    } 
+    }
     else {
       console.log("Recipe not found: ", result.data.message);
       recipeNotFound.value = true;
@@ -79,9 +76,6 @@ const getDbRecipeSingle = async () => {
     loading.value = false;
   }
 };
-
-
-
 
 const likeRecipe = async () => {
   const user = auth.currentUser;
@@ -134,14 +128,15 @@ Show author name (hyperlinked) and PFP near the title
 Add a script to +1 or -1 like number locally
 -->
 
-
 <template>
   <div class="container-fluid bg-secondary gradient-custom min-vh-100" style="padding-top: 20px;">
     <div v-if="loading" class="spinner-border" role="status">
       <span class="visually-hidden">Loading...</span>
     </div>
-    <div v-else-if="recipeNotFound">
-      <NotFound />
+    <div v-else-if="recipeNotFound" class="text-center">
+      <h1>Recipe Not Found</h1>
+      <p>The recipe you are looking for does not exist or has been removed.</p>
+      <router-link to="/" class="btn btn-primary">Return to Home</router-link>
     </div>
     <div v-else class="row d-flex justify-content-center">
       <div class="col-md-8 ">
@@ -149,42 +144,50 @@ Add a script to +1 or -1 like number locally
           <div class="card-body d-flex flex-column h-100">
             <div class="row">
               <div class="col-md-6 d-flex justify-content-center align-items-center border">
-                <img class="img-fluid rounded" src="../assets/images/coconut.png" alt="Recipe default"
+                <img class="img-fluid rounded" :src="recipe.image || '../assets/images/coconut.png'" alt="Recipe Image"
                   style="max-width: 100%; height: auto;">
               </div>
               <div class="col-md-6">
                 <h2 class="card-title mb-1">{{ recipe.name }}</h2>
                 <p>Preparation Time: <b>{{ recipe.preparationTime }} mins</b> &emsp; {{ recipe.authorRef }}
-                 &emsp; Published: {{ readableDate }}</p>
-                <hr class="my-1"/>
+                  &emsp; Published: {{ readableDate }}</p>
+                <hr class="my-1" />
                 <div class="m-4">
                   <h5>Ingredients:</h5>
                   <p class="card-text">
-                    <li v-for="item in recipe.ingredients">
-                    {{ item }}
+                    <li v-for="item in recipe.ingredients" :key="item">
+                      {{ item }}
                     </li>
                   </p>
                 </div>
-                <hr class="my-1"/>
+                <hr class="my-1" />
                 <div class="m-2">
                   <h5>Instructions:</h5>
                   <p class="card-text">
-                    <ol>
-                    <li v-for="item in recipe.instructions">
-                    {{ item }}
+                  <ol>
+                    <li v-for="item in recipe.instructions" :key="item">
+                      {{ item }}
                     </li>
-                    </ol>
+                  </ol>
                   </p>
                 </div>
-                
+                <hr class="my-1" />
+                <div class="m-2">
+                  <h5>Equipment:</h5>
+                  <p class="card-text">
+                    <li v-for="item in recipe.equipment" :key="item">
+                      {{ item }}
+                    </li>
+                  </p>
+                </div>
               </div>
             </div>
-              <div class="d-flex gap-2 mt-auto justify-content-end border-top py-3">
-                <button v-if="ownsRecipe" class="btn btn-outline-dark" @click="router.push('/updaterecipe/'+routeProp.id)">Edit</button>
-                <button class="btn btn-outline-success" @click="likeRecipe">Like {{ recipe.likes }}</button>
-                <button class="btn btn-outline-danger" @click="dislikeRecipe">Dislike {{ recipe.dislikes }}</button>
-               <!---<button class="btn btn-secondary" @click="getHelloWorld">Hello World</button> --> 
-              </div>
+            <div class="d-flex gap-2 mt-auto justify-content-end border-top py-3">
+              <button v-if="ownsRecipe" class="btn btn-outline-dark"
+                @click="router.push('/updaterecipe/' + routeProp.id)">Edit</button>
+              <button class="btn btn-outline-success" @click="likeRecipe">Like {{ recipe.likes }}</button>
+              <button class="btn btn-outline-danger" @click="dislikeRecipe">Dislike {{ recipe.dislikes }}</button>
+            </div>
           </div>
         </div>
       </div>
@@ -193,6 +196,15 @@ Add a script to +1 or -1 like number locally
 </template>
 
 <style scoped>
+button {
+  background: rgb(240, 240, 240);
+  border: black 2px solid;
+  border-radius: 15px;
+  Box-shadow: 3px 3px 5px black;
+  max-width: 20rem;
+  min-width: 5rem;
+}
+
 .card {
   border-radius: 15px;
   background-color: rgb(245, 247, 248);
@@ -213,6 +225,7 @@ Add a script to +1 or -1 like number locally
   font-size: 1rem;
   padding: 0.5rem 1rem;
 }
+
 .gradient-custom {
   background: linear-gradient(to right, rgba(242, 233, 126, 75%), rgba(255, 121, 0, 50%));
 }

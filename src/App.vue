@@ -5,13 +5,19 @@ import Header from './components/Header.vue';
 <template>
   <div id="body">
     <Header />
-    <router-view />
+    <div class="main-content">
+      <router-view />
+    </div>
   </div>
 </template>
 
 <style scoped>
-#body{
+#body {
   min-height: 100%;
   min-width: 720px;
+}
+
+.main-content {
+  margin-top: 5rem;
 }
 </style>
