@@ -147,8 +147,11 @@ const handleFileUpload = function (event) {
       <div class="flex-d flex-column tab-content align-self-center" id="flexWrapper">
         <div class="tab-pane show active align-self-center" role="tabpanel" id="userContent">
           <div class="container-fluid align-self-center">
-            <div class="row justify-content-start">
-              <button v-if="ownPage" style="width: 10%;min-width: 200px" @click="logOut">Log out</button>
+            <div class="row">
+              <div class="col d-flex justify-content-end">
+                <button v-if="ownPage" style="width: 10%; min-width: 200px; margin: 0.2rem;" @click="logOut">Log
+                  out</button>
+              </div>
             </div>
             <div class="row justify-content-center">
               <div class="col-xxl-6 col-xl-12 form-group align-content-start">
@@ -224,7 +227,7 @@ const handleFileUpload = function (event) {
                     <div class="cardContainer">
                       <button v-if="ownPage" @click="router.push('/updaterecipe/' + item.id)" style="border-radius: 0">
                         Edit</button>
-                      <Card :thisRecipeId="item.id" :thisRecipeName="item.name" :thisAuthor="item.author"
+                      <Card :thisRecipeId="item.id" :thisRecipeName="item.name" :thisUserRecipe="true"
                         :thisCookTime="item.preparationTime" :thisLikes="item.likes"
                         :thisImgStorageSrc="item.cardImgReg" />
                     </div>

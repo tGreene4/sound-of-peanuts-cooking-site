@@ -69,47 +69,59 @@ export default {
       }
     },
     async postRecipe() {
-      this.loading = true;
-      if (!this.name || !this.time || !this.steps.length || !this.ingredients.length || !this.equipment.length || !this.downloadURL) {
-        console.error("Error: Missing required fields");
-        alert("Please fill in all fields before publishing the recipe.");
-        return;
-      }
-      const user = auth.currentUser;
-      if (!user) {
-        console.error("Error: User is not authenticated");
-        alert("You must be logged in to post a recipe.");
-        return;
-      }
+  this.loading = true;
 
-      const postDbRecipe = httpsCallable(functions, 'postDbRecipe');
-      try {
-        console.log(`Calling postDbRecipe`);
-        const result = await postDbRecipe({
-          name: this.name,
-          preparationTime: parseInt(this.time),
-          instructions: this.steps.map(step => step.value),
-          ingredients: this.ingredients.map(ingredient => ingredient.value),
-          equipment: this.equipment.map(equipment => equipment.value),
-          cardImgReg: this.downloadURL,
-          uid: user.uid,
-        });
+  if (!this.name || !this.time || !this.steps.length || !this.ingredients.length || !this.equipment.length || !this.downloadURL) {
+    console.error("Error: Missing required fields");
+    alert("Please fill in all fields before publishing the recipe.");
+    this.loading = false;
+    return;
+  }
 
-        console.log("Response from postDbRecipe:", result.data);
+  const preparationTime = parseInt(this.time);
+  if (isNaN(preparationTime) || preparationTime <= 0) {
+    console.error("Error: Invalid cooking time");
+    alert("Please enter a valid cooking time in minutes.");
+    this.loading = false;
+    return;
+  }
 
-        if (result.data.success) {
-          console.log("Recipe posted successfully", result.data.message);
-          console.log("Routing to recipe ",result.data.recipeId)
-          await this.router.push("/recipe/"+result.data.recipeId);
-        } else {
-          console.warn("Recipes failed to post", result.data.message);
-        }
-      } catch (error) {
-        console.error("Error calling postDbRecipe:", error);
-      } finally{
-        this.loading=false;
-      }
-    },
+  const user = auth.currentUser;
+  if (!user) {
+    console.error("Error: User is not authenticated");
+    alert("You must be logged in to post a recipe.");
+    this.loading = false;
+    return;
+  }
+
+  const postDbRecipe = httpsCallable(functions, 'postDbRecipe');
+  try {
+    console.log(`Calling postDbRecipe`);
+    const result = await postDbRecipe({
+      name: this.name,
+      preparationTime: preparationTime,
+      instructions: this.steps.map(step => step.value),
+      ingredients: this.ingredients.map(ingredient => ingredient.value),
+      equipment: this.equipment.map(equipment => equipment.value),
+      cardImgReg: this.downloadURL,
+      uid: user.uid,
+    });
+
+    console.log("Response from postDbRecipe:", result.data);
+
+    if (result.data.success) {
+      console.log("Recipe posted successfully", result.data.message);
+      console.log("Routing to recipe ", result.data.recipeId);
+      await this.router.push("/recipe/" + result.data.recipeId);
+    } else {
+      console.warn("Recipe failed to post", result.data.message);
+    }
+  } catch (error) {
+    console.error("Error calling postDbRecipe:", error);
+  } finally {
+    this.loading = false;
+  }
+},
   },
 };
 </script>

@@ -297,8 +297,8 @@ exports.postDbRecipe = onCall(async (req) => {
 });
 
 exports.updateDbRecipe = onCall(async (req) => {
-    const { name, preparationTime, instructions, ingredients, equipment, cardImgReg, id, uid } = req.data
-    if (!name || !preparationTime || !instructions || !ingredients || !equipment || !cardImgReg || !uid) {
+    const { name, preparationTime, instructions, ingredients, equipment, cardImgReg, id, } = req.data
+    if (!name || !preparationTime || !instructions || !ingredients || !equipment || !cardImgReg) {
         logger.log("Error: Recipe data not found or invalid: ", req.data);
         return { success: false, message: "Recipe data not found or invalid" }
     }
@@ -318,7 +318,7 @@ exports.updateDbRecipe = onCall(async (req) => {
 
         const recipeData = recipeSnapshot.data();
 
-        if (recipeData.authorUid !== uid) {
+        if (recipeData.authorUid !== req.auth.uid) {
             logger.log("Error: Authenticated user is not the author of the recipe");
             return { success: false, message: "Error: Authenticated user is not the author of the recipe" };
         }
@@ -569,10 +569,10 @@ exports.getDbUser = onCall(async (req) => {
         const madeRecipes = [];
         const likedRecipes = [];
         let ownPage = false;
-        if(req.auth){
+        if (req.auth) {
             ownPage = (req.auth.uid == userData.uId);
         }
-        
+
 
         for (const recipeId of madeRecipesIds) {
             const recipeRef = db.doc('/Recipe/' + recipeId);
@@ -633,7 +633,7 @@ exports.getDbUser = onCall(async (req) => {
         }
 
         logger.log("returning pfpUrl: ", pfpUrl);
-        return { success: true, madeRecipes: madeRecipes, likedRecipes: likedRecipes , name:name, pfpUrl:pfpUrl, biography:biography, ownPage:ownPage};
+        return { success: true, madeRecipes: madeRecipes, likedRecipes: likedRecipes, name: name, pfpUrl: pfpUrl, biography: biography, ownPage: ownPage };
 
     } catch (error) {
         logger.error("Error fetching user recipes:", error);
@@ -696,17 +696,24 @@ exports.createDbUser = onCall(async (req) => {
 
 exports.updateDbUser = onCall(async (req) => {
     const { uName, pfpDownloadURL, uBiography, uDocId, } = req.data
-    const dbUser = await db.collection('Users').doc(uDocId).get();
+    
+    logger.log("Attempting to get user: ", uDocId)
+    const ref = db.doc("/Recipe/" + uDocId);
+    const dbUser = await ref.get();
+
+    logger.log("User: ", dbUser.data())
+    let complete = false;
     if (req.auth.uid == dbUser.data.uId) {
         try {
-            const complete = await dbUser.ref.update({
-                biography:uBiography,
+            await dbUser.update({
+                biography: uBiography,
                 name: uName,
                 pfpUrl: pfpDownloadURL
             })
+            complete = true;
         } catch (error) {
             logger.error(error);
-            return { success: false, message: "Could not update user:" + error }
+            return { success: false, message: "Could not update user:", error }
         }
     }
 

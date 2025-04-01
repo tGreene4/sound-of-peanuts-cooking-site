@@ -118,7 +118,6 @@ const updateRecipe = async () => {
       ingredients: parsedIngredients,
       equipment: parsedEquipment,
       cardImgReg: downloadURL.value,
-      uid: user.uid,
     });
 
     console.log("Response from updateDbRecipe:", result.data);
