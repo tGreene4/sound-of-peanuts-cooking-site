@@ -156,7 +156,6 @@ const toggleEditName = () => {
             <div class="row justify-content-center">
               <div class="col-xxl-6 col-xl-12 form-group align-content-start">
                 <div class="sectionHeader" style="height:3.5rem; width: fit-content;">
-                  <!-- Toggle between username display and textarea -->
                   <div v-if="!showEditName" @click="toggleEditName" style="cursor: pointer;">
                     <h1 style="font-size: 2.5rem; font-weight: bold;">
                       {{ userName.length > 20 ? userName.slice(0, 20) + '...' : userName }}
