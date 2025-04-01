@@ -7,7 +7,7 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 const { getFirestore, Timestamp } = require('firebase-admin/firestore');
-const { getStorage, getDownloadURL, uploadBytes, ref } = require('firebase-admin/storage');
+const { getStorage } = require('firebase-admin/storage');
 const { onCall } = require("firebase-functions/v2/https");
 const { initializeApp } = require('firebase-admin/app');
 
@@ -572,7 +572,6 @@ exports.getDbUser = onCall(async (req) => {
         if(req.auth){
             ownPage = (req.auth.uid == userData.uId);
         }
-        
 
         for (const recipeId of madeRecipesIds) {
             const recipeRef = db.doc('/Recipe/' + recipeId);
@@ -695,65 +694,74 @@ exports.createDbUser = onCall(async (req) => {
 });
 
 exports.updateDbUser = onCall(async (req) => {
-    const { uName, pfpDownloadURL, uBiography, uDocId, } = req.data
-    const dbUser = await db.collection('Users').doc(uDocId).get();
-    if (req.auth.uid == dbUser.data.uId) {
+    const { uName, pfpDownloadURL, uBiography, uDocId } = req.data
+    const dbUser = await db.doc('/Users/' + uDocId).get();
+    logger.info(dbUser)
+    logger.info("Updating user with doc ID "+uDocId+", user ID "+dbUser.data().uId);
+    logger.info("Req uid: "+req.auth.uid);
+    logger.info("Doc uid: "+dbUser.data().uId);
+    if (req.auth.uid == dbUser.data().uId) {
+        logger.info("Update passed auth check");
         try {
             const complete = await dbUser.ref.update({
                 biography:uBiography,
                 name: uName,
                 pfpUrl: pfpDownloadURL
             })
+            if (complete) {
+                logger.info("User updated");
+                return { success: true, message: "User updated" }
+            }
+            else {
+                logger.info("User update failed");
+                return { success: false, message: "Error: could not update user" }
+            }
         } catch (error) {
-            logger.error(error);
+            logger.error("Update error:",error);
             return { success: false, message: "Could not update user:" + error }
         }
+    }else{
+        return{success:false,message: "Could not update user:failed auth check"}
     }
 
-    if (complete) {
-        return { success: true, message: "User updated" }
-    }
-    else {
-        return { success: false, message: "Error: could not update user" }
-    }
+    
 });
 
 exports.deleteDbUser = onCall(async (req) => {
     const { uDocId } = req.data;
-    var complete = false;
+    logger.info(uDocId);
     if (!uDocId) {
         throw new Error("UDocID not found");
     }
-
     const dbUser = await db.collection('Users').doc(uDocId).get();
-    const uId = dbUser.data.uId;
+    const uId = dbUser.data().uId;
     if (req.auth.uid == uId) {
+        logger.info("deleteDbUser passed auth check");
         try {
             const dbDelComplete = await dbUser.ref.delete();
             if (dbDelComplete) {
                 logger.info("Deleted user from database");
+                const deletedUserRecipes = dbUser.data().madeRecipes;
+                for(var i=0;i<deletedUserRecipes.length;i++){
+                    let thisDoc = db.collection("Recipe").doc(deletedUserRecipes[i]).get();
+                    thisDoc.ref.update({
+                        uId: "",
+                        authorRef: "/Users/aLsEiyAU2DPPajSJdZ0f"
+                    })
+                }
+                return { success: true, message: "User deleted" }
             }
-            auth.deleteUser(uId);
-            const deletedUserRecipes = await db.collection('Recipe').where("authorUid", "==", uId).get();
-            deletedUserRecipes.docs.forEach((thisDoc) => {
-                thisDoc.ref.update({
-                    uId: "",
-                    authorRef: "/Users/aLsEiyAU2DPPajSJdZ0f"
-                })
-
-            })
+            else{
+                return { success: false, message: "Error: could not delete user" }
+            }
         }
         catch (error) {
-            logger.error(error);
-            console.log();
+            logger.error("Error deleting user from database",error);
         }
+    }else{
+        logger.error("deleteDbUser could not authenticate")
     }
-    if (complete) {
-        return { success: true, message: "User deleted" }
-    }
-    else {
-        return { success: false, message: "Error: could not delete user" }
-    }
+    
 });
 
 exports.getUDocIdFromUId = onCall(async (req) => {

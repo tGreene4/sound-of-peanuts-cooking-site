@@ -11,7 +11,9 @@ const isAuthenticated = ref(false);
 const userId = ref("");
 
 onMounted(() => {
-    onAuthStateChanged(auth, async (currentUser) => {
+    auth.authStateReady().then(async ()=>{
+        console.log("Pfp image user check")
+        const currentUser = auth.currentUser;
         if (currentUser) {
             isAuthenticated.value = true;
             userId.value = currentUser.uid;
@@ -36,11 +38,16 @@ onMounted(() => {
                 pfpImgRef.value = currentUser.photoURL;
             }
         } else {
+            console.log("User not signed in")
             isAuthenticated.value = false;
             userId.value = "";
             pfpImgRef.value = placeholderPfp; // Reset to placeholder if user logs out
         }
         loadingPfp.value = false;
+
+    })
+    onAuthStateChanged(auth, async (currentUser) => {
+        
     });
 });
 </script>

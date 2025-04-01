@@ -1,10 +1,12 @@
 <script setup>
 import { onMounted, ref } from 'vue';
-import { auth, functions } from '../api/firebase'
+import { auth, functions, storage } from '../api/firebase'
 import { httpsCallable } from 'firebase/functions';
+import {deleteUser, EmailAuthProvider, reauthenticateWithCredential, signOut,updateProfile} from 'firebase/auth'
 import { useRoute, useRouter } from 'vue-router';
 import Card from "@/components/Card.vue";
 import placeholderImg from "@/assets/images/User icon.png";
+import { deleteObject, ref as storageRef ,uploadBytes,getDownloadURL} from 'firebase/storage';
 const router = useRouter();
 
 const liked = ref([]);
@@ -23,9 +25,9 @@ const getThisUser = async () => {
   console.log("Calling getDbUser");
   const dbUserRequest = httpsCallable(functions, 'getDbUser');
   try {
-    const userId = route.params.id;
-    console.log("Fetching recipes for user ID: ", userId);
-    const result = await dbUserRequest({ id: userId });
+    const docId = route.params.id;
+    console.log("Fetching recipes for document ID: ", docId);
+    const result = await dbUserRequest({ id: docId });
     console.log("Response from getDbUser:", result.data);
 
     if (result.data.success) {
@@ -34,6 +36,7 @@ const getThisUser = async () => {
       pfpRef.value = result.data.pfpUrl;
       liked.value = result.data.likedRecipes || [];
       userRecipes.value = result.data.madeRecipes || [];
+      ownPage.value = result.data.ownPage || false;
 
       console.log("Liked Recipes:", liked.value);
       console.log("User Recipes:", userRecipes.value);
@@ -47,33 +50,99 @@ const getThisUser = async () => {
     userLoading.value = false;
   }
 };
-function userCheck() {
-  if (auth.currentUser != null) {
-    console.log(route.params.id + " and " + auth.currentUser);
-    //Doesn't work very well, I think auth is returning the Uid while route.params is returning the docid
-    if (auth.currentUser.uid == route.params.id) {
-      console.log("This User owns this user page");
-      ownPage.value = true;
-      nameLabel.value = "Your";
+
+const deleteThisUser = async () => {
+  
+  const dbUserDelete = httpsCallable(functions,"deleteDbUser")
+  var dbSuccess = false;
+  var delUid = auth.currentUser.uid;
+  try{
+    let email = prompt("Enter email:")
+    let password = prompt("Enter password:")
+    if(email!=null && password!=null){
+      let cred = EmailAuthProvider.credential(email,password);
+      reauthenticateWithCredential(auth.currentUser,cred).then(()=>{
+        deleteUser(auth.currentUser);
+      });
     }
-    else {
-      console.log("This User doesn't own this user page");
-      ownPage.value = false;
-      //Change this to the User Page Owner's Name
-      nameLabel.value = userName.value + "'s";
-    }
+    
+  }catch(error){
+    console.log("Error deleting account:",error)
+    alert("Could not delete account")
   }
-  else {
-    console.log("No User logged in");
-    ownPage.value = false;
-    //Change this to the User Page Owner's Name
-    nameLabel.value = userName.value + "'s";
+  
+  try{
+    const docId = route.params.id
+    console.log("Deleting user with doc ID "+docId)
+    dbSuccess = await dbUserDelete({uDocId:docId});
+  }catch(error){
+    console.log("Error deleting user from DB:",error)
+    return;
   }
+
+  try{
+      console.log("Removed user from database")
+      deleteObject(storageRef(storage,"images/"+delUid));
+  }catch(error){
+      console.log("Error deleting pfp:",error)
+  }
+
+  router.push("/account");
+
 }
+
+const updateThisUser = async() => {
+  const updateBio = userBiography.value;
+  const updateName = userName.value;
+  const pfpFile = file;
+  var updatePfpDownloadURL;
+
+  try{
+    const storageReference = storageRef(storage, 'images/' + auth.currentUser.uid);
+    deleteObject(storageReference);
+    const snapshot = await uploadBytes(storageReference, pfpFile);
+    updatePfpDownloadURL = await getDownloadURL(snapshot.ref);
+    console.log("Image uploaded successfully. Download URL:", updatePfpDownloadURL);
+    await updateProfile(auth.currentUser, { photoURL: updatePfpDownloadURL });
+    
+  }catch(error){
+    console.log("Failed to download image:",error)
+
+  }
+
+  const dbUserUpdate = httpsCallable(functions,"updateDbUser");
+  try{
+    const result = await dbUserUpdate({
+      uName:updateName,
+      pfpDownloadURL:updatePfpDownloadURL,
+      uBiography:updateBio,
+      uDocId:route.params.id
+    });
+    if(result.data.success=true){
+      console.log("Update complete");
+    }else{
+      console.log("Update failed");
+    }
+
+  }
+  catch(error){
+    console.log("Failed to update DB:",error)
+
+  }
+
+  router.push("/user/" + route.params.id);
+
+}
+
+function logOut(){
+  signOut(auth);
+  router.push("/account")
+  
+}
+
 
 onMounted(() => {
   getThisUser();
-  userCheck();
 })
 
 var file;
@@ -111,7 +180,7 @@ const handleFileUpload = function (event) {
         <div class="tab-pane show active align-self-center" role="tabpanel" id="userContent">
           <div class="container-fluid align-self-center">
             <div class="row justify-content-start">
-              <button v-if="ownPage" style="width: 10%;min-width: 200px">Log out</button>
+              <button v-if="ownPage" style="width: 10%;min-width: 200px" @click="logOut">Log out</button>
             </div>
             <div class="row justify-content-center">
               <div class="col-xxl-6 col-xl-12 form-group align-content-start">
@@ -139,7 +208,7 @@ const handleFileUpload = function (event) {
                 <div v-if="ownPage" style="height:100%;width: 100%;">
                   <div class="row justify-content-center" style="height: 60%; min-height: 200px; width:100%">
                     <textarea id="bio" style="border: dashed">{{ userBiography.value }}</textarea>
-                    <button style="width: 25%"> Upload Bio</button>
+                    <button style="width: 25%" @click="updateThisUser();">Update Profile</button>
                   </div>
                 </div>
                 <div v-else id="bio">
@@ -174,7 +243,7 @@ const handleFileUpload = function (event) {
 
             <div class="row justify-content-end">
               <!--Connect this to delete User-->
-              <button v-if="ownPage" style="width: 10%;min-width: 200px">Delete User Profile</button>
+              <button v-if="ownPage" style="width: 10%;min-width: 200px" @click="deleteThisUser()">Delete User Profile</button>
             </div>
           </div>
         </div>
