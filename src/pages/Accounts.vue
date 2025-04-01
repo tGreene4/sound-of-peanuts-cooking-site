@@ -217,8 +217,12 @@ function userLogin(event) {
 </template>
 
 <style scoped>
-.gradient-custom {
-    background: linear-gradient(to right, rgba(242, 233, 126, 75%), rgba(255, 121, 0, 50%));
+#flexWrapper {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    background: radial-gradient(rgba(242, 233, 126, 75%), rgba(255, 121, 0, 50%));
 }
 
 #accountPageDiv {
@@ -229,9 +233,18 @@ function userLogin(event) {
     border-radius: 20px;
     margin: 3vh;
     background-color: rgb(243, 239, 234);
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
 }
 
-#emailInput,
+#accountPageDiv {
+    align-items: center;
+    width: max-content;
+    padding: 4vh;
+    border: 2px solid lightgrey;
+    border-radius: 20px;
+    background-color: rgb(243, 239, 234);
+}
+
 #emailLoginInput {
     width: 35ch;
 }
