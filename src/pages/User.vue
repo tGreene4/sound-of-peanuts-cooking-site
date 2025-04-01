@@ -116,7 +116,9 @@ const handleFileUpload = async (event) => {
 
 const showEditName = ref(false);
 const toggleEditName = () => {
-  showEditName.value = !showEditName.value;
+  if(ownPage.value){
+    showEditName.value = !showEditName.value;
+  }
 };
 </script>
 
@@ -163,7 +165,7 @@ const toggleEditName = () => {
                   </div>
                   <div v-else>
                     <textarea v-model="userName"
-                      style="font-size: 2.5rem; font-weight: bold; font-size: 2rem;background-color: transparent; width: 100%; height: 100%; border: none; outline: none; resize: none; text-align: center;"
+                      style="font-weight: bold; font-size: 2.5rem;background-color: transparent; width: 100%; height: 100%; border: none; outline: none; resize: none; text-align: center;"
                       @blur="toggleEditName"></textarea>
                   </div>
                 </div>
