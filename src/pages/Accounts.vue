@@ -59,6 +59,8 @@ auth.authStateReady().then(authCheck)
 
 const handleFileUpload = function (event) {
     file = event.target.files[0];
+    if (!file) return;
+    
     pfpRef.value = URL.createObjectURL(file);
     defaultPFP.value = false;
 };

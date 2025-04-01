@@ -693,44 +693,43 @@ exports.createDbUser = onCall(async (req) => {
 
 exports.updateDbUser = onCall(async (req) => {
     const { uName, pfpDownloadURL, uBiography, uDocId } = req.data;
-  
+
     if (!req.auth) {
-      return { success: false, message: "User is not authenticated" };
+        return { success: false, message: "User is not authenticated" };
     }
-  
+
     if (!uDocId) {
-      return { success: false, message: "User document ID is required" };
+        return { success: false, message: "User document ID is required" };
     }
-  
+
     logger.log("Attempting to get user: ", uDocId);
     const ref = db.doc("/Users/" + uDocId);
-  
     try {
-      const dbUserQuery = await ref.get();
-  
-      if (!dbUserQuery.exists) {
-        return { success: false, message: "User not found" };
-      }
-  
-      const dbUserData = dbUserQuery.data();
-      logger.log("User: ", dbUserData);
-  
-      if (req.auth.uid !== dbUserData.uId) {
-        return { success: false, message: "Unauthorized: You cannot update this user" };
-      }
-  
-      await ref.update({
-        biography: uBiography,
-        name: uName,
-        pfpUrl: pfpDownloadURL,
-      });
-  
-      return { success: true, message: "User updated" };
+        const dbUserQuery = await ref.get();
+
+        if (!dbUserQuery.exists) {
+            return { success: false, message: "User not found" };
+        }
+
+        const dbUserData = dbUserQuery.data();
+        logger.log("User: ", dbUserData);
+
+        if (req.auth.uid !== dbUserData.uId) {
+            return { success: false, message: "Unauthorized: You cannot update this user" };
+        }
+
+        await ref.update({
+            biography: uBiography,
+            name: uName,
+            pfpUrl: pfpDownloadURL,
+        });
+
+        return { success: true, message: "User updated" };
     } catch (error) {
-      logger.error("Error updating user:", error);
-      return { success: false, message: "Could not update user", error };
+        logger.error("Error updating user:", error);
+        return { success: false, message: "Could not update user", error };
     }
-  });
+});
 
 exports.deleteDbUser = onCall(async (req) => {
     const { uDocId } = req.data;

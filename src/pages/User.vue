@@ -69,21 +69,13 @@ const updateThisUser = async () => {
     return;
   }
   try {
-    if (changedPFP) {
-      const storageReference = storageRef(storage, 'images/' + auth.currentUser.uid);
-      const snapshot = await uploadBytes(storageReference, pfpRef);
-      pfpRef.value = await getDownloadURL(snapshot.ref);
-      console.log("Image uploaded successfully. Download URL:", pfpRef.value);
-    }
-
-    console.log("Updating user with ID: ", userDoc);
     const result = await updateThisDbUser({
       uName: userName.value,
       pfpDownloadURL: pfpRef.value,
       uBiography: userBiography.value,
       uDocId: userDoc
     });
-    
+
     if (result.data.success) {
       location.reload();
     } else {
@@ -106,11 +98,20 @@ onMounted(() => {
   getThisUser();
 })
 
-var file;
-const handleFileUpload = function (event) {
-  file = event.target.files[0];
-  pfpRef.value = URL.createObjectURL(file);
-  changedPFP.value = true;
+const handleFileUpload = async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  try {
+    const storageReference = storageRef(storage, 'images/' + auth.currentUser.uid);
+    const snapshot = await uploadBytes(storageReference, file);
+    const downloadURL = await getDownloadURL(snapshot.ref);
+
+    pfpRef.value = downloadURL;
+    console.log("Image uploaded successfully. Download URL:", pfpRef.value);
+  } catch (error) {
+    console.error("Error uploading image:", error);
+  }
 };
 </script>
 
@@ -191,7 +192,7 @@ const handleFileUpload = function (event) {
                   </h3>
                   <div class="row justify-content-center">
                     <button class="form-control" type="button" @click="updateThisUser" style="width:200px;"> Yes, Update
-                      Recipe</button>
+                      Account</button>
                     <button class="form-control" type="button" @click="updateWarning = false;"
                       style="width:100px;">No</button>
                   </div>
@@ -202,13 +203,14 @@ const handleFileUpload = function (event) {
                 <h3>{{ nameLabel }} Bio</h3>
                 <div v-if="ownPage" style="height:100%;width: 100%;">
                   <div class="row justify-content-center" style="height: 85%; min-height: 200px; width:100%">
-                    <textarea id="bio" style="border: dashed">{{ userBiography.value }}</textarea>
+                    <textarea id="bio" style="border: dashed; width: 100%; height: 100%;"
+                      v-model="userBiography"></textarea>
                     <button style="width: 25%; padding:0;margin:0;" @click="updateWarning = true"> Save Changes
                     </button>
                   </div>
                 </div>
                 <div v-else id="bio">
-                  {{ userBiography.value }}
+                  {{ userBiography }}
                 </div>
               </div>
 

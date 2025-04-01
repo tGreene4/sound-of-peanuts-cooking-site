@@ -55,6 +55,8 @@ export default {
       try {
         const storage = getStorage();
         const file = event.target.files[0];
+        if (!file) return;
+        
         const storageRef = ref(storage, 'images/' + file.name);
         const snapshot = await uploadBytes(storageRef, file);
         const downloadURL = await getDownloadURL(snapshot.ref);
