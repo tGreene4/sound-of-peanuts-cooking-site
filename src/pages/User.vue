@@ -13,6 +13,7 @@ const userName = ref('');
 const userBiography = ref('');
 const pfpRef = ref(placeholderImg);
 const userLoading = ref(true);
+const userNotFound = ref(true);
 
 const nameLabel = ref("Your");
 const ownPage = ref(false);
@@ -34,6 +35,8 @@ const getThisUser = async () => {
       pfpRef.value = result.data.pfpUrl;
       liked.value = result.data.likedRecipes || [];
       userRecipes.value = result.data.madeRecipes || [];
+      ownPage.value = result.data.ownPage;
+      userNotFound.value = false;
 
       console.log("Liked Recipes:", liked.value);
       console.log("User Recipes:", userRecipes.value);
@@ -152,7 +155,7 @@ const handleFileUpload = function (event) {
               <h1 class="sectionHeader">{{ nameLabel }} Recipes</h1>
               <div class="col-xxl-12">
                 <div class="row justify-content-center">
-                  <div v-if="!userRecipeLoading" class="col-auto" id="" v-for="item in userRecipes">
+                  <div class="col-auto" id="" v-for="item in userRecipes">
                     <div class="cardContainer">
                       <button v-if="ownPage" @click="router.push('/updaterecipe/' + item.id)" style="border-radius: 0">
                         Edit</button>
@@ -163,13 +166,10 @@ const handleFileUpload = function (event) {
                   </div>
                 </div>
               </div>
-              <div v-if="(userRecipes == '') & (!userRecipeLoading)" id="noRecWarning">
+              <div v-if="(userRecipes == '')" id="noRecWarning">
                 No recipes found
               </div>
               <br>
-              <div v-if="userRecipeLoading" class="spinner-border" role="status">
-                <span class="visually-hidden">Loading...</span>
-              </div>
             </div>
 
             <div class="row justify-content-end">
@@ -184,21 +184,18 @@ const handleFileUpload = function (event) {
             <div class="row justify-content-center">
               <h1 class="sectionHeader" style="top:5px">{{ nameLabel }} Liked Recipes</h1>
               <div class="row justify-content-center" id="moreField">
-                <div v-if="!likedLoading" class="col-auto" id="" v-for="item in liked">
+                <div class="col-auto" id="" v-for="item in liked">
                   <div class="cardContainer">
                     <Card :thisRecipeId="item.id" :thisRecipeName="item.name" :thisAuthor="item.author"
                       :thisCookTime="item.preparationTime" :thisLikes="item.likes"
                       :thisImgStorageSrc="item.cardImgReg" />
                   </div>
                 </div>
-                <div v-if="(liked == '') & (!likedLoading)" id="noRecWarning">
+                <div v-if="(liked == '')" id="noRecWarning">
                   No recipes found
                 </div>
                 <br>
                 <br>
-                <div v-if="likedLoading" class="spinner-border" role="status">
-                  <span class="visually-hidden">Loading...</span>
-                </div>
               </div>
             </div>
           </div>
