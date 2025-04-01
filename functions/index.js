@@ -20,7 +20,6 @@ initializeApp({
 });
 
 const db = getFirestore();
-const store = getStorage();
 const auth = getAuth();
 
 exports.helloWorld = onCall(async (req) => {
@@ -235,8 +234,8 @@ exports.getDbRecipeSingle = onCall(async (req) => {
 });
 
 exports.postDbRecipe = onCall(async (req) => {
-    const { name, preparationTime, instructions, ingredients, equipment, cardImgReg, uid } = req.data
-    if (!name || !preparationTime || !instructions || !ingredients || !equipment || !cardImgReg || !uid) {
+    const { name, preparationTime, instructions, ingredients, equipment, cardImgReg, } = req.data
+    if (!name || !preparationTime || !instructions || !ingredients || !equipment || !cardImgReg) {
         logger.log("Error: Recipe data not found or invalid: ", req.data);
         return { success: false, message: "Recipe data not found or invalid" }
     }
@@ -244,11 +243,9 @@ exports.postDbRecipe = onCall(async (req) => {
     if (!req.auth) {
         return { success: false, message: "Error: User is not authenticated" }
     }
-    logger.log("Auth info", req.auth);
 
     try {
-        logger.log("type of uid: " + typeof uid)
-        const userQuery = db.collection("Users").where('uId', '==', uid).limit(1);
+        const userQuery = db.collection("Users").where('uId', '==', req.auth.uid).limit(1);
         const userSnapshot = await userQuery.get();
 
         logger.log("user Snapshot: ", userSnapshot)
@@ -297,8 +294,8 @@ exports.postDbRecipe = onCall(async (req) => {
 });
 
 exports.updateDbRecipe = onCall(async (req) => {
-    const { name, preparationTime, instructions, ingredients, equipment, cardImgReg, id, uid } = req.data
-    if (!name || !preparationTime || !instructions || !ingredients || !equipment || !cardImgReg || !uid) {
+    const { name, preparationTime, instructions, ingredients, equipment, cardImgReg, id, } = req.data
+    if (!name || !preparationTime || !instructions || !ingredients || !equipment || !cardImgReg) {
         logger.log("Error: Recipe data not found or invalid: ", req.data);
         return { success: false, message: "Recipe data not found or invalid" }
     }
@@ -318,7 +315,7 @@ exports.updateDbRecipe = onCall(async (req) => {
 
         const recipeData = recipeSnapshot.data();
 
-        if (recipeData.authorUid !== uid) {
+        if (recipeData.authorUid !== req.auth.uid) {
             logger.log("Error: Authenticated user is not the author of the recipe");
             return { success: false, message: "Error: Authenticated user is not the author of the recipe" };
         }
@@ -569,10 +566,10 @@ exports.getDbUser = onCall(async (req) => {
         const madeRecipes = [];
         const likedRecipes = [];
         let ownPage = false;
-        if(req.auth){
+        if (req.auth) {
             ownPage = (req.auth.uid == userData.uId);
         }
-        
+
 
         for (const recipeId of madeRecipesIds) {
             const recipeRef = db.doc('/Recipe/' + recipeId);
@@ -633,7 +630,7 @@ exports.getDbUser = onCall(async (req) => {
         }
 
         logger.log("returning pfpUrl: ", pfpUrl);
-        return { success: true, madeRecipes: madeRecipes, likedRecipes: likedRecipes , name:name, pfpUrl:pfpUrl, biography:biography, ownPage:ownPage};
+        return { success: true, madeRecipes: madeRecipes, likedRecipes: likedRecipes, name: name, pfpUrl: pfpUrl, biography: biography, ownPage: ownPage };
 
     } catch (error) {
         logger.error("Error fetching user recipes:", error);
@@ -695,26 +692,42 @@ exports.createDbUser = onCall(async (req) => {
 });
 
 exports.updateDbUser = onCall(async (req) => {
-    const { uName, pfpDownloadURL, uBiography, uDocId, } = req.data
-    const dbUser = await db.collection('Users').doc(uDocId).get();
-    if (req.auth.uid == dbUser.data.uId) {
-        try {
-            const complete = await dbUser.ref.update({
-                biography:uBiography,
-                name: uName,
-                pfpUrl: pfpDownloadURL
-            })
-        } catch (error) {
-            logger.error(error);
-            return { success: false, message: "Could not update user:" + error }
-        }
+    const { uName, pfpDownloadURL, uBiography, uDocId } = req.data;
+
+    if (!req.auth) {
+        return { success: false, message: "User is not authenticated" };
     }
 
-    if (complete) {
-        return { success: true, message: "User updated" }
+    if (!uDocId) {
+        return { success: false, message: "User document ID is required" };
     }
-    else {
-        return { success: false, message: "Error: could not update user" }
+
+    logger.log("Attempting to get user: ", uDocId);
+    const ref = db.doc("/Users/" + uDocId);
+    try {
+        const dbUserQuery = await ref.get();
+
+        if (!dbUserQuery.exists) {
+            return { success: false, message: "User not found" };
+        }
+
+        const dbUserData = dbUserQuery.data();
+        logger.log("User: ", dbUserData);
+
+        if (req.auth.uid !== dbUserData.uId) {
+            return { success: false, message: "Unauthorized: You cannot update this user" };
+        }
+
+        await ref.update({
+            biography: uBiography,
+            name: uName,
+            pfpUrl: pfpDownloadURL,
+        });
+
+        return { success: true, message: "User updated" };
+    } catch (error) {
+        logger.error("Error updating user:", error);
+        return { success: false, message: "Could not update user", error };
     }
 });
 

@@ -37,26 +37,12 @@ const recipe = ref({
   likes: 0,
   dislikes: 0,
   image: '',
-  /*
-  thisAuthor: {
-            type: Object,
-            default: () => ({ 
-                name: "Unknown", //add default pfp and no link, like a deleted reddit profile
-                pfpUrl: "",
-                id: 0
-            })
-        },
-        */
   preparationTime: 0,
   equipment: '',
   publishDate: ''
 });
-//const authorLink = ref("/user/"+recipe.thisAuthor.id)
 
-
-
-
-
+//const authorLink = ref("/user/"+recipe.value.author.id)
 
 const getDbRecipeSingle = async () => {
   console.log("Calling getDbRecipeSingle with ID:", routeProp.id);
@@ -175,7 +161,6 @@ Show author name (hyperlinked) and PFP near the title
       <div class="modal-footer">
         <button type="button" class="btn btn-light"  @click="closePopup" >Close</button>
         <router-link :to="{ path: '/account' }"><button type="button" class="btn btn-light" @click="closePopup" >Log in</button></router-link>
-        
       </div>
     </div>
   </div>
