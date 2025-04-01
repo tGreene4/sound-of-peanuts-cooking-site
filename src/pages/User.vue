@@ -21,9 +21,6 @@ const updateWarning = ref(false);
 
 const nameLabel = ref("Your");
 const ownPage = ref(false);
-
-const changedPFP = ref(false);
-
 const route = useRoute();
 const userDoc = route.params.id;
 

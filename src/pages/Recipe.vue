@@ -11,7 +11,8 @@ const recipeNotFound = ref(false);
 const loading = ref(true);
 const readableDate = ref('');
 const ownsRecipe = ref(false);
-let localLikes = ref('');
+const localLikes = ref(0);
+const localDislikes = ref(0);
 
 const state = reactive({
   authPopup: null,
@@ -42,8 +43,6 @@ const recipe = ref({
   publishDate: ''
 });
 
-//const authorLink = ref("/user/"+recipe.value.author.id)
-
 const getDbRecipeSingle = async () => {
   console.log("Calling getDbRecipeSingle with ID:", routeProp.id);
   const getDbRecipeSingleFunction = httpsCallable(functions, 'getDbRecipeSingle');
@@ -68,6 +67,9 @@ const getDbRecipeSingle = async () => {
         publishDate: recipeData.publishDate || ''
       };
 
+      isLiked.value = recipeData.isLiked;
+      isDisliked.value = recipeData.isDisliked;
+
       console.log("Author: ", recipe.value.author)
       console.log("Recipe" + recipe.value.author.name)
       if (recipeData.publishDate && recipeData.publishDate._seconds) {
@@ -75,7 +77,7 @@ const getDbRecipeSingle = async () => {
         readableDate.value = date.toLocaleDateString();
       }
       console.log(recipeData.publishDate._seconds);
-      localLikes = recipeData.likes;
+      localLikes.value = recipeData.likes;
     }
     else {
       console.log("Recipe not found: ", result.data.message);
@@ -89,6 +91,9 @@ const getDbRecipeSingle = async () => {
   }
 };
 
+const isLiked = ref(false);
+const isDisliked = ref(false);
+
 const likeRecipe = async () => {
   const user = auth.currentUser;
 
@@ -98,34 +103,55 @@ const likeRecipe = async () => {
     return;
   }
 
-  const uid = user.uid;
-
-  console.log("Calling addLikeRecipe with ID:", routeProp.id, "and user ID: ", uid);
+  console.log("Calling addLikeRecipe with ID:", routeProp.id, "and user ID: ", user.uid);
   const likeRecipeFunction = httpsCallable(functions, 'addLikeRecipe');
   try {
-    const result = await likeRecipeFunction({ id: routeProp.id, uid });
+    const result = await likeRecipeFunction({ id: routeProp.id });
+    if (result.data.alreadyLiked == false) {
+      isLiked.value = true;
+      if (isDisliked.value) {
+        isDisliked.value = false;
+        localDislikes.value = localDislikes.value - 1;
+      }
+      localLikes.value = localLikes.value + 1;
+    }
+    else if (result.data.alreadyLiked == true) {
+      isLiked.value = false;
+      localLikes.value = localLikes.value - 1;
+    }
     console.log(result.data);
   } catch (error) {
     console.error("Error calling addLikeRecipe:", error);
   }
-  localLikes = recipe.likes + 1;
 };
 
 const dislikeRecipe = async () => {
   const user = auth.currentUser;
 
   if (!user) {
-    console.error("User is not authenticated. Cannot like the recipe.");
+    console.error("User is not authenticated. Cannot dislike the recipe.");
     state.authPopup.show();
     return;
   }
 
-  const uid = user.uid;
-
-  console.log("Calling addDislikeRecipe with ID:", routeProp.id, "and user ID: ", uid);
+  console.log("Calling addDislikeRecipe with ID:", routeProp.id, "and user ID: ", user.uid);
   const dislikeRecipeFunction = httpsCallable(functions, 'addDislikeRecipe');
   try {
-    const result = await dislikeRecipeFunction({ id: routeProp.id, uid });
+    const result = await dislikeRecipeFunction({ id: routeProp.id });
+
+    if (result.data.alreadyDisliked == false) {
+      isDisliked.value = true;
+      if (isLiked.value) {
+        isLiked.value = false;
+        localLikes.value = localLikes.value - 1;
+      }
+      localDislikes.value = localDislikes.value + 1;
+    }
+    else if (result.data.alreadyDisliked == true) {
+      isDisliked.value = false;
+      localDislikes.value = localDislikes.value - 1;
+    }
+
     console.log(result.data);
   } catch (error) {
     console.error("Error calling addDislikeRecipe:", error);
@@ -142,11 +168,6 @@ onMounted(() => {
   state.authPopup = new Modal('#authPopup', {})
 });
 </script>
-
-<!-- TODO: 
-Add the popup to ask for authentication on like+dislike buttons
-Show author name (hyperlinked) and PFP near the title
--->
 
 <template>
   <div class="modal fade" id="authPopup" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
@@ -170,8 +191,10 @@ Show author name (hyperlinked) and PFP near the title
 
 
   <div class="container-fluid bg-secondary gradient-custom min-vh-100" style="padding-top: 20px;">
-    <div v-if="loading" class="spinner-border" role="status">
-      <span class="visually-hidden">Loading...</span>
+    <div v-if="loading" class="d-flex justify-content-center align-items-center min-vh-100">
+      <div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
     </div>
     <div v-else-if="recipeNotFound" class="text-center">
       <h1>Recipe Not Found</h1>
@@ -225,10 +248,14 @@ Show author name (hyperlinked) and PFP near the title
               </div>
             </div>
             <div class="d-flex gap-2 mt-auto justify-content-end border-top py-3">
-              <button v-if="ownsRecipe" class="btn btn-outline-dark"
-                @click="router.push('/updaterecipe/' + routeProp.id)">Edit</button>
-              <button class="btn btn-outline-success" @click="likeRecipe">Like {{ localLikes }}</button>
-              <button class="btn btn-outline-danger" @click="dislikeRecipe">Dislike {{ recipe.dislikes }}</button>
+              <button class="btn" :class="isLiked ? 'btn-success' : 'btn-outline-success'" @click="likeRecipe"
+                :style="{ backgroundColor: isLiked ? '#28a745' : '' }">
+                {{ isLiked ? 'Liked' : 'Like' }} {{ localLikes }}
+              </button>
+              <button class="btn" :class="isDisliked ? 'btn-danger' : 'btn-outline-danger'" @click="dislikeRecipe"
+                :style="{ backgroundColor: isDisliked ? '#dc3545' : '' }">
+                {{ isDisliked ? 'Disliked' : 'Dislike' }} {{ localDislikes }}
+              </button>
             </div>
           </div>
         </div>
