@@ -9,6 +9,7 @@ const recipeNotFound = ref(false);
 const loading = ref(true);
 const readableDate = ref('');
 const ownsRecipe = ref(false);
+let localLikes = ref(''); 
 
 const getHelloWorld = async () => { //remove before final deployment
   console.log("Calling helloWorld");
@@ -54,7 +55,7 @@ const getDbRecipeSingle = async () => {
         likes: recipeData.likes || 0,
         dislikes: recipeData.dislikes || 0,
         image: recipeData.cardImgReg || '',
-        author: recipeData.authorRef || '',
+        //author: recipeData.authorRef.id || '', 
         preparationTime: recipeData.preparationTime || 0,
         equipment: recipeData.equipment || '',
         publishDate: recipeData.publishDate || ''
@@ -64,6 +65,7 @@ const getDbRecipeSingle = async () => {
         readableDate.value = date.toLocaleDateString();
       }
       console.log(recipeData.publishDate._seconds);
+      localLikes = recipeData.likes;
     }
     else {
       console.log("Recipe not found: ", result.data.message);
@@ -95,6 +97,7 @@ const likeRecipe = async () => {
   } catch (error) {
     console.error("Error calling addLikeRecipe:", error);
   }
+  localLikes = recipe.likes + 1;
 };
 
 const dislikeRecipe = async () => {
@@ -125,7 +128,6 @@ onMounted(() => {
 <!-- TODO: 
 Add the popup to ask for authentication on like+dislike buttons
 Show author name (hyperlinked) and PFP near the title
-Add a script to +1 or -1 like number locally
 -->
 
 <template>
@@ -149,7 +151,7 @@ Add a script to +1 or -1 like number locally
               </div>
               <div class="col-md-6">
                 <h2 class="card-title mb-1">{{ recipe.name }}</h2>
-                <p>Preparation Time: <b>{{ recipe.preparationTime }} mins</b> &emsp; {{ recipe.authorRef }}
+                <p>Preparation Time: <b>{{ recipe.preparationTime }} mins</b> &emsp; {{ recipe.author }}
                   &emsp; Published: {{ readableDate }}</p>
                 <hr class="my-1" />
                 <div class="m-4">
@@ -185,7 +187,7 @@ Add a script to +1 or -1 like number locally
             <div class="d-flex gap-2 mt-auto justify-content-end border-top py-3">
               <button v-if="ownsRecipe" class="btn btn-outline-dark"
                 @click="router.push('/updaterecipe/' + routeProp.id)">Edit</button>
-              <button class="btn btn-outline-success" @click="likeRecipe">Like {{ recipe.likes }}</button>
+              <button class="btn btn-outline-success" @click="likeRecipe">Like {{ localLikes }}</button>
               <button class="btn btn-outline-danger" @click="dislikeRecipe">Dislike {{ recipe.dislikes }}</button>
             </div>
           </div>
