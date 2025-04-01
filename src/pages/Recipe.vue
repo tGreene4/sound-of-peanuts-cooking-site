@@ -2,13 +2,20 @@
 import { functions, auth } from '../api/firebase';
 import { httpsCallable } from 'firebase/functions';
 import { useRouter } from "vue-router";
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, reactive } from 'vue';
+import { Modal } from 'bootstrap';
+
 
 const router = useRouter();
 const recipeNotFound = ref(false);
 const loading = ref(true);
 const readableDate = ref('');
 const ownsRecipe = ref(false);
+let localLikes = ref(''); 
+
+const state = reactive({
+    authPopup: null,
+});
 
 const getHelloWorld = async () => { //remove before final deployment
   console.log("Calling helloWorld");
@@ -30,11 +37,21 @@ const recipe = ref({
   likes: 0,
   dislikes: 0,
   image: '',
-  author: [],
+  /*
+  thisAuthor: {
+            type: Object,
+            default: () => ({ 
+                name: "Unknown", //add default pfp and no link, like a deleted reddit profile
+                pfpUrl: "",
+                id: 0
+            })
+        },
+        */
   preparationTime: 0,
   equipment: '',
   publishDate: ''
 });
+//const authorLink = ref("/user/"+recipe.thisAuthor.id)
 
 
 
@@ -59,6 +76,7 @@ const getDbRecipeSingle = async () => {
         dislikes: recipeData.dislikes || 0,
         image: recipeData.cardImgReg || '',
         author: recipeData.author || '',
+
         preparationTime: recipeData.preparationTime || 0,
         equipment: recipeData.equipment || '',
         publishDate: recipeData.publishDate || ''
@@ -71,6 +89,7 @@ const getDbRecipeSingle = async () => {
         readableDate.value = date.toLocaleDateString();
       }
       console.log(recipeData.publishDate._seconds);
+      localLikes = recipeData.likes;
     }
     else {
       console.log("Recipe not found: ", result.data.message);
@@ -89,6 +108,7 @@ const likeRecipe = async () => {
 
   if (!user) {
     console.error("User is not authenticated. Cannot like the recipe.");
+    state.authPopup.show();
     return;
   }
 
@@ -102,6 +122,7 @@ const likeRecipe = async () => {
   } catch (error) {
     console.error("Error calling addLikeRecipe:", error);
   }
+  localLikes = recipe.likes + 1;
 };
 
 const dislikeRecipe = async () => {
@@ -109,6 +130,7 @@ const dislikeRecipe = async () => {
 
   if (!user) {
     console.error("User is not authenticated. Cannot like the recipe.");
+    state.authPopup.show();
     return;
   }
 
@@ -123,19 +145,43 @@ const dislikeRecipe = async () => {
     console.error("Error calling addDislikeRecipe:", error);
   }
 };
+const closePopup = async () => {
+  console.log("closing popup")
+  state.authPopup.hide();
+}
+
 
 onMounted(() => {
   getDbRecipeSingle();
+  state.authPopup = new Modal('#authPopup', {})
 });
 </script>
 
 <!-- TODO: 
 Add the popup to ask for authentication on like+dislike buttons
 Show author name (hyperlinked) and PFP near the title
-Add a script to +1 or -1 like number locally
 -->
 
 <template>
+<div class="modal fade" id="authPopup" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Not Logged In</h5>
+      </div>
+      <div class="modal-body">
+        Sorry! You're not logged in. Please log in and try again.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light"  @click="closePopup" >Close</button>
+        <router-link :to="{ path: '/account' }"><button type="button" class="btn btn-light" @click="closePopup" >Log in</button></router-link>
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+
   <div class="container-fluid bg-secondary gradient-custom min-vh-100" style="padding-top: 20px;">
     <div v-if="loading" class="spinner-border" role="status">
       <span class="visually-hidden">Loading...</span>
@@ -156,7 +202,7 @@ Add a script to +1 or -1 like number locally
               </div>
               <div class="col-md-6">
                 <h2 class="card-title mb-1">{{ recipe.name }}</h2>
-                <p>Preparation Time: <b>{{ recipe.preparationTime }} mins</b> &emsp; {{ recipe.authorRef }}
+                <p>Preparation Time: <b>{{ recipe.preparationTime }} mins</b> &emsp; {{ recipe.author }}
                   &emsp; Published: {{ readableDate }}</p>
                 <hr class="my-1" />
                 <div class="m-4">
@@ -192,7 +238,7 @@ Add a script to +1 or -1 like number locally
             <div class="d-flex gap-2 mt-auto justify-content-end border-top py-3">
               <button v-if="ownsRecipe" class="btn btn-outline-dark"
                 @click="router.push('/updaterecipe/' + routeProp.id)">Edit</button>
-              <button class="btn btn-outline-success" @click="likeRecipe">Like {{ recipe.likes }}</button>
+              <button class="btn btn-outline-success" @click="likeRecipe">Like {{ localLikes }}</button>
               <button class="btn btn-outline-danger" @click="dislikeRecipe">Dislike {{ recipe.dislikes }}</button>
             </div>
           </div>
@@ -218,22 +264,8 @@ button {
   min-height: 750px;
 }
 
-.card-title {
-  font-size: 2rem;
-  font-weight: bold;
-}
-
-.card-text {
-  font-size: 1.1rem;
-  line-height: 1.6;
-}
-
 .btn {
   font-size: 1rem;
   padding: 0.5rem 1rem;
-}
-
-.gradient-custom {
-  background: linear-gradient(to right, rgba(242, 233, 126, 75%), rgba(255, 121, 0, 50%));
 }
 </style>

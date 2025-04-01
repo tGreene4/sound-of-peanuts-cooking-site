@@ -187,7 +187,7 @@ export default {
                       <button class="btn" type="button" @click="deleteField('equipment', index)" tabindex="-1">X</button>
                     </div>
                   </div>
-                </div>
+                </div><br>
                 <button type="button" class="align-self-start" @click="addField('equipment')" tabindex="-1">Add new
                   Equipment</button><br><br>
               </div>
@@ -212,11 +212,6 @@ export default {
   border-bottom-right-radius: 20px;
   margin-left: 20px;
   margin-right: 20px;
-  position: relative;
-}
-
-#content {
-  width: 100%;
   position: relative;
 }
 
@@ -251,24 +246,11 @@ export default {
   border-radius: 0;
 }
 
-button {
-  background: rgb(240, 240, 240);
-  border: black 2px solid;
-  border-radius: 15px;
-  Box-shadow: 3px 3px 5px black;
-}
-
 
 img {
   border: 2px dashed black;
   border-radius: 20px;
   align-self: center;
-}
-
-#media {
-  background: linear-gradient(to left, rgba(255, 121, 0, 0%), rgba(255, 121, 0, 100%));
-  border-radius: 2px;
-  width: 100%;
 }
 
 button:hover{

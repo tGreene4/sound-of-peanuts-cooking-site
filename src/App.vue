@@ -11,7 +11,8 @@ import Header from './components/Header.vue';
   </div>
 </template>
 
-<style scoped>
+<style>
+@import './assets/main.css';
 #body {
   min-height: 100%;
   min-width: 720px;

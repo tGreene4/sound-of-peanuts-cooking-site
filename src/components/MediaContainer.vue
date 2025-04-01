@@ -192,9 +192,6 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.gradient-custom {
-  background: linear-gradient(to right, rgba(242, 233, 126, 75%), rgba(255, 121, 0, 50%));
-}
 
 .sectionHeader {
   border: 3px solid;
@@ -202,21 +199,15 @@ onMounted(async () => {
   border-left: 0;
   border-top-right-radius: 5px;
   border-bottom-right-radius: 5px;
-  box-shadow: 5px 5px 5px black;
-  position: relative;
   top: 5px;
   left: -20px;
   width: 15%;
-  min-width: 250px;
-  text-align: center;
-  background: rgba(255, 183, 77, 50%);
 }
 
 button {
   height: 50px;
   width: 250px;
   position: sticky;
-  background: rgb(240, 240, 240);
   border: black 2px solid;
   border-radius: 15px;
   Box-shadow: 3px 3px 5px black;
@@ -230,16 +221,6 @@ button {
   padding-bottom: 5px;
   position: relative;
   align-self: center;
-}
-
-#noRecWarning {
-  top: 10px;
-  font-weight: bolder;
-  color: red;
-}
-button:hover{
-  background: rgb(0, 0, 0);
-  color: white;
 }
 
 </style>

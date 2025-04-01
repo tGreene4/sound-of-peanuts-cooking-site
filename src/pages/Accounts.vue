@@ -51,7 +51,6 @@ function authCheck() {
     else {
         loading.value = false;
     }
-
 }
 
 auth.authStateReady().then(authCheck)
