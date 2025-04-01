@@ -258,6 +258,7 @@ export default {
   color: red;
   border: none;
   border-radius: 0;
+  background: white;
 }
 
 

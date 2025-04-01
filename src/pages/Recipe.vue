@@ -18,16 +18,6 @@ const state = reactive({
   authPopup: null,
 });
 
-const getHelloWorld = async () => { //remove before final deployment
-  console.log("Calling helloWorld");
-  const helloWorld = httpsCallable(functions, 'helloWorld');
-  try {
-    const result = await helloWorld({});
-    console.log(result.data);
-  } catch (error) {
-    console.error("Error calling helloWorld:", error);
-  }
-};
 
 const routeProp = defineProps(['id']);
 
@@ -61,7 +51,6 @@ const getDbRecipeSingle = async () => {
         dislikes: recipeData.dislikes || 0,
         image: recipeData.cardImgReg || '',
         author: recipeData.author || '',
-
         preparationTime: recipeData.preparationTime || 0,
         equipment: recipeData.equipment || '',
         publishDate: recipeData.publishDate || ''
