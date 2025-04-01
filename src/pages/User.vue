@@ -67,9 +67,9 @@ const updateThisUser = async () => {
   }
   try {
     const result = await updateThisDbUser({
-      uName: userName.value,
+      uName: userName.value.slice(0,25),
       pfpDownloadURL: pfpRef.value,
-      uBiography: userBiography.value,
+      uBiography: userBiography.value.slice(0,2000),
       uDocId: userDoc
     });
 
@@ -113,9 +113,7 @@ const handleFileUpload = async (event) => {
 
 const showEditName = ref(false);
 const toggleEditName = () => {
-  if(ownPage.value){
     showEditName.value = !showEditName.value;
-  }
 };
 </script>
 
@@ -134,12 +132,14 @@ const toggleEditName = () => {
     <div v-else>
       <ul class="nav nav-tabs" style="justify-content: center; border:0">
         <li class="nav-item">
-          <button class="nav-link active truncate" id="userTab" data-bs-toggle="tab" data-bs-target="#userContent" type="button"
-            role="tab" aria-controls="user Content Tab" aria-selected="true">{{ nameLabel }} Profile</button>
+          <button class="nav-link active truncate" id="userTab" data-bs-toggle="tab" data-bs-target="#userContent"
+            type="button" role="tab" aria-controls="user Content Tab" aria-selected="true">{{ nameLabel }}
+            Profile</button>
         </li>
         <li class="nav-item">
-          <button class="nav-link truncate" id="likedTab" data-bs-toggle="tab" data-bs-target="#likedContent" type="button"
-            role="tab" aria-controls="like tab" aria-selected="false">{{ nameLabel }} Liked Recipes</button>
+          <button class="nav-link truncate" id="likedTab" data-bs-toggle="tab" data-bs-target="#likedContent"
+            type="button" role="tab" aria-controls="like tab" aria-selected="false">{{ nameLabel }} Liked
+            Recipes</button>
         </li>
       </ul>
 
@@ -155,15 +155,22 @@ const toggleEditName = () => {
             <div class="row justify-content-center">
               <div class="col-xxl-6 col-xl-12 form-group align-content-start">
                 <div class="sectionHeader" style="height:3.5rem; width: fit-content;">
-                  <div v-if="!showEditName" @click="toggleEditName" style="cursor: pointer;">
-                    <h1 style="font-size: 2.5rem; font-weight: bold;">
-                      {{ userName.length > 20 ? userName.slice(0, 20) + '...' : userName }}
-                    </h1>
+                  <div v-if="ownPage">
+                    <div v-if="!showEditName" @click="toggleEditName" style="cursor: pointer;">
+                      <h1 style="font-size: 2.5rem; font-weight: bold;">
+                        {{ userName.length > 20 ? userName.slice(0, 20) + '...' : userName }}
+                      </h1>
+                    </div>
+                    <div v-else>
+                      <textarea v-model="userName"
+                        style="font-weight: bold; font-size: 2.5rem;background-color: transparent; width: 100%; height: 100%; border: none; outline: none; resize: none; text-align: center;"
+                        @blur="toggleEditName"></textarea>
+                    </div>
                   </div>
                   <div v-else>
-                    <textarea v-model="userName"
-                      style="font-weight: bold; font-size: 2.5rem;background-color: transparent; width: 100%; height: 100%; border: none; outline: none; resize: none; text-align: center;"
-                      @blur="toggleEditName"></textarea>
+                    <h1 style="font-size: 2.5rem; font-weight: bold;">
+                        {{ userName.length > 20 ? userName.slice(0, 20) + '...' : userName }}
+                      </h1>
                   </div>
                 </div>
                 <div class="row justify-content-center">

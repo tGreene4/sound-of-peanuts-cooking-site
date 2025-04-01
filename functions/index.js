@@ -470,7 +470,7 @@ exports.addLikeRecipe = onCall(async (req) => {
             likedRecipes: likedRecipes,
             dislikedRecipes: dislikedRecipes,
         });
-        
+
         await recipeRef.update({
             likes: Math.max(0, recipeData.likes + likesChange),
             dislikes: Math.max(0, recipeData.dislikes + dislikesChange),
@@ -693,7 +693,7 @@ exports.createDbUser = onCall(async (req) => {
     let dislikedRecipes = []
     try {
         const complete = await db.collection('Users').add({
-            name: uName,
+            name: uName.slice(0,25),
             pfpUrl: pfpFile,
             uId: uId,
             biography: "",
@@ -745,8 +745,8 @@ exports.updateDbUser = onCall(async (req) => {
         }
 
         await ref.update({
-            biography: uBiography,
-            name: uName,
+            biography: uBiography.slice(0,2000),
+            name: uName.slice(0,25),
             pfpUrl: pfpDownloadURL,
         });
 
