@@ -187,8 +187,7 @@ Show author name (hyperlinked) and PFP near the title
               </div>
               <div class="col-md-6">
                 <h2 class="card-title mb-1">{{ recipe.name }}</h2>
-                <p>Preparation Time: <b>{{ recipe.preparationTime }} mins</b> 
-                  <!--&emsp; {{ recipe.author }}-->
+                <p>Preparation Time: <b>{{ recipe.preparationTime }} mins</b> &emsp; {{ recipe.author.name }}
                   &emsp; Published: {{ readableDate }}</p>
                 <hr class="my-1" />
                 <div class="m-4">
