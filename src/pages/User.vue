@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue';
 import { auth, functions } from '../api/firebase'
 import { httpsCallable } from 'firebase/functions';
 import { useRoute, useRouter } from 'vue-router';
+import { signOut } from "firebase/auth";
 import Card from "@/components/Card.vue";
 import placeholderImg from "@/assets/images/User icon.png";
 const router = useRouter();
@@ -13,6 +14,7 @@ const userName = ref('');
 const userBiography = ref('');
 const pfpRef = ref(placeholderImg);
 const userLoading = ref(true);
+const userNotFound = ref(true);
 
 const deleteWarning = ref(false);
 const updateWarning = ref(false);
@@ -20,15 +22,17 @@ const updateWarning = ref(false);
 const nameLabel = ref("Unknown");
 const ownPage = ref(false);
 
+const changedPFP = ref(false);
+
 const route = useRoute();
+const userDoc = route.params.id;
 
 const getThisUser = async () => {
   console.log("Calling getDbUser");
   const dbUserRequest = httpsCallable(functions, 'getDbUser');
   try {
-    const userId = route.params.id;
-    console.log("Fetching recipes for user ID: ", userId);
-    const result = await dbUserRequest({ id: userId });
+    console.log("Fetching recipes for user ID: ", userDoc);
+    const result = await dbUserRequest({ id: userDoc });
     console.log("Response from getDbUser:", result.data);
 
     if (result.data.success) {
@@ -37,6 +41,51 @@ const getThisUser = async () => {
       pfpRef.value = result.data.pfpUrl;
       liked.value = result.data.likedRecipes || [];
       userRecipes.value = result.data.madeRecipes || [];
+      ownPage.value = result.data.ownPage;
+      userNotFound.value = false;
+
+      if(ownPage.value == false){
+        nameLabel.value = userName.value + "\'s"
+      }
+      
+      console.log("Liked Recipes:", liked.value);
+      console.log("User Recipes:", userRecipes.value);
+    } else {
+      console.warn("Error fetching user recipes:", result.data.message);
+    }
+  } catch (error) {
+    console.error("Error calling getDbUserRecipes:", error);
+  } finally {
+    console.log("PFPREFERENCE: ", pfpRef.value)
+    userLoading.value = false;
+  }
+};
+
+const updateThisUser = async () => {
+  console.log("Calling updateDbUser");
+  const updateThisDbUser = httpsCallable(functions, 'updateDbUser');
+
+  if (!auth.currentUser) {
+    console.error("User is not authenticated. Cannot like the recipe.");
+    return;
+  }
+
+  try {
+    if(!auth.currentUser){
+      console.log("")
+    }
+    console.log("Updating recipes for user ID: ", userDoc);
+    const result = await updateThisDbUser({ id: userDoc });
+    console.log("Response from updateDbUser:", result.data);
+
+    if (result.data.success) {
+      userName.value = result.data.name;
+      userBiography.value = result.data.biography;
+      pfpRef.value = result.data.pfpUrl;
+      liked.value = result.data.likedRecipes || [];
+      userRecipes.value = result.data.madeRecipes || [];
+      ownPage.value = result.data.ownPage;
+      userNotFound.value = false;
 
       console.log("Liked Recipes:", liked.value);
       console.log("User Recipes:", userRecipes.value);
@@ -46,9 +95,17 @@ const getThisUser = async () => {
   } catch (error) {
     console.error("Error calling getDbUserRecipes:", error);
   } finally {
-    console.log("PFPREFERENCE: ",pfpRef.value)
+    console.log("PFPREFERENCE: ", pfpRef.value)
     userLoading.value = false;
   }
+};
+
+const logOut = async () => {
+  signOut(auth).then(() => {
+    router.push("/account");
+  }).catch((error) => {
+    console.log("Error caught when attempting to log out", error);
+  });
 };
 
 onMounted(() => {
@@ -59,6 +116,7 @@ var file;
 const handleFileUpload = function (event) {
   file = event.target.files[0];
   pfpRef.value = URL.createObjectURL(file);
+  changedPFP.value = true;
 };
 </script>
 
@@ -90,12 +148,12 @@ const handleFileUpload = function (event) {
         <div class="tab-pane show active align-self-center" role="tabpanel" id="userContent">
           <div class="container-fluid align-self-center">
             <div class="row justify-content-start">
-              <button v-if="ownPage" style="width: 10%;min-width: 200px">Log out</button>
+              <button v-if="ownPage" style="width: 10%;min-width: 200px" @click="logOut">Log out</button>
             </div>
             <div class="row justify-content-center">
               <div class="col-xxl-6 col-xl-12 form-group align-content-start">
-                <div class="sectionHeader" style="height:3rem;">
-                  <h1>{{ userName.value }}</h1>
+<div class="sectionHeader" style="height:3rem;">
+                  <h1>{{ userName }}</h1>
                 </div>
                 <div class="row justify-content-center">
                   <a class="align-content-center">
@@ -156,7 +214,7 @@ const handleFileUpload = function (event) {
               <h1 class="sectionHeader">{{ nameLabel }} Recipes</h1>
               <div class="col-xxl-12">
                 <div class="row justify-content-center">
-                  <div v-if="!userRecipeLoading" class="col-auto" id="" v-for="item in userRecipes">
+                  <div class="col-auto" id="" v-for="item in userRecipes">
                     <div class="cardContainer">
                       <button v-if="ownPage" @click="router.push('/updaterecipe/' + item.id)" style="border-radius: 0">
                         Edit</button>
@@ -167,13 +225,10 @@ const handleFileUpload = function (event) {
                   </div>
                 </div>
               </div>
-              <div v-if="(userRecipes == '') & (!userRecipeLoading)" id="noRecWarning">
+              <div v-if="(userRecipes == '')" id="noRecWarning">
                 No recipes found
               </div>
               <br>
-              <div v-if="userRecipeLoading" class="spinner-border" role="status">
-                <span class="visually-hidden">Loading...</span>
-              </div>
             </div>
 
             <div class="row justify-content-end">
@@ -188,21 +243,18 @@ const handleFileUpload = function (event) {
             <div class="row justify-content-center">
               <h1 class="sectionHeader" style="top:5px">{{ nameLabel }} Liked Recipes</h1>
               <div class="row justify-content-center" id="moreField">
-                <div v-if="!likedLoading" class="col-auto" id="" v-for="item in liked">
+                <div class="col-auto" id="" v-for="item in liked">
                   <div class="cardContainer">
                     <Card :thisRecipeId="item.id" :thisRecipeName="item.name" :thisAuthor="item.author"
                       :thisCookTime="item.preparationTime" :thisLikes="item.likes"
                       :thisImgStorageSrc="item.cardImgReg" />
                   </div>
                 </div>
-                <div v-if="(liked == '') & (!likedLoading)" id="noRecWarning">
+                <div v-if="(liked == '')" id="noRecWarning">
                   No recipes found
                 </div>
                 <br>
                 <br>
-                <div v-if="likedLoading" class="spinner-border" role="status">
-                  <span class="visually-hidden">Loading...</span>
-                </div>
               </div>
             </div>
           </div>
