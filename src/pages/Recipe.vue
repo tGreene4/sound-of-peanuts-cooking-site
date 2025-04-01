@@ -36,6 +36,11 @@ const recipe = ref({
   publishDate: ''
 });
 
+
+
+
+
+
 const getDbRecipeSingle = async () => {
   console.log("Calling getDbRecipeSingle with ID:", routeProp.id);
   const getDbRecipeSingleFunction = httpsCallable(functions, 'getDbRecipeSingle');
@@ -45,7 +50,6 @@ const getDbRecipeSingle = async () => {
 
     if (result.data.success) {
       const recipeData = result.data.recipe;
-      console.log("Recipe found:", recipe);
 
       recipe.value = {
         name: recipeData.name || "No name provided",
@@ -54,11 +58,14 @@ const getDbRecipeSingle = async () => {
         likes: recipeData.likes || 0,
         dislikes: recipeData.dislikes || 0,
         image: recipeData.cardImgReg || '',
-        author: recipeData.authorRef || '',
+        author: recipeData.author || '',
         preparationTime: recipeData.preparationTime || 0,
         equipment: recipeData.equipment || '',
         publishDate: recipeData.publishDate || ''
       };
+
+      console.log("Author: ", recipe.value.author)
+      console.log("Recipe"+ recipe.value.author.name)
       if (recipeData.publishDate && recipeData.publishDate._seconds) {
         const date = new Date(recipeData.publishDate._seconds * 1000);
         readableDate.value = date.toLocaleDateString();

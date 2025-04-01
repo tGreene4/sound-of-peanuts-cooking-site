@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue';
 import { auth, functions } from '../api/firebase'
 import { httpsCallable } from 'firebase/functions';
 import { useRoute, useRouter } from 'vue-router';
+import { signOut } from "firebase/auth";
 import Card from "@/components/Card.vue";
 import placeholderImg from "@/assets/images/User icon.png";
 const router = useRouter();
@@ -18,16 +19,61 @@ const userNotFound = ref(true);
 const nameLabel = ref("Your");
 const ownPage = ref(false);
 
+const changedPFP = ref(false);
+
 const route = useRoute();
+const userDoc = route.params.id;
 
 const getThisUser = async () => {
   console.log("Calling getDbUser");
   const dbUserRequest = httpsCallable(functions, 'getDbUser');
   try {
-    const userId = route.params.id;
-    console.log("Fetching recipes for user ID: ", userId);
-    const result = await dbUserRequest({ id: userId });
+    console.log("Fetching recipes for user ID: ", userDoc);
+    const result = await dbUserRequest({ id: userDoc });
     console.log("Response from getDbUser:", result.data);
+
+    if (result.data.success) {
+      userName.value = result.data.name;
+      userBiography.value = result.data.biography;
+      pfpRef.value = result.data.pfpUrl;
+      liked.value = result.data.likedRecipes || [];
+      userRecipes.value = result.data.madeRecipes || [];
+      ownPage.value = result.data.ownPage;
+      userNotFound.value = false;
+
+      if(ownPage.value == false){
+        nameLabel.value = userName.value + "\'s"
+      }
+      
+      console.log("Liked Recipes:", liked.value);
+      console.log("User Recipes:", userRecipes.value);
+    } else {
+      console.warn("Error fetching user recipes:", result.data.message);
+    }
+  } catch (error) {
+    console.error("Error calling getDbUserRecipes:", error);
+  } finally {
+    console.log("PFPREFERENCE: ", pfpRef.value)
+    userLoading.value = false;
+  }
+};
+
+const updateThisUser = async () => {
+  console.log("Calling updateDbUser");
+  const updateThisDbUser = httpsCallable(functions, 'updateDbUser');
+
+  if (!auth.currentUser) {
+    console.error("User is not authenticated. Cannot like the recipe.");
+    return;
+  }
+
+  try {
+    if(!auth.currentUser){
+      console.log("")
+    }
+    console.log("Updating recipes for user ID: ", userDoc);
+    const result = await updateThisDbUser({ id: userDoc });
+    console.log("Response from updateDbUser:", result.data);
 
     if (result.data.success) {
       userName.value = result.data.name;
@@ -46,43 +92,28 @@ const getThisUser = async () => {
   } catch (error) {
     console.error("Error calling getDbUserRecipes:", error);
   } finally {
-    console.log("PFPREFERENCE: ",pfpRef.value)
+    console.log("PFPREFERENCE: ", pfpRef.value)
     userLoading.value = false;
   }
 };
-function userCheck() {
-  if (auth.currentUser != null) {
-    console.log(route.params.id + " and " + auth.currentUser);
-    //Doesn't work very well, I think auth is returning the Uid while route.params is returning the docid
-    if (auth.currentUser.uid == route.params.id) {
-      console.log("This User owns this user page");
-      ownPage.value = true;
-      nameLabel.value = "Your";
-    }
-    else {
-      console.log("This User doesn't own this user page");
-      ownPage.value = false;
-      //Change this to the User Page Owner's Name
-      nameLabel.value = userName.value + "'s";
-    }
-  }
-  else {
-    console.log("No User logged in");
-    ownPage.value = false;
-    //Change this to the User Page Owner's Name
-    nameLabel.value = userName.value + "'s";
-  }
-}
+
+const logOut = async () => {
+  signOut(auth).then(() => {
+    router.push("/account");
+  }).catch((error) => {
+    console.log("Error caught when attempting to log out", error);
+  });
+};
 
 onMounted(() => {
   getThisUser();
-  userCheck();
 })
 
 var file;
 const handleFileUpload = function (event) {
   file = event.target.files[0];
   pfpRef.value = URL.createObjectURL(file);
+  changedPFP.value = true;
 };
 </script>
 
@@ -114,11 +145,11 @@ const handleFileUpload = function (event) {
         <div class="tab-pane show active align-self-center" role="tabpanel" id="userContent">
           <div class="container-fluid align-self-center">
             <div class="row justify-content-start">
-              <button v-if="ownPage" style="width: 10%;min-width: 200px">Log out</button>
+              <button v-if="ownPage" style="width: 10%;min-width: 200px" @click="logOut">Log out</button>
             </div>
             <div class="row justify-content-center">
               <div class="col-xxl-6 col-xl-12 form-group align-content-start">
-                <h1>{{ userName.value }}</h1>
+                <h1>{{ userName }}</h1>
                 <div class="row justify-content-center">
                   <a class="align-content-center">
                     <img class="d align-self-center" id="Avatar" :src="pfpRef" alt="Avatar">

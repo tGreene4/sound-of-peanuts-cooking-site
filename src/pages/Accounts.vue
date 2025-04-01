@@ -56,20 +56,6 @@ function authCheck() {
 
 auth.authStateReady().then(authCheck)
 
-// async handleFileUpload(event) {
-//       try {
-//         const storage = getStorage();
-//         const file = event.target.files[0];
-//         console.log(downloadURL);
-//         this.downloadURL = downloadURL;
-//         const imageElement = this.$refs.image;
-//         if (imageElement) {
-//           imageElement.setAttribute("src", downloadURL);
-//         }
-//       } catch (error) {
-//         console.error("Error uploading image:", error);
-//       }
-//     },
 
 const handleFileUpload = function (event) {
     file = event.target.files[0];
@@ -109,11 +95,11 @@ const userCreate = async () => {
     console.log(signUpUser);
     try {
         const storageReference = storageRef(storage, 'images/' + signUpUser.uid);
-            const snapshot = await uploadBytes(storageReference, file);
-            const url = await getDownloadURL(snapshot.ref);
-            console.log("Image uploaded successfully. Download URL:", url);
-            signUp.downloadURL = url;
-            await updateProfile(signUpUser, { photoURL: url });
+        const snapshot = await uploadBytes(storageReference, file);
+        const url = await getDownloadURL(snapshot.ref);
+        console.log("Image uploaded successfully. Download URL:", url);
+        signUp.downloadURL = url;
+        await updateProfile(signUpUser, { photoURL: url });
     } catch (error) {
         console.error("Error uploading image:", error);
         deleteUser(signUpUser);
