@@ -1,18 +1,18 @@
 <script setup>
 import { onMounted, ref } from 'vue';
-import { auth, functions } from '../api/firebase'
+import { auth, functions, storage } from '../api/firebase'
 import { httpsCallable } from 'firebase/functions';
 import { useRoute, useRouter } from 'vue-router';
+import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { signOut } from "firebase/auth";
 import Card from "@/components/Card.vue";
-import placeholderImg from "@/assets/images/User icon.png";
 const router = useRouter();
 
 const liked = ref([]);
 const userRecipes = ref([]);
 const userName = ref('');
 const userBiography = ref('');
-const pfpRef = ref(placeholderImg);
+const pfpRef = ref('');
 const userLoading = ref(true);
 const userNotFound = ref(true);
 
@@ -56,7 +56,6 @@ const getThisUser = async () => {
   } catch (error) {
     console.error("Error calling getDbUserRecipes:", error);
   } finally {
-    console.log("PFPREFERENCE: ", pfpRef.value)
     userLoading.value = false;
   }
 };
@@ -66,37 +65,32 @@ const updateThisUser = async () => {
   const updateThisDbUser = httpsCallable(functions, 'updateDbUser');
 
   if (!auth.currentUser) {
-    console.error("User is not authenticated. Cannot like the recipe.");
+    console.error("User is not authenticated. Cannot update.");
     return;
   }
-
   try {
-    if (!auth.currentUser) {
-      console.log("")
+    if (changedPFP) {
+      const storageReference = storageRef(storage, 'images/' + auth.currentUser.uid);
+      const snapshot = await uploadBytes(storageReference, pfpRef);
+      pfpRef.value = await getDownloadURL(snapshot.ref);
+      console.log("Image uploaded successfully. Download URL:", pfpRef.value);
     }
-    console.log("Updating recipes for user ID: ", userDoc);
-    const result = await updateThisDbUser({ id: userDoc });
-    console.log("Response from updateDbUser:", result.data);
 
+    console.log("Updating user with ID: ", userDoc);
+    const result = await updateThisDbUser({
+      uName: userName.value,
+      pfpDownloadURL: pfpRef.value,
+      uBiography: userBiography.value,
+      uDocId: userDoc
+    });
+    
     if (result.data.success) {
-      userName.value = result.data.name;
-      userBiography.value = result.data.biography;
-      pfpRef.value = result.data.pfpUrl;
-      liked.value = result.data.likedRecipes || [];
-      userRecipes.value = result.data.madeRecipes || [];
-      ownPage.value = result.data.ownPage;
-      userNotFound.value = false;
-
-      console.log("Liked Recipes:", liked.value);
-      console.log("User Recipes:", userRecipes.value);
+      location.reload();
     } else {
-      console.warn("Error fetching user recipes:", result.data.message);
+      alert("Error updating user", result.data.message);
     }
   } catch (error) {
     console.error("Error calling getDbUserRecipes:", error);
-  } finally {
-    console.log("PFPREFERENCE: ", pfpRef.value)
-    userLoading.value = false;
   }
 };
 
@@ -196,7 +190,7 @@ const handleFileUpload = function (event) {
                     Are You Sure That You Want To Save these Changes?
                   </h3>
                   <div class="row justify-content-center">
-                    <button class="form-control" type="button" @click="" style="width:200px;"> Yes, Update
+                    <button class="form-control" type="button" @click="updateThisUser" style="width:200px;"> Yes, Update
                       Recipe</button>
                     <button class="form-control" type="button" @click="updateWarning = false;"
                       style="width:100px;">No</button>

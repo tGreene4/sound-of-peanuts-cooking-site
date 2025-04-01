@@ -20,7 +20,6 @@ initializeApp({
 });
 
 const db = getFirestore();
-const store = getStorage();
 const auth = getAuth();
 
 exports.helloWorld = onCall(async (req) => {
@@ -235,8 +234,8 @@ exports.getDbRecipeSingle = onCall(async (req) => {
 });
 
 exports.postDbRecipe = onCall(async (req) => {
-    const { name, preparationTime, instructions, ingredients, equipment, cardImgReg, uid } = req.data
-    if (!name || !preparationTime || !instructions || !ingredients || !equipment || !cardImgReg || !uid) {
+    const { name, preparationTime, instructions, ingredients, equipment, cardImgReg, } = req.data
+    if (!name || !preparationTime || !instructions || !ingredients || !equipment || !cardImgReg) {
         logger.log("Error: Recipe data not found or invalid: ", req.data);
         return { success: false, message: "Recipe data not found or invalid" }
     }
@@ -244,11 +243,9 @@ exports.postDbRecipe = onCall(async (req) => {
     if (!req.auth) {
         return { success: false, message: "Error: User is not authenticated" }
     }
-    logger.log("Auth info", req.auth);
 
     try {
-        logger.log("type of uid: " + typeof uid)
-        const userQuery = db.collection("Users").where('uId', '==', uid).limit(1);
+        const userQuery = db.collection("Users").where('uId', '==', req.auth.uid).limit(1);
         const userSnapshot = await userQuery.get();
 
         logger.log("user Snapshot: ", userSnapshot)
@@ -695,35 +692,45 @@ exports.createDbUser = onCall(async (req) => {
 });
 
 exports.updateDbUser = onCall(async (req) => {
-    const { uName, pfpDownloadURL, uBiography, uDocId, } = req.data
-    
-    logger.log("Attempting to get user: ", uDocId)
-    const ref = db.doc("/Recipe/" + uDocId);
-    const dbUser = await ref.get();
-
-    logger.log("User: ", dbUser.data())
-    let complete = false;
-    if (req.auth.uid == dbUser.data.uId) {
-        try {
-            await dbUser.update({
-                biography: uBiography,
-                name: uName,
-                pfpUrl: pfpDownloadURL
-            })
-            complete = true;
-        } catch (error) {
-            logger.error(error);
-            return { success: false, message: "Could not update user:", error }
-        }
+    const { uName, pfpDownloadURL, uBiography, uDocId } = req.data;
+  
+    if (!req.auth) {
+      return { success: false, message: "User is not authenticated" };
     }
-
-    if (complete) {
-        return { success: true, message: "User updated" }
+  
+    if (!uDocId) {
+      return { success: false, message: "User document ID is required" };
     }
-    else {
-        return { success: false, message: "Error: could not update user" }
+  
+    logger.log("Attempting to get user: ", uDocId);
+    const ref = db.doc("/Users/" + uDocId);
+  
+    try {
+      const dbUserQuery = await ref.get();
+  
+      if (!dbUserQuery.exists) {
+        return { success: false, message: "User not found" };
+      }
+  
+      const dbUserData = dbUserQuery.data();
+      logger.log("User: ", dbUserData);
+  
+      if (req.auth.uid !== dbUserData.uId) {
+        return { success: false, message: "Unauthorized: You cannot update this user" };
+      }
+  
+      await ref.update({
+        biography: uBiography,
+        name: uName,
+        pfpUrl: pfpDownloadURL,
+      });
+  
+      return { success: true, message: "User updated" };
+    } catch (error) {
+      logger.error("Error updating user:", error);
+      return { success: false, message: "Could not update user", error };
     }
-});
+  });
 
 exports.deleteDbUser = onCall(async (req) => {
     const { uDocId } = req.data;
