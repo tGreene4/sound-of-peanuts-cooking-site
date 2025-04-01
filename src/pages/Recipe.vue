@@ -37,26 +37,12 @@ const recipe = ref({
   likes: 0,
   dislikes: 0,
   image: '',
-  /*
-  thisAuthor: {
-            type: Object,
-            default: () => ({ 
-                name: "Unknown", //add default pfp and no link, like a deleted reddit profile
-                pfpUrl: "",
-                id: 0
-            })
-        },
-        */
   preparationTime: 0,
   equipment: '',
   publishDate: ''
 });
-//const authorLink = ref("/user/"+recipe.thisAuthor.id)
 
-
-
-
-
+//const authorLink = ref("/user/"+recipe.value.author.id)
 
 const getDbRecipeSingle = async () => {
   console.log("Calling getDbRecipeSingle with ID:", routeProp.id);
@@ -202,7 +188,8 @@ Show author name (hyperlinked) and PFP near the title
               </div>
               <div class="col-md-6">
                 <h2 class="card-title mb-1">{{ recipe.name }}</h2>
-                <p>Preparation Time: <b>{{ recipe.preparationTime }} mins</b> &emsp; {{ recipe.author }}
+                <p>Preparation Time: <b>{{ recipe.preparationTime }} mins</b> 
+                  <!--&emsp; {{ recipe.author }}-->
                   &emsp; Published: {{ readableDate }}</p>
                 <hr class="my-1" />
                 <div class="m-4">

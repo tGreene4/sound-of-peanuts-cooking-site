@@ -19,7 +19,7 @@ const userNotFound = ref(true);
 const deleteWarning = ref(false);
 const updateWarning = ref(false);
 
-const nameLabel = ref("Unknown");
+const nameLabel = ref("Your");
 const ownPage = ref(false);
 
 const changedPFP = ref(false);
@@ -44,10 +44,10 @@ const getThisUser = async () => {
       ownPage.value = result.data.ownPage;
       userNotFound.value = false;
 
-      if(ownPage.value == false){
+      if (ownPage.value == false) {
         nameLabel.value = userName.value + "\'s"
       }
-      
+
       console.log("Liked Recipes:", liked.value);
       console.log("User Recipes:", userRecipes.value);
     } else {
@@ -71,7 +71,7 @@ const updateThisUser = async () => {
   }
 
   try {
-    if(!auth.currentUser){
+    if (!auth.currentUser) {
       console.log("")
     }
     console.log("Updating recipes for user ID: ", userDoc);
@@ -152,7 +152,7 @@ const handleFileUpload = function (event) {
             </div>
             <div class="row justify-content-center">
               <div class="col-xxl-6 col-xl-12 form-group align-content-start">
-<div class="sectionHeader" style="height:3rem;">
+                <div class="sectionHeader" style="height:3rem;">
                   <h1>{{ userName }}</h1>
                 </div>
                 <div class="row justify-content-center">
@@ -170,20 +170,22 @@ const handleFileUpload = function (event) {
 
               </div>
 
-              <div id="warning" class="container" v-if="deleteWarning" >
+              <div id="warning" class="container" v-if="deleteWarning">
                 <div class="box">
                   <h3>
                     Are You Sure That You Want To Delete Your User Account?
                     There is no going back from this.
                   </h3>
                   <div class="row justify-content-center">
-                    <button class="form-control" type="button" @click="" style="width:200px;"> Yes, Delete Account</button>
-                    <button class="form-control" type="button" @click="deleteWarning=false;" style="width:100px;">No</button>
+                    <button class="form-control" type="button" @click="" style="width:200px;"> Yes, Delete
+                      Account</button>
+                    <button class="form-control" type="button" @click="deleteWarning = false;"
+                      style="width:100px;">No</button>
                   </div>
                 </div>
               </div>
 
-              <div id="warning" class="container" v-if="updateWarning" >
+              <div id="warning" class="container" v-if="updateWarning">
                 <div class="box">
                   <h3>
                     Are You Sure That You Want To Save these Changes?
@@ -191,7 +193,8 @@ const handleFileUpload = function (event) {
                   <div class="row justify-content-center">
                     <button class="form-control" type="button" @click="" style="width:200px;"> Yes, Update
                       Recipe</button>
-                    <button class="form-control" type="button" @click="updateWarning=false;" style="width:100px;">No</button>
+                    <button class="form-control" type="button" @click="updateWarning = false;"
+                      style="width:100px;">No</button>
                   </div>
                 </div>
               </div>
@@ -201,7 +204,7 @@ const handleFileUpload = function (event) {
                 <div v-if="ownPage" style="height:100%;width: 100%;">
                   <div class="row justify-content-center" style="height: 85%; min-height: 200px; width:100%">
                     <textarea id="bio" style="border: dashed">{{ userBiography.value }}</textarea>
-                    <button style="width: 25%; padding:0;margin:0;" @click="updateWarning=true"> Save Changes </button>
+                    <button style="width: 25%; padding:0;margin:0;" @click="updateWarning = true"> Save Changes </button>
                   </div>
                 </div>
                 <div v-else id="bio">
@@ -233,7 +236,8 @@ const handleFileUpload = function (event) {
 
             <div class="row justify-content-end">
               <!--Connect this to delete User-->
-              <button v-if="ownPage" style="width: 10%;min-width: 200px; color: red" @click="deleteWarning=true">Delete User Profile</button>
+              <button v-if="ownPage" style="width: 10%;min-width: 200px; color: red" @click="deleteWarning = true">Delete
+                User Profile</button>
             </div>
           </div>
         </div>
@@ -319,7 +323,7 @@ button {
   align-self: center;
 }
 
-.sectionHeader{
+.sectionHeader {
   max-width: 700px;
   margin-bottom: 20px;
 }
