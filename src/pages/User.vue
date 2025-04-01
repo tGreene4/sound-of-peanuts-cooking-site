@@ -113,6 +113,11 @@ const handleFileUpload = async (event) => {
     console.error("Error uploading image:", error);
   }
 };
+
+const showEditName = ref(false);
+const toggleEditName = () => {
+  showEditName.value = !showEditName.value;
+};
 </script>
 
 <template>
@@ -151,9 +156,17 @@ const handleFileUpload = async (event) => {
             <div class="row justify-content-center">
               <div class="col-xxl-6 col-xl-12 form-group align-content-start">
                 <div class="sectionHeader" style="height:3.5rem; width: fit-content;">
-                  <h1 style="font-size: 2.5rem; font-weight: bold;">
-                    {{ userName.length > 20 ? userName.slice(0, 20) + '...' : userName }}
-                  </h1>
+                  <!-- Toggle between username display and textarea -->
+                  <div v-if="!showEditName" @click="toggleEditName" style="cursor: pointer;">
+                    <h1 style="font-size: 2.5rem; font-weight: bold;">
+                      {{ userName.length > 20 ? userName.slice(0, 20) + '...' : userName }}
+                    </h1>
+                  </div>
+                  <div v-else>
+                    <textarea v-model="userName"
+                      style="font-size: 2.5rem; font-weight: bold; font-size: 2rem;background-color: transparent; width: 100%; height: 100%; border: none; outline: none; resize: none; text-align: center;"
+                      @blur="toggleEditName"></textarea>
+                  </div>
                 </div>
                 <div class="row justify-content-center">
                   <a class="align-content-center">
