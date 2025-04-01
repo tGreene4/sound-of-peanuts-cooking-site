@@ -71,10 +71,4 @@
   position: relative;
 }
 
-.truncate{
-  text-overflow: ellipsis;
-  overflow: hidden;
-  white-space: nowrap;
-  max-width: 100%;
-}
 </style>

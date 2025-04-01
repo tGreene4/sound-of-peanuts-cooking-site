@@ -213,22 +213,8 @@ button {
   min-height: 750px;
 }
 
-.card-title {
-  font-size: 2rem;
-  font-weight: bold;
-}
-
-.card-text {
-  font-size: 1.1rem;
-  line-height: 1.6;
-}
-
 .btn {
   font-size: 1rem;
   padding: 0.5rem 1rem;
-}
-
-.gradient-custom {
-  background: linear-gradient(to right, rgba(242, 233, 126, 75%), rgba(255, 121, 0, 50%));
 }
 </style>

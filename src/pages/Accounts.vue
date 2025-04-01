@@ -1,17 +1,13 @@
 <script setup>
 import { onMounted, ref } from 'vue'
-import { auth, functions, storage } from '../api/firebase'
-import { createUserWithEmailAndPassword, deleteUser, onAuthStateChanged, signInWithEmailAndPassword, updateCurrentUser, updateProfile } from 'firebase/auth';
+import { auth, functions,storage } from '../api/firebase'
+import { createUserWithEmailAndPassword, deleteUser, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
 import { httpsCallable } from 'firebase/functions';
-import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { ref as storageRef ,uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { useRouter } from 'vue-router';
-import placeholderPfp from "@/assets/images/User icon.png";
-
 
 const router = useRouter();
 console.log(router);
-
-const loading = ref(true);
 
 const signUp = {
     username: ref(""),
@@ -26,52 +22,23 @@ const login = {
     password: ref("")
 }
 
-var file = placeholderPfp;
+var file;
+
 var pfpRef = ref("https://firebasestorage.googleapis.com/v0/b/sound-of-peanuts-cooking-site.appspot.com/o/User%20icon%20Clear.png?alt=media&token=02ef6aea-e4bd-4c39-a65a-f00acea43188")
 
 function authCheck() {
-    console.log("Auth check")
-    console.log("auth.currentUser:", auth.currentUser)
     if (auth.currentUser != null) {
-        console.log("User verified")
         const id = auth.currentUser.uid;
-        const getDocIdFromUserId = httpsCallable(functions, "getUDocIdFromUId");
-        const getDocId = async () => {
-            console.log("Getting doc ID from user ID " + id)
-            const res = await getDocIdFromUserId({ uId: id });
-            console.log(res.data)
-            if (res.data.uDocId) {
-                router.push("/user/" + res.data.uDocId);
-            } else {
-                console.log("Could not get doc ID")
-            }
-        }
-        getDocId()
+        router.push("/user/" + id);
     }
-    else {
-        loading.value = false;
-    }
-
 }
 
-auth.authStateReady().then(authCheck)
+onMounted(() => {
+    authCheck()
+})
 
-// async handleFileUpload(event) {
-//       try {
-//         const storage = getStorage();
-//         const file = event.target.files[0];
-//         console.log(downloadURL);
-//         this.downloadURL = downloadURL;
-//         const imageElement = this.$refs.image;
-//         if (imageElement) {
-//           imageElement.setAttribute("src", downloadURL);
-//         }
-//       } catch (error) {
-//         console.error("Error uploading image:", error);
-//       }
-//     },
 
-const handleFileUpload = function (event) {
+const handleFileUpload = function(event){
     file = event.target.files[0];
     pfpRef.value = URL.createObjectURL(file);
 };
@@ -101,25 +68,26 @@ const userCreate = async () => {
             return;
         }
         console.log(createSuccess);
-    } catch (error) {
-        console.log("Failed to create user:" + error.message);
+    }catch(error){
+        console.log("Failed to create user:"+error.message);
     }
 
     const signUpUser = auth.currentUser;
     console.log(signUpUser);
+    
     try {
         const storageReference = storageRef(storage, 'images/' + signUpUser.uid);
-            const snapshot = await uploadBytes(storageReference, file);
-            const url = await getDownloadURL(snapshot.ref);
-            console.log("Image uploaded successfully. Download URL:", url);
-            signUp.downloadURL = url;
-            await updateProfile(signUpUser, { photoURL: url });
+        const snapshot = await uploadBytes(storageReference, file); 
+        const url = await getDownloadURL(snapshot.ref); 
+        console.log("Image uploaded successfully. Download URL:", url);
+        signUp.downloadURL = url; 
     } catch (error) {
         console.error("Error uploading image:", error);
         deleteUser(signUpUser);
-    }
 
-    try {
+    }
+    
+    try{
         const createUser = httpsCallable(functions, "createDbUser");
         const result = await createUser({
             uName: signUp.username.value,
@@ -158,14 +126,8 @@ function userLogin(event) {
 </script>
 
 <template>
-
-    <div id="flexWrapper" class="d-flex flex-column gradient-custom align-self-center">
-        <div v-if="loading" class="d-flex justify-content-center align-items-center min-vh-100">
-            <div class="spinner-border" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-        </div>
-        <div v-else id="accountPageDiv" class="align-self-center">
+    <div id="flexWrapper" class="d-flex flex-column align-self-center">
+        <div id="accountPageDiv" class="align-self-center">
             <ul class="nav nav-tabs">
                 <li class="nav-item">
                     <button class="nav-link active" id="newAccountTab" data-bs-toggle="tab"
@@ -201,7 +163,7 @@ function userLogin(event) {
                             id="pfpPreviewImg">
                         <input type="file" :value="null" class="form-control" id="pfpInput"
                             accept="image/png,image/jpeg" multiple @change="(event) => handleFileUpload(event)">
-                        <br>
+              <br>
 
                         <button class="form-control" @click="userCreate" type="button">Sign Up</button>
                     </form>
@@ -226,22 +188,8 @@ function userLogin(event) {
 </template>
 
 <style scoped>
-.gradient-custom {
-    background: linear-gradient(to right, rgba(242, 233, 126, 75%), rgba(255, 121, 0, 50%));
-}
-
-#accountPageDiv {
-    align-items: center;
-    width: max-content;
-    padding: 4vh;
-    border: 2px solid lightgrey;
-    border-radius: 20px;
-    margin: 3vh;
-    background-color: rgb(243, 239, 234);
-}
-
-#emailInput,
-#emailLoginInput {
-    width: 35ch;
+#flexWrapper {
+  background-color: rgb(255, 243, 224);
+  height: 110vh;
 }
 </style>

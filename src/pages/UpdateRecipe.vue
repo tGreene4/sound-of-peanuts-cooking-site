@@ -307,7 +307,7 @@ onMounted(() => {
                                     <button class="btn" type="button" @click="deleteField('equipment', index)" tabindex="-1">X</button>
                                   </div>
                                 </div>
-                            </div>
+                            </div><br>
                           <button type="button" class="align-self-start" @click="addField('equipment')" tabindex="-1">Add new
                             Equipment</button><br><br>
                         </div>
@@ -334,11 +334,6 @@ onMounted(() => {
   border-bottom-right-radius: 20px;
   margin-left: 20px;
   margin-right: 20px;
-  position: relative;
-}
-
-#content {
-  width: 100%;
   position: relative;
 }
 
@@ -373,50 +368,10 @@ onMounted(() => {
   border-radius: 0;
 }
 
-button {
-  background: rgb(240, 240, 240);
-  border: black 2px solid;
-  border-radius: 15px;
-  Box-shadow: 3px 3px 5px black;
-}
-
-button:hover{
-  background: rgb(0, 0, 0);
-  color: white;
-}
-
 
 img {
   border: 2px dashed black;
   border-radius: 20px;
   align-self: center;
-}
-
-#warning{
-  position: fixed;
-  align-content: center;
-  top: 25%;
-  left: 50%;
-  margin-top: -100px;
-  margin-left: -200px;
-  width: 400px;
-  height: 200px;
-  z-index: 100;
-}
-
-.box {
-  border: 2px solid;
-  border-radius: 5px;
-  padding: 10px;
-  min-width: 18rem;
-  min-height: 5rem;
-  Box-shadow: 3px 3px 5px black;
-  background-color: rgba(255, 183, 77, 100%);
-}
-
-#media {
-  background: linear-gradient(to left, rgba(255, 121, 0, 0%), rgba(255, 121, 0, 100%));
-  border-radius: 2px;
-  width: 100%;
 }
 </style>

@@ -97,14 +97,4 @@ h1 {
     left: 0;
     z-index: 1000;
 }
-
-.btn {
-    background-color: black;
-    border: none;
-    position: relative;
-    right: 10px;
-    Box-shadow: 3px 3px 10px white;
-    font-family: 'Segoe UI', Tahoma, Verdana, sans-serif;
-    float: right;
-}
 </style>

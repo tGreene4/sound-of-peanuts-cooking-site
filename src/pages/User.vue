@@ -14,7 +14,10 @@ const userBiography = ref('');
 const pfpRef = ref(placeholderImg);
 const userLoading = ref(true);
 
-const nameLabel = ref("Your");
+const deleteWarning = ref(false);
+const updateWarning = ref(false);
+
+const nameLabel = ref("Unknown");
 const ownPage = ref(false);
 
 const route = useRoute();
@@ -47,33 +50,9 @@ const getThisUser = async () => {
     userLoading.value = false;
   }
 };
-function userCheck() {
-  if (auth.currentUser != null) {
-    console.log(route.params.id + " and " + auth.currentUser);
-    //Doesn't work very well, I think auth is returning the Uid while route.params is returning the docid
-    if (auth.currentUser.uid == route.params.id) {
-      console.log("This User owns this user page");
-      ownPage.value = true;
-      nameLabel.value = "Your";
-    }
-    else {
-      console.log("This User doesn't own this user page");
-      ownPage.value = false;
-      //Change this to the User Page Owner's Name
-      nameLabel.value = userName.value + "'s";
-    }
-  }
-  else {
-    console.log("No User logged in");
-    ownPage.value = false;
-    //Change this to the User Page Owner's Name
-    nameLabel.value = userName.value + "'s";
-  }
-}
 
 onMounted(() => {
   getThisUser();
-  userCheck();
 })
 
 var file;
@@ -96,7 +75,7 @@ const handleFileUpload = function (event) {
       <button @click="router.push('/')">Go Back to Home</button>
     </div>
     <div v-else>
-      <ul class="nav nav-tabs" style="justify-content: center;">
+      <ul class="nav nav-tabs" style="justify-content: center; border:0">
         <li class="nav-item">
           <button class="nav-link active" id="userTab" data-bs-toggle="tab" data-bs-target="#userContent" type="button"
             role="tab" aria-controls="user Content Tab" aria-selected="true">{{ nameLabel }} Profile</button>
@@ -115,31 +94,56 @@ const handleFileUpload = function (event) {
             </div>
             <div class="row justify-content-center">
               <div class="col-xxl-6 col-xl-12 form-group align-content-start">
-                <h1>{{ userName.value }}</h1>
+                <div class="sectionHeader" style="height:3rem;">
+                  <h1>{{ userName.value }}</h1>
+                </div>
                 <div class="row justify-content-center">
                   <a class="align-content-center">
-                    <img class="d align-self-center" id="Avatar" :src="pfpRef" alt="Avatar">
+                    <img class="d align-self-center" id="userAvatar" :src="pfpRef" alt="Avatar">
                   </a>
                   <div v-if="ownPage">
                     <a> Profile Picture Upload</a><br>
                     <div class="input-group">
                       <input type="file" :value="null" class="form-control" id="pfpInput" style="width:2rem"
                         accept="image/png,image/jpeg" multiple @change="(event) => handleFileUpload(event)">
-                      <div class="input-group-append">
-                        <button style="border-radius: 0;">Save profile picture</button>
-                      </div>
                     </div>
                   </div>
                 </div>
 
               </div>
 
+              <div id="warning" class="container" v-if="deleteWarning" >
+                <div class="box">
+                  <h3>
+                    Are You Sure That You Want To Delete Your User Account?
+                    There is no going back from this.
+                  </h3>
+                  <div class="row justify-content-center">
+                    <button class="form-control" type="button" @click="" style="width:200px;"> Yes, Delete Account</button>
+                    <button class="form-control" type="button" @click="deleteWarning=false;" style="width:100px;">No</button>
+                  </div>
+                </div>
+              </div>
+
+              <div id="warning" class="container" v-if="updateWarning" >
+                <div class="box">
+                  <h3>
+                    Are You Sure That You Want To Save these Changes?
+                  </h3>
+                  <div class="row justify-content-center">
+                    <button class="form-control" type="button" @click="" style="width:200px;"> Yes, Update
+                      Recipe</button>
+                    <button class="form-control" type="button" @click="updateWarning=false;" style="width:100px;">No</button>
+                  </div>
+                </div>
+              </div>
+
               <div class="col-xxl-6 col-xl-12 form-group">
                 <h3>{{ nameLabel }} Bio</h3>
                 <div v-if="ownPage" style="height:100%;width: 100%;">
-                  <div class="row justify-content-center" style="height: 60%; min-height: 200px; width:100%">
+                  <div class="row justify-content-center" style="height: 85%; min-height: 200px; width:100%">
                     <textarea id="bio" style="border: dashed">{{ userBiography.value }}</textarea>
-                    <button style="width: 25%"> Upload Bio</button>
+                    <button style="width: 25%; padding:0;margin:0;" @click="updateWarning=true"> Save Changes </button>
                   </div>
                 </div>
                 <div v-else id="bio">
@@ -174,7 +178,7 @@ const handleFileUpload = function (event) {
 
             <div class="row justify-content-end">
               <!--Connect this to delete User-->
-              <button v-if="ownPage" style="width: 10%;min-width: 200px">Delete User Profile</button>
+              <button v-if="ownPage" style="width: 10%;min-width: 200px; color: red" @click="deleteWarning=true">Delete User Profile</button>
             </div>
           </div>
         </div>
@@ -230,50 +234,15 @@ const handleFileUpload = function (event) {
   position: relative;
 }
 
-#Avatar {
-  border-radius: 100%;
+#userAvatar {
+  Box-shadow: 10px 5px 10px black;
   background: lightgray;
-  border: 1px solid black;
-  height: 100vh;
-  width: 100vw;
+  border: 3px solid black;
+  min-height: 30rem;
+  min-width: 30rem;
   max-height: 30rem;
   max-width: 30rem;
   object-fit: cover;
-}
-
-
-.nav-link {
-  background: darkgray;
-  accent-color: black;
-  color: white;
-}
-
-.nav-tabs {
-  left: 100px;
-  border: none;
-}
-
-#bio {
-  height: 100%;
-  width: 100%;
-  border: 4px solid black;
-  border-radius: 20px;
-  background: whitesmoke;
-  padding: 20px;
-  margin-bottom: 10px;
-
-}
-
-.sectionHeader {
-  border: 3px solid;
-  font-family: 'Segoe UI', Tahoma, Verdana, sans-serif;
-  border-radius: 5px;
-  box-shadow: 5px 5px 5px black;
-  position: relative;
-  width: 25%;
-  min-width: 400px;
-  text-align: center;
-  background: rgba(255, 183, 77, 50%);
 }
 
 #pfpInput {
@@ -296,5 +265,10 @@ button {
   padding-bottom: 5px;
   position: relative;
   align-self: center;
+}
+
+.sectionHeader{
+  max-width: 700px;
+  margin-bottom: 20px;
 }
 </style>
