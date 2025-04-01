@@ -152,8 +152,10 @@ const handleFileUpload = function (event) {
             </div>
             <div class="row justify-content-center">
               <div class="col-xxl-6 col-xl-12 form-group align-content-start">
-                <div class="sectionHeader" style="height:3rem;">
-                  <h1>{{ userName }}</h1>
+                <div class="sectionHeader" style="height:3.5rem; width: fit-content;">
+                  <h1 style="font-size: 2.5rem; font-weight: bold;">
+                    {{ userName.length > 20 ? userName.slice(0, 20) + '...' : userName }}
+                  </h1>
                 </div>
                 <div class="row justify-content-center">
                   <a class="align-content-center">
@@ -204,7 +206,8 @@ const handleFileUpload = function (event) {
                 <div v-if="ownPage" style="height:100%;width: 100%;">
                   <div class="row justify-content-center" style="height: 85%; min-height: 200px; width:100%">
                     <textarea id="bio" style="border: dashed">{{ userBiography.value }}</textarea>
-                    <button style="width: 25%; padding:0;margin:0;" @click="updateWarning = true"> Save Changes </button>
+                    <button style="width: 25%; padding:0;margin:0;" @click="updateWarning = true"> Save Changes
+                    </button>
                   </div>
                 </div>
                 <div v-else id="bio">
@@ -236,7 +239,8 @@ const handleFileUpload = function (event) {
 
             <div class="row justify-content-end">
               <!--Connect this to delete User-->
-              <button v-if="ownPage" style="width: 10%;min-width: 200px; color: red" @click="deleteWarning = true">Delete
+              <button v-if="ownPage" style="width: 10%;min-width: 200px; color: red"
+                @click="deleteWarning = true">Delete
                 User Profile</button>
             </div>
           </div>

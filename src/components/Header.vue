@@ -38,7 +38,7 @@ onMounted(() => {
         } else {
             isAuthenticated.value = false;
             userId.value = "";
-            pfpImgRef.value = placeholderPfp; // Reset to placeholder if user logs out
+            pfpImgRef.value = placeholderPfp;
         }
         loadingPfp.value = false;
     });
@@ -59,12 +59,13 @@ onMounted(() => {
             </a>
         </a>
         <a v-else-if="isAuthenticated" :href="`/user/${userId}`">
-            <img :src="pfpImgRef" height="50vh" style="float: right;" data-toggle="tooltip" data-placement="left"
-                title="Account">
+            <img :src="pfpImgRef" height="50vh"
+                style="float: right; border: 0.1rem solid black; border-right-width: 4px; border-bottom-width: 4px;"
+                data-toggle="tooltip" data-placement="left" title="Account" />
         </a>
         <a v-else href="/account">
             <img :src="pfpImgRef" height="50vh" style="float: right;" data-toggle="tooltip" data-placement="left"
-                title="Account">
+                title="Account" />
         </a>
         <a href="/CreateRecipe"><img src="../assets/images/Create icon.png" height="50vh"
                 style="float: right;margin-right: 1vw;" data-toggle="tooltip" data-placement="left"

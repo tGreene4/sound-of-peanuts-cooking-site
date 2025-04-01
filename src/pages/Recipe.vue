@@ -161,7 +161,6 @@ Show author name (hyperlinked) and PFP near the title
       <div class="modal-footer">
         <button type="button" class="btn btn-light"  @click="closePopup" >Close</button>
         <router-link :to="{ path: '/account' }"><button type="button" class="btn btn-light" @click="closePopup" >Log in</button></router-link>
-        
       </div>
     </div>
   </div>

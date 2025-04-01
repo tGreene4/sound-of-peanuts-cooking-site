@@ -18,7 +18,7 @@ const signUp = {
     email: ref(""),
     password: ref(""),
     confirmPassword: ref(""),
-    downloadURL: ""
+    downloadURL: "https://firebasestorage.googleapis.com/v0/b/sound-of-peanuts-cooking-site.appspot.com/o/User%20icon%20Clear.png?alt=media&token=02ef6aea-e4bd-4c39-a65a-f00acea43188"
 }
 
 const login = {
@@ -27,7 +27,8 @@ const login = {
 }
 
 var file = placeholderPfp;
-var pfpRef = ref("https://firebasestorage.googleapis.com/v0/b/sound-of-peanuts-cooking-site.appspot.com/o/User%20icon%20Clear.png?alt=media&token=02ef6aea-e4bd-4c39-a65a-f00acea43188")
+const pfpRef = ref("https://firebasestorage.googleapis.com/v0/b/sound-of-peanuts-cooking-site.appspot.com/o/User%20icon%20Clear.png?alt=media&token=02ef6aea-e4bd-4c39-a65a-f00acea43188")
+const defaultPFP = ref(true);
 
 function authCheck() {
     console.log("Auth check")
@@ -59,6 +60,7 @@ auth.authStateReady().then(authCheck)
 const handleFileUpload = function (event) {
     file = event.target.files[0];
     pfpRef.value = URL.createObjectURL(file);
+    defaultPFP.value = false;
 };
 
 const userCreate = async () => {
@@ -92,16 +94,18 @@ const userCreate = async () => {
 
     const signUpUser = auth.currentUser;
     console.log(signUpUser);
-    try {
-        const storageReference = storageRef(storage, 'images/' + signUpUser.uid);
-        const snapshot = await uploadBytes(storageReference, file);
-        const url = await getDownloadURL(snapshot.ref);
-        console.log("Image uploaded successfully. Download URL:", url);
-        signUp.downloadURL = url;
-        await updateProfile(signUpUser, { photoURL: url });
-    } catch (error) {
-        console.error("Error uploading image:", error);
-        deleteUser(signUpUser);
+    if (!defaultPFP.value) {
+        try {
+            const storageReference = storageRef(storage, 'images/' + signUpUser.uid);
+            const snapshot = await uploadBytes(storageReference, file);
+            const url = await getDownloadURL(snapshot.ref);
+            console.log("Image uploaded successfully. Download URL:", url);
+            signUp.downloadURL = url;
+            await updateProfile(signUpUser, { photoURL: url });
+        } catch (error) {
+            console.error("Error uploading image:", error);
+            deleteUser(signUpUser);
+        }
     }
 
     try {
