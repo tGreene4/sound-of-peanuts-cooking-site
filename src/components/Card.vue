@@ -60,7 +60,8 @@
   max-width: 3rem;
   background: lightgray;
   border: 1px solid black;
-
+  padding:0;
+  margin:0;
 }
 .card{
   box-shadow: 2px 5px 5px black;

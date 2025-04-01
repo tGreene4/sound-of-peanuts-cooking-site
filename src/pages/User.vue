@@ -135,11 +135,11 @@ const toggleEditName = () => {
     <div v-else>
       <ul class="nav nav-tabs" style="justify-content: center; border:0">
         <li class="nav-item">
-          <button class="nav-link active" id="userTab" data-bs-toggle="tab" data-bs-target="#userContent" type="button"
+          <button class="nav-link active truncate" id="userTab" data-bs-toggle="tab" data-bs-target="#userContent" type="button"
             role="tab" aria-controls="user Content Tab" aria-selected="true">{{ nameLabel }} Profile</button>
         </li>
         <li class="nav-item">
-          <button class="nav-link" id="likedTab" data-bs-toggle="tab" data-bs-target="#likedContent" type="button"
+          <button class="nav-link truncate" id="likedTab" data-bs-toggle="tab" data-bs-target="#likedContent" type="button"
             role="tab" aria-controls="like tab" aria-selected="false">{{ nameLabel }} Liked Recipes</button>
         </li>
       </ul>
@@ -212,7 +212,7 @@ const toggleEditName = () => {
               </div>
 
               <div class="col-xxl-6 col-xl-12 form-group">
-                <h3>{{ nameLabel }} Bio</h3>
+                <h3 class="truncate">{{ nameLabel }} Bio</h3>
                 <div v-if="ownPage" style="height:100%;width: 100%;">
                   <div class="row justify-content-center" style="height: 85%; min-height: 200px; width:100%">
                     <textarea id="bio" style="border: dashed; width: 100%; height: 100%;"

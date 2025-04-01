@@ -53,19 +53,18 @@ onMounted(() => {
             <img src="../assets/images/Potluck Logo.png" height="50vh" class="d-inline-block align-text-bottom">
             <h1 class="">Potluck</h1>
         </a>
-        <a v-if="(loadingPfp)">
+        <span v-if="(loadingPfp)">
             <a class="spinner-border" role="status" style="float: right; width: 3rem; height: 3rem">
                 <span class="visually-hidden">Loading...</span>
             </a>
-        </a>
+        </span>
         <a v-else-if="isAuthenticated" :href="`/user/${userId}`">
-            <img :src="pfpImgRef" height="50vh"
-                style="float: right; border: 0.1rem solid black; border-right-width: 4px; border-bottom-width: 4px;"
-                data-toggle="tooltip" data-placement="left" title="Account" />
+            <img :src="pfpImgRef" id="Avatar" height="50vh" style="float: right;" data-toggle="tooltip" data-placement="left"
+                title="Account">
         </a>
         <a v-else href="/account">
-            <img :src="pfpImgRef" height="50vh" style="float: right;" data-toggle="tooltip" data-placement="left"
-                title="Account" />
+            <img :src="pfpImgRef" id="Avatar" height="50vh" style="float: right;" data-toggle="tooltip" data-placement="left"
+                title="Account">
         </a>
         <a href="/CreateRecipe"><img src="../assets/images/Create icon.png" height="50vh"
                 style="float: right;margin-right: 1vw;" data-toggle="tooltip" data-placement="left"
@@ -85,6 +84,14 @@ h1 {
     margin-left: 5px;
 }
 
+#Avatar {
+  border: 3px black solid;
+  border-radius: 10%;
+  background: rgb(255, 183, 77);
+  box-shadow: 5px 5px 5px black;
+  width: 3.5rem;
+  height: 3.5rem;
+}
 #headerContainer {
     background-color: rgb(255, 183, 77);
     border-bottom: 3px solid black;
