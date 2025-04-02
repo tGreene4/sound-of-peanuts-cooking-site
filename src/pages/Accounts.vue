@@ -149,7 +149,6 @@ function userLogin(event) {
 </script>
 
 <template>
-
     <div id="flexWrapper" class="d-flex flex-column gradient-custom align-self-center">
         <div v-if="loading" class="d-flex justify-content-center align-items-center min-vh-100">
             <div class="spinner-border" role="status">
@@ -168,7 +167,7 @@ function userLogin(event) {
                         role="tab" aria-controls="log in tab" aria-selected="false">Log In</button>
                 </li>
             </ul>
-            <div class="tab-content" style=" min-width: 50%;">
+            <div class="tab-content" style=" min-width: 20vw;">
                 <div class="tab-pane show active" id="newAccountDiv">
                     <form>
                         <label for="usernameInput" class="form-label">Username:</label>
@@ -176,7 +175,7 @@ function userLogin(event) {
                             v-model="signUp.username.value">
 
                         <label for="emailInput" class="form-label">Email:</label>
-                        <input type="email" class="form-control" id="emailInput" placeholder="Enter your email"
+                        <input type="email" class="form-control" id="emailInput" style="width: 100%" placeholder="Enter your email"
                             v-model="signUp.email.value">
 
                         <label for="passwordInput" class="form-label">Password:</label>
@@ -197,7 +196,7 @@ function userLogin(event) {
                         <button class="form-control" @click="userCreate" type="button">Sign Up</button>
                     </form>
                 </div>
-                <div class="tab-pane" id="loginDiv">
+                <div class="tab-pane" style="min-width: 20vw " id="loginDiv">
                     <form>
                         <label for="emailLoginInput" class="form-label">Email:</label>
                         <input type="email" class="form-control" id="emailLoginInput" placeholder="Enter your email"
@@ -221,8 +220,7 @@ function userLogin(event) {
     min-height: 100vh;
     display: flex;
     justify-content: center;
-    align-items: flex-start;
-    background: radial-gradient(rgba(242, 233, 126, 75%), rgba(255, 121, 0, 50%));
+    align-items: center;
 }
 
 #accountPageDiv {

@@ -255,7 +255,6 @@ const toggleEditName = () => {
             </div>
 
             <div class="row justify-content-end">
-              <!--Connect this to delete User-->
               <button v-if="ownPage" style="width: 10%;min-width: 200px; color: red"
                 @click="deleteWarning = true">Delete
                 User Profile</button>

@@ -95,11 +95,11 @@ h1 {
 #headerContainer {
     background-color: rgb(255, 183, 77);
     border-bottom: 3px solid black;
-    padding: 0.5vh 1.5vh 1.5vh;
-  width: 100%;
+    padding: 1vh 1.5vh 1.5vh;
+    width: 100%;
     height: 5rem;
     max-height: 100px;
-    min-width: 720px;
+    min-width: 700px;
     position: fixed;
     top: 0;
     left: 0;
