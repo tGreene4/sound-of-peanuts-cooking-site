@@ -8,11 +8,12 @@
         thisAuthor: {
             type: Object,
             default: () => ({ 
-                name: "Unknown", //add default pfp and no link, like a deleted reddit profile
+                name: "Unknown",
                 pfpUrl: "",
                 id: 0
             })
         },
+        thisUserRecipe: Boolean,
         thisCookTime: Number,
         thisLikes: Number,
         thisImgStorageSrc: String
@@ -33,8 +34,7 @@
               <p class="card-text" style="display: inline;float: left;">{{thisLikes}} Likes</p>
             </div>
             <div class="col-7" style="padding-bottom: 1px">
-              <!--TO DO: Pfps still broken? -->
-              <a :href="authorLink" >
+              <a v-if="!props.thisUserRecipe":href="authorLink" >
                 <img id="Avatar" class="card-img-top img-thumbnail" :src="thisAuthor.pfpUrl || placeholderPfp" alt="Avatar">
                 <h6 class = "card-text truncate" >by {{thisAuthor.name}}</h6>
               </a>
@@ -60,7 +60,8 @@
   max-width: 3rem;
   background: lightgray;
   border: 1px solid black;
-
+  padding:0;
+  margin:0;
 }
 .card{
   box-shadow: 2px 5px 5px black;
@@ -71,10 +72,4 @@
   position: relative;
 }
 
-.truncate{
-  text-overflow: ellipsis;
-  overflow: hidden;
-  white-space: nowrap;
-  max-width: 100%;
-}
 </style>

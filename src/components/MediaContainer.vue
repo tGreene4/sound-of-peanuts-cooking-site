@@ -171,7 +171,7 @@ onMounted(async () => {
 
     <h1 class="sectionHeader">More</h1>
     <div class="row justify-content-center" id="moreField">
-      <div v-if="!moreloading" class="col-auto" id="More" v-for="item in more">
+      <div class="col-auto" id="More" v-for="item in more">
         <div class="cardContainer">
           <Card :thisRecipeId="item.id" :thisRecipeName="item.name" :thisAuthor="item.author"
             :thisCookTime="item.preparationTime" :thisLikes="item.likes" :thisImgStorageSrc="item.cardImgReg" />
@@ -180,11 +180,14 @@ onMounted(async () => {
       <div v-if="(more == '') & (!moreloading)" id="noRecWarning">
         No recipes found
       </div>
-      <div v-if="moreloading" class="spinner-border" role="status">
+
+    </div>
+    <div v-if="moreloading" class="d-flex justify-content-center align-items-center">
+      <div class="spinner-border" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
     </div>
-    <div class="row justify-content-center" v-if="!noMoreRecipes">
+    <div v-else-if="(!noMoreRecipes || moreloading)" class="row justify-content-center">
       <button @click="tryGetMoreRecipes">Load More</button>
     </div>
     <br>
@@ -192,31 +195,21 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.gradient-custom {
-  background: linear-gradient(to right, rgba(242, 233, 126, 75%), rgba(255, 121, 0, 50%));
-}
-
 .sectionHeader {
   border: 3px solid;
   font-family: 'Segoe UI', Tahoma, Verdana, sans-serif;
   border-left: 0;
   border-top-right-radius: 5px;
   border-bottom-right-radius: 5px;
-  box-shadow: 5px 5px 5px black;
-  position: relative;
   top: 5px;
   left: -20px;
   width: 15%;
-  min-width: 250px;
-  text-align: center;
-  background: rgba(255, 183, 77, 50%);
 }
 
 button {
   height: 50px;
   width: 250px;
   position: sticky;
-  background: rgb(240, 240, 240);
   border: black 2px solid;
   border-radius: 15px;
   Box-shadow: 3px 3px 5px black;
@@ -231,15 +224,4 @@ button {
   position: relative;
   align-self: center;
 }
-
-#noRecWarning {
-  top: 10px;
-  font-weight: bolder;
-  color: red;
-}
-button:hover{
-  background: rgb(0, 0, 0);
-  color: white;
-}
-
 </style>

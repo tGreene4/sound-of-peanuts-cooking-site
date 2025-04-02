@@ -4,6 +4,8 @@ import { auth, functions, storage } from '../api/firebase'
 import { httpsCallable } from 'firebase/functions';
 import {deleteUser, EmailAuthProvider, reauthenticateWithCredential, signOut,updateProfile} from 'firebase/auth'
 import { useRoute, useRouter } from 'vue-router';
+import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import { signOut } from "firebase/auth";
 import Card from "@/components/Card.vue";
 import placeholderImg from "@/assets/images/User icon.png";
 import { deleteObject, ref as storageRef ,uploadBytes,getDownloadURL} from 'firebase/storage';
@@ -13,21 +15,24 @@ const liked = ref([]);
 const userRecipes = ref([]);
 const userName = ref('');
 const userBiography = ref('');
-const pfpRef = ref(placeholderImg);
+const pfpRef = ref('');
 const userLoading = ref(true);
+const userNotFound = ref(true);
+
+const deleteWarning = ref(false);
+const updateWarning = ref(false);
 
 const nameLabel = ref("Your");
 const ownPage = ref(false);
-
 const route = useRoute();
+const userDoc = route.params.id;
 
 const getThisUser = async () => {
   console.log("Calling getDbUser");
   const dbUserRequest = httpsCallable(functions, 'getDbUser');
   try {
-    const docId = route.params.id;
-    console.log("Fetching recipes for document ID: ", docId);
-    const result = await dbUserRequest({ id: docId });
+    console.log("Fetching recipes for user ID: ", userDoc);
+    const result = await dbUserRequest({ id: userDoc });
     console.log("Response from getDbUser:", result.data);
 
     if (result.data.success) {
@@ -36,7 +41,12 @@ const getThisUser = async () => {
       pfpRef.value = result.data.pfpUrl;
       liked.value = result.data.likedRecipes || [];
       userRecipes.value = result.data.madeRecipes || [];
-      ownPage.value = result.data.ownPage || false;
+      ownPage.value = result.data.ownPage;
+      userNotFound.value = false;
+
+      if (ownPage.value == false) {
+        nameLabel.value = userName.value + "\'s"
+      }
 
       console.log("Liked Recipes:", liked.value);
       console.log("User Recipes:", userRecipes.value);
@@ -46,7 +56,6 @@ const getThisUser = async () => {
   } catch (error) {
     console.error("Error calling getDbUserRecipes:", error);
   } finally {
-    console.log("PFPREFERENCE: ",pfpRef.value)
     userLoading.value = false;
   }
 };
@@ -91,48 +100,39 @@ const deleteThisUser = async () => {
 
 }
 
-const updateThisUser = async() => {
-  const updateBio = userBiography.value;
-  const updateName = userName.value;
-  const pfpFile = file;
-  var updatePfpDownloadURL;
+const updateThisUser = async () => {
+  console.log("Calling updateDbUser");
+  const updateThisDbUser = httpsCallable(functions, 'updateDbUser');
 
-  try{
-    const storageReference = storageRef(storage, 'images/' + auth.currentUser.uid);
-    deleteObject(storageReference);
-    const snapshot = await uploadBytes(storageReference, pfpFile);
-    updatePfpDownloadURL = await getDownloadURL(snapshot.ref);
-    console.log("Image uploaded successfully. Download URL:", updatePfpDownloadURL);
-    await updateProfile(auth.currentUser, { photoURL: updatePfpDownloadURL });
-    
-  }catch(error){
-    console.log("Failed to download image:",error)
-
+  if (!auth.currentUser) {
+    console.error("User is not authenticated. Cannot update.");
+    return;
   }
-
-  const dbUserUpdate = httpsCallable(functions,"updateDbUser");
-  try{
-    const result = await dbUserUpdate({
-      uName:updateName,
-      pfpDownloadURL:updatePfpDownloadURL,
-      uBiography:updateBio,
-      uDocId:route.params.id
+  try {
+    const result = await updateThisDbUser({
+      uName: userName.value.slice(0,25),
+      pfpDownloadURL: pfpRef.value,
+      uBiography: userBiography.value.slice(0,2000),
+      uDocId: userDoc
     });
-    if(result.data.success=true){
-      console.log("Update complete");
-    }else{
-      console.log("Update failed");
+
+    if (result.data.success) {
+      location.reload();
+    } else {
+      alert("Error updating user", result.data.message);
     }
-
+  } catch (error) {
+    console.error("Error calling getDbUserRecipes:", error);
   }
-  catch(error){
-    console.log("Failed to update DB:",error)
+};
 
-  }
-
-  router.push("/user/" + route.params.id);
-
-}
+const logOut = async () => {
+  signOut(auth).then(() => {
+    router.push("/account");
+  }).catch((error) => {
+    console.log("Error caught when attempting to log out", error);
+  });
+};
 
 function logOut(){
   signOut(auth);
@@ -145,10 +145,25 @@ onMounted(() => {
   getThisUser();
 })
 
-var file;
-const handleFileUpload = function (event) {
-  file = event.target.files[0];
-  pfpRef.value = URL.createObjectURL(file);
+const handleFileUpload = async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  try {
+    const storageReference = storageRef(storage, 'images/' + auth.currentUser.uid);
+    const snapshot = await uploadBytes(storageReference, file);
+    const downloadURL = await getDownloadURL(snapshot.ref);
+
+    pfpRef.value = downloadURL;
+    console.log("Image uploaded successfully. Download URL:", pfpRef.value);
+  } catch (error) {
+    console.error("Error uploading image:", error);
+  }
+};
+
+const showEditName = ref(false);
+const toggleEditName = () => {
+    showEditName.value = !showEditName.value;
 };
 </script>
 
@@ -165,54 +180,106 @@ const handleFileUpload = function (event) {
       <button @click="router.push('/')">Go Back to Home</button>
     </div>
     <div v-else>
-      <ul class="nav nav-tabs" style="justify-content: center;">
+      <ul class="nav nav-tabs" style="justify-content: center; border:0">
         <li class="nav-item">
-          <button class="nav-link active" id="userTab" data-bs-toggle="tab" data-bs-target="#userContent" type="button"
-            role="tab" aria-controls="user Content Tab" aria-selected="true">{{ nameLabel }} Profile</button>
+          <button class="nav-link active truncate" id="userTab" data-bs-toggle="tab" data-bs-target="#userContent"
+            type="button" role="tab" aria-controls="user Content Tab" aria-selected="true">{{ nameLabel }}
+            Profile</button>
         </li>
         <li class="nav-item">
-          <button class="nav-link" id="likedTab" data-bs-toggle="tab" data-bs-target="#likedContent" type="button"
-            role="tab" aria-controls="like tab" aria-selected="false">{{ nameLabel }} Liked Recipes</button>
+          <button class="nav-link truncate" id="likedTab" data-bs-toggle="tab" data-bs-target="#likedContent"
+            type="button" role="tab" aria-controls="like tab" aria-selected="false">{{ nameLabel }} Liked
+            Recipes</button>
         </li>
       </ul>
 
       <div class="flex-d flex-column tab-content align-self-center" id="flexWrapper">
         <div class="tab-pane show active align-self-center" role="tabpanel" id="userContent">
           <div class="container-fluid align-self-center">
-            <div class="row justify-content-start">
-              <button v-if="ownPage" style="width: 10%;min-width: 200px" @click="logOut">Log out</button>
+
+            <div class="row">
+              <div class="col d-flex justify-content-end">
+                <button v-if="ownPage" style="width: 10%; min-width: 200px; margin: 0.2rem;" @click="logOut">Log
+                  out</button>
+              </div>
             </div>
             <div class="row justify-content-center">
               <div class="col-xxl-6 col-xl-12 form-group align-content-start">
-                <h1>{{ userName.value }}</h1>
+                <div class="sectionHeader" style="height:3.5rem; width: fit-content;">
+                  <div v-if="ownPage">
+                    <div v-if="!showEditName" @click="toggleEditName" style="cursor: pointer;">
+                      <h1 style="font-size: 2.5rem; font-weight: bold;">
+                        {{ userName.length > 20 ? userName.slice(0, 20) + '...' : userName }}
+                      </h1>
+                    </div>
+                    <div v-else>
+                      <textarea v-model="userName"
+                        style="font-weight: bold; font-size: 2.5rem;background-color: transparent; width: 100%; height: 100%; border: none; outline: none; resize: none; text-align: center;"
+                        @blur="toggleEditName"></textarea>
+                    </div>
+                  </div>
+                  <div v-else>
+                    <h1 style="font-size: 2.5rem; font-weight: bold;">
+                        {{ userName.length > 20 ? userName.slice(0, 20) + '...' : userName }}
+                      </h1>
+                  </div>
+                </div>
                 <div class="row justify-content-center">
                   <a class="align-content-center">
-                    <img class="d align-self-center" id="Avatar" :src="pfpRef" alt="Avatar">
+                    <img class="d align-self-center" id="userAvatar" :src="pfpRef" alt="Avatar">
                   </a>
                   <div v-if="ownPage">
                     <a> Profile Picture Upload</a><br>
                     <div class="input-group">
                       <input type="file" :value="null" class="form-control" id="pfpInput" style="width:2rem"
                         accept="image/png,image/jpeg" multiple @change="(event) => handleFileUpload(event)">
-                      <div class="input-group-append">
-                        <button style="border-radius: 0;">Save profile picture</button>
-                      </div>
                     </div>
                   </div>
                 </div>
 
               </div>
 
+              <div id="warning" class="container" v-if="deleteWarning">
+                <div class="box">
+                  <h3>
+                    Are You Sure That You Want To Delete Your User Account?
+                    There is no going back from this.
+                  </h3>
+                  <div class="row justify-content-center">
+                    <button class="form-control" type="button" @click="" style="width:200px;"> Yes, Delete
+                      Account</button>
+                    <button class="form-control" type="button" @click="deleteWarning = false;"
+                      style="width:100px;">No</button>
+                  </div>
+                </div>
+              </div>
+
+              <div id="warning" class="container" v-if="updateWarning">
+                <div class="box">
+                  <h3>
+                    Are You Sure That You Want To Save these Changes?
+                  </h3>
+                  <div class="row justify-content-center">
+                    <button class="form-control" type="button" @click="updateThisUser" style="width:200px;"> Yes, Update
+                      Account</button>
+                    <button class="form-control" type="button" @click="updateWarning = false;"
+                      style="width:100px;">No</button>
+                  </div>
+                </div>
+              </div>
+
               <div class="col-xxl-6 col-xl-12 form-group">
-                <h3>{{ nameLabel }} Bio</h3>
+                <h3 class="truncate">{{ nameLabel }} Bio</h3>
                 <div v-if="ownPage" style="height:100%;width: 100%;">
-                  <div class="row justify-content-center" style="height: 60%; min-height: 200px; width:100%">
-                    <textarea id="bio" style="border: dashed">{{ userBiography.value }}</textarea>
-                    <button style="width: 25%" @click="updateThisUser();">Update Profile</button>
+                  <div class="row justify-content-center" style="height: 85%; min-height: 200px; width:100%">
+                    <textarea id="bio" style="border: dashed; width: 100%; height: 100%;"
+                      v-model="userBiography"></textarea>
+                    <button style="width: 25%; padding:0;margin:0;" @click="updateWarning = true"> Save Changes
+                    </button>
                   </div>
                 </div>
                 <div v-else id="bio">
-                  {{ userBiography.value }}
+                  {{ userBiography }}
                 </div>
               </div>
 
@@ -221,24 +288,21 @@ const handleFileUpload = function (event) {
               <h1 class="sectionHeader">{{ nameLabel }} Recipes</h1>
               <div class="col-xxl-12">
                 <div class="row justify-content-center">
-                  <div v-if="!userRecipeLoading" class="col-auto" id="" v-for="item in userRecipes">
+                  <div class="col-auto" id="" v-for="item in userRecipes">
                     <div class="cardContainer">
                       <button v-if="ownPage" @click="router.push('/updaterecipe/' + item.id)" style="border-radius: 0">
                         Edit</button>
-                      <Card :thisRecipeId="item.id" :thisRecipeName="item.name" :thisAuthor="item.author"
+                      <Card :thisRecipeId="item.id" :thisRecipeName="item.name" :thisUserRecipe="true"
                         :thisCookTime="item.preparationTime" :thisLikes="item.likes"
                         :thisImgStorageSrc="item.cardImgReg" />
                     </div>
                   </div>
                 </div>
               </div>
-              <div v-if="(userRecipes == '') & (!userRecipeLoading)" id="noRecWarning">
+              <div v-if="(userRecipes == '')" id="noRecWarning">
                 No recipes found
               </div>
               <br>
-              <div v-if="userRecipeLoading" class="spinner-border" role="status">
-                <span class="visually-hidden">Loading...</span>
-              </div>
             </div>
 
             <div class="row justify-content-end">
@@ -253,21 +317,18 @@ const handleFileUpload = function (event) {
             <div class="row justify-content-center">
               <h1 class="sectionHeader" style="top:5px">{{ nameLabel }} Liked Recipes</h1>
               <div class="row justify-content-center" id="moreField">
-                <div v-if="!likedLoading" class="col-auto" id="" v-for="item in liked">
+                <div class="col-auto" id="" v-for="item in liked">
                   <div class="cardContainer">
                     <Card :thisRecipeId="item.id" :thisRecipeName="item.name" :thisAuthor="item.author"
                       :thisCookTime="item.preparationTime" :thisLikes="item.likes"
                       :thisImgStorageSrc="item.cardImgReg" />
                   </div>
                 </div>
-                <div v-if="(liked == '') & (!likedLoading)" id="noRecWarning">
+                <div v-if="(liked == '')" id="noRecWarning">
                   No recipes found
                 </div>
                 <br>
                 <br>
-                <div v-if="likedLoading" class="spinner-border" role="status">
-                  <span class="visually-hidden">Loading...</span>
-                </div>
               </div>
             </div>
           </div>
@@ -299,50 +360,15 @@ const handleFileUpload = function (event) {
   position: relative;
 }
 
-#Avatar {
-  border-radius: 100%;
+#userAvatar {
+  Box-shadow: 10px 5px 10px black;
   background: lightgray;
-  border: 1px solid black;
-  height: 100vh;
-  width: 100vw;
+  border: 3px solid black;
+  min-height: 30rem;
+  min-width: 30rem;
   max-height: 30rem;
   max-width: 30rem;
   object-fit: cover;
-}
-
-
-.nav-link {
-  background: darkgray;
-  accent-color: black;
-  color: white;
-}
-
-.nav-tabs {
-  left: 100px;
-  border: none;
-}
-
-#bio {
-  height: 100%;
-  width: 100%;
-  border: 4px solid black;
-  border-radius: 20px;
-  background: whitesmoke;
-  padding: 20px;
-  margin-bottom: 10px;
-
-}
-
-.sectionHeader {
-  border: 3px solid;
-  font-family: 'Segoe UI', Tahoma, Verdana, sans-serif;
-  border-radius: 5px;
-  box-shadow: 5px 5px 5px black;
-  position: relative;
-  width: 25%;
-  min-width: 400px;
-  text-align: center;
-  background: rgba(255, 183, 77, 50%);
 }
 
 #pfpInput {
@@ -365,5 +391,10 @@ button {
   padding-bottom: 5px;
   position: relative;
   align-self: center;
+}
+
+.sectionHeader {
+  max-width: 700px;
+  margin-bottom: 20px;
 }
 </style>
