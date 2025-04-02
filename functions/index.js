@@ -222,7 +222,7 @@ exports.getDbRecipeSingle = onCall(async (req) => {
         let isLiked = false;
         let isDisliked = false;
         if (req.auth) {
-            if(recipeData.authorUid == req.auth.uid){
+            if (recipeData.authorUid == req.auth.uid) {
                 ownsRecipe = true;
             }
             if (recipeData.likedBy.includes(req.auth.uid)) {
@@ -698,7 +698,7 @@ exports.createDbUser = onCall(async (req) => {
     let dislikedRecipes = []
     try {
         const complete = await db.collection('Users').add({
-            name: uName.slice(0,25),
+            name: uName.slice(0, 25),
             pfpUrl: pfpFile,
             uId: uId,
             biography: "",
@@ -750,8 +750,8 @@ exports.updateDbUser = onCall(async (req) => {
         }
 
         await ref.update({
-            biography: uBiography.slice(0,2000),
-            name: uName.slice(0,25),
+            biography: uBiography.slice(0, 2000),
+            name: uName.slice(0, 25),
             pfpUrl: pfpDownloadURL,
         });
 
@@ -818,7 +818,4 @@ exports.getUDocIdFromUId = onCall(async (req) => {
     catch (error) {
         logger.error("Error in getting doument from user ID:", error);
     }
-
-
-
-})
+});
