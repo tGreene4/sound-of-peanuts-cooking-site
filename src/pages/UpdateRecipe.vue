@@ -73,7 +73,7 @@ const getDbRecipeSingle = async () => {
         preparationTime: recipeData.preparationTime || 0,
         image: recipeData.cardImgReg || '',
       };
-      downloadURL.value = recipeData.image || '';
+      downloadURL.value = recipeData.cardImgReg || '';
     } else {
       console.log("Recipe not found: ", result.data.message);
       recipeNotFound.value = true;
@@ -86,9 +86,9 @@ const getDbRecipeSingle = async () => {
   }
 };
 
-// Update recipe
 const updateRecipe = async () => {
   loading.value = true;
+  console.log(!recipe.value.name, !recipe.value.preparationTime, !recipe.value.instructions.length, !recipe.value.ingredients.length, !recipe.value.equipment.length, !downloadURL.value);
   if (!recipe.value.name || !recipe.value.preparationTime || !recipe.value.instructions.length || !recipe.value.ingredients.length || !recipe.value.equipment.length || !downloadURL.value) {
     console.error("Error: Missing required fields");
     alert("Please fill in all fields before updating the recipe.");
@@ -138,7 +138,6 @@ const updateRecipe = async () => {
   }
 };
 
-// Delete recipe
 const deleteRecipe = async () => {
   loading.value = true;
   const user = auth.currentUser;
