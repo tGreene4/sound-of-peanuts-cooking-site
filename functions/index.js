@@ -802,17 +802,28 @@ exports.deleteDbUser = onCall(async (req) => {
         const deletedDefaultUser = await db.doc("/Users/aLsEiyAU2DPPajSJdZ0f").get();
         const deletedDefaultUserRef = deletedDefaultUser.ref;
 
+        let migratedRecipeIds = [];
+
         if (deletedUserRecipes.length > 0) {
             const updatePromises = deletedUserRecipes.map(async (recipeId) => {
                 const recipeDoc = await db.collection("Recipe").doc(recipeId).get();
                 if (recipeDoc.exists) {
-                    return recipeDoc.ref.update({
+                    await recipeDoc.ref.update({
                         authorUid: "",
                         authorRef: deletedDefaultUserRef,
                     });
+                    migratedRecipeIds.push(recipeId);
                 }
             });
             await Promise.all(updatePromises);
+
+            if (migratedRecipeIds.length > 0) {
+                await deletedDefaultUser.ref.update({
+                    madeRecipes: admin.firestore.FieldValue.arrayUnion(...migratedRecipeIds)
+                });
+
+                logger.info("Default user's madeRecipes field updated with migrated recipe IDs");
+            }
         }
 
         logger.log("User's recipes updated successfully");
