@@ -168,7 +168,7 @@ function userLogin(event) {
                         role="tab" aria-controls="log in tab" aria-selected="false">Log In</button>
                 </li>
             </ul>
-            <div class="tab-content" style="width: 8cm;">
+            <div class="tab-content" style=" min-width: 50%;">
                 <div class="tab-pane show active" id="newAccountDiv">
                     <form>
                         <label for="usernameInput" class="form-label">Username:</label>
@@ -188,7 +188,7 @@ function userLogin(event) {
                             placeholder="Enter the same password as above" v-model="signUp.confirmPassword.value">
 
                         <label for="pfpInput" class="form-label">Upload your Profile Picture</label>
-                        <img :src="pfpRef" style="width:100%;height:30vh;display:block;object-fit: cover;"
+                        <img :src="pfpRef" style="width:100%;height:30rem;display:block;object-fit: cover;"
                             id="pfpPreviewImg">
                         <input type="file" :value="null" class="form-control" id="pfpInput"
                             accept="image/png,image/jpeg" multiple @change="(event) => handleFileUpload(event)">
@@ -228,21 +228,13 @@ function userLogin(event) {
 #accountPageDiv {
     align-items: center;
     width: max-content;
+    align-content: center;
     padding: 4vh;
     border: 2px solid lightgrey;
     border-radius: 20px;
     margin: 3vh;
     background-color: rgb(243, 239, 234);
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-#accountPageDiv {
-    align-items: center;
-    width: max-content;
-    padding: 4vh;
-    border: 2px solid lightgrey;
-    border-radius: 20px;
-    background-color: rgb(243, 239, 234);
 }
 
 #emailLoginInput {
