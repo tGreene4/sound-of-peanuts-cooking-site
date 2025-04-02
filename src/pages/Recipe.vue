@@ -205,7 +205,8 @@ onMounted(() => {
                 <h2 class="card-title mb-1">{{ recipe.name }}</h2>
                 <p>
                   Preparation Time: <b>{{ recipe.preparationTime }} mins</b> &emsp;
-                  By <a :href="'/user/' + recipe.author.id">{{ recipe.author.name }}</a>
+                  By <a v-if="recipe.author.name != 'deletedUser'" :href="'/user/' + recipe.author.id">{{ recipe.author.name }}</a>
+                  <a v-else>{{ recipe.author.name }}</a>
                   &emsp; Published: {{ readableDate }}</p>
                 <hr class="my-1" />
                 <div class="m-4">

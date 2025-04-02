@@ -34,7 +34,11 @@
               <p class="card-text" style="display: inline;float: left;">{{thisLikes}} Likes</p>
             </div>
             <div class="col-7" style="padding-bottom: 1px">
-              <a v-if="!props.thisUserRecipe":href="authorLink" >
+              <a v-if="(!props.thisUserRecipe && props.thisAuthor.name != 'deletedUser')":href="authorLink" >
+                <img id="Avatar" class="card-img-top img-thumbnail" :src="thisAuthor.pfpUrl || placeholderPfp" alt="Avatar">
+                <h6 class = "card-text truncate" >by {{thisAuthor.name}}</h6>
+              </a>
+              <a v-else="(!props.thisUserRecipe && props.thisAuthor.name == 'deletedUser')">                
                 <img id="Avatar" class="card-img-top img-thumbnail" :src="thisAuthor.pfpUrl || placeholderPfp" alt="Avatar">
                 <h6 class = "card-text truncate" >by {{thisAuthor.name}}</h6>
               </a>

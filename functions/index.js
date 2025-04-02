@@ -7,7 +7,7 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 const { getFirestore, Timestamp } = require('firebase-admin/firestore');
-const { getStorage, getDownloadURL, uploadBytes, ref } = require('firebase-admin/storage');
+const { getStorage } = require('firebase-admin/storage');
 const { onCall } = require("firebase-functions/v2/https");
 const { initializeApp } = require('firebase-admin/app');
 
@@ -723,6 +723,7 @@ exports.createDbUser = onCall(async (req) => {
 });
 
 exports.updateDbUser = onCall(async (req) => {
+
     const { uName, pfpDownloadURL, uBiography, uDocId } = req.data;
 
     if (!req.auth) {
@@ -764,39 +765,73 @@ exports.updateDbUser = onCall(async (req) => {
 
 exports.deleteDbUser = onCall(async (req) => {
     const { uDocId } = req.data;
-    var complete = false;
     if (!uDocId) {
         throw new Error("UDocID not found");
     }
 
-    const dbUser = await db.collection('Users').doc(uDocId).get();
-    const uId = dbUser.data.uId;
-    if (req.auth.uid == uId) {
-        try {
-            const dbDelComplete = await dbUser.ref.delete();
-            if (dbDelComplete) {
-                logger.info("Deleted user from database");
-            }
-            auth.deleteUser(uId);
-            const deletedUserRecipes = await db.collection('Recipe').where("authorUid", "==", uId).get();
-            deletedUserRecipes.docs.forEach((thisDoc) => {
-                thisDoc.ref.update({
-                    uId: "",
-                    authorRef: "/Users/aLsEiyAU2DPPajSJdZ0f"
-                })
+    if (!req.auth || !req.auth.uid) {
+        logger.error("No user UID found in the request");
+        return { success: false, message: "Authentication failed" };
+    }
 
-            })
+    logger.info("Document id: " + uDocId + "\nUser req id: " + req.auth.uid);
+    
+    try {
+        const dbUser = await db.collection('Users').doc(uDocId).get();
+
+        if (!dbUser.exists) {
+            logger.error("User not found");
+            return { success: false, message: "User not found" };
         }
-        catch (error) {
-            logger.error(error);
-            console.log();
+
+        const uId = dbUser.data().uId;
+
+        if (req.auth.uid !== uId) {
+            logger.error("User UID does not match the requested UID");
+            return { success: false, message: "Authentication failed" };
         }
-    }
-    if (complete) {
-        return { success: true, message: "User deleted" }
-    }
-    else {
-        return { success: false, message: "Error: could not delete user" }
+
+        logger.info("Authentication successful");
+
+        await dbUser.ref.delete();
+
+        logger.info("User deleted from the database");
+
+        const deletedUserRecipes = dbUser.data().madeRecipes;
+
+        const deletedDefaultUser = await db.doc("/Users/aLsEiyAU2DPPajSJdZ0f").get();
+        const deletedDefaultUserRef = deletedDefaultUser.ref;
+
+        let migratedRecipeIds = [];
+
+        if (deletedUserRecipes.length > 0) {
+            const updatePromises = deletedUserRecipes.map(async (recipeId) => {
+                const recipeDoc = await db.collection("Recipe").doc(recipeId).get();
+                if (recipeDoc.exists) {
+                    await recipeDoc.ref.update({
+                        authorUid: "",
+                        authorRef: deletedDefaultUserRef,
+                    });
+                    migratedRecipeIds.push(recipeId);
+                }
+            });
+            await Promise.all(updatePromises);
+
+            if (migratedRecipeIds.length > 0) {
+                await deletedDefaultUser.ref.update({
+                    madeRecipes: admin.firestore.FieldValue.arrayUnion(...migratedRecipeIds)
+                });
+
+                logger.info("Default user's madeRecipes field updated with migrated recipe IDs");
+            }
+        }
+
+        logger.log("User's recipes updated successfully");
+        return { success: true, message: "User deleted successfully" };
+
+    } catch (error) {
+        logger.error("Error deleting user from database: ", error);
+        return { success: false, message: "Error occurred while deleting user" };
     }
 });
 
