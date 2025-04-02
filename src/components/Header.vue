@@ -48,7 +48,7 @@ onMounted(() => {
 
 <template>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=ComicNeue">
-    <div class="container-fluid justify-content-around" id="headerContainer">
+    <div class="container-fluid justify-content-around top-0" id="headerContainer">
         <a class="navbar-brand col-xs-10" href="/">
             <img src="../assets/images/Potluck Logo.png" height="50vh" class="d-inline-block align-text-bottom">
             <h1 class="">Potluck</h1>
@@ -95,8 +95,8 @@ h1 {
 #headerContainer {
     background-color: rgb(255, 183, 77);
     border-bottom: 3px solid black;
-    padding: 1.5vh;
-    width: 100%;
+    padding: 0.5vh 1.5vh 1.5vh;
+  width: 100%;
     height: 5rem;
     max-height: 100px;
     min-width: 720px;
