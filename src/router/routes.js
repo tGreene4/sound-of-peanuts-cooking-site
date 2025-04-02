@@ -16,7 +16,6 @@ function isAuth(to, from, next) {
 }
 export default [
     { path: '/', component: loadPage('Home') },
-    { path: '/search', component: loadPage('Search') },
     { path: '/recipe/:id', component: loadPage('Recipe'), props: true },
     { path: '/user/:id', component: loadPage('User')},
     { path: '/account', component: loadPage('Accounts')},

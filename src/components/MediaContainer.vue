@@ -171,7 +171,7 @@ onMounted(async () => {
 
     <h1 class="sectionHeader">More</h1>
     <div class="row justify-content-center" id="moreField">
-      <div v-if="!moreloading" class="col-auto" id="More" v-for="item in more">
+      <div class="col-auto" id="More" v-for="item in more">
         <div class="cardContainer">
           <Card :thisRecipeId="item.id" :thisRecipeName="item.name" :thisAuthor="item.author"
             :thisCookTime="item.preparationTime" :thisLikes="item.likes" :thisImgStorageSrc="item.cardImgReg" />
@@ -180,11 +180,14 @@ onMounted(async () => {
       <div v-if="(more == '') & (!moreloading)" id="noRecWarning">
         No recipes found
       </div>
-      <div v-if="moreloading" class="spinner-border" role="status">
+
+    </div>
+    <div v-if="moreloading" class="d-flex justify-content-center align-items-center">
+      <div class="spinner-border" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
     </div>
-    <div class="row justify-content-center" v-if="!noMoreRecipes">
+    <div v-else-if="(!noMoreRecipes || moreloading)" class="row justify-content-center">
       <button @click="tryGetMoreRecipes">Load More</button>
     </div>
     <br>
@@ -192,7 +195,6 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-
 .sectionHeader {
   border: 3px solid;
   font-family: 'Segoe UI', Tahoma, Verdana, sans-serif;
@@ -222,5 +224,4 @@ button {
   position: relative;
   align-self: center;
 }
-
 </style>
