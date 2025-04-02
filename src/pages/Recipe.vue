@@ -179,7 +179,7 @@ onMounted(() => {
   </div>
 
 
-  <div class="container-fluid bg-secondary gradient-custom min-vh-100" style="padding-top: 20px;">
+  <div class="main container-fluid bg-secondary gradient-custom min-vh-100" style="padding-top: 20px;">
     <div v-if="loading" class="d-flex justify-content-center align-items-center min-vh-100">
       <div class="spinner-border" role="status">
         <span class="visually-hidden">Loading...</span>
@@ -237,6 +237,7 @@ onMounted(() => {
               </div>
             </div>
             <div class="d-flex gap-2 mt-auto justify-content-end border-top py-3">
+              <button v-if="ownsRecipe" class="btn" @click="router.push('/updaterecipe/'+ id)">Edit</button>
               <button class="btn" :class="isLiked ? 'btn-success' : 'btn-outline-success'" @click="likeRecipe"
                 :style="{ backgroundColor: isLiked ? '#28a745' : '' }">
                 {{ isLiked ? 'Liked' : 'Like' }} {{ localLikes }}
