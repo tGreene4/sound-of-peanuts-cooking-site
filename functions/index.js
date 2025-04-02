@@ -218,9 +218,13 @@ exports.getDbRecipeSingle = onCall(async (req) => {
             }
         }
 
+        let ownsRecipe = false;
         let isLiked = false;
         let isDisliked = false;
         if (req.auth) {
+            if(recipeData.authorUid == req.auth.uid){
+                ownsRecipe = true;
+            }
             if (recipeData.likedBy.includes(req.auth.uid)) {
                 isLiked = true;
             }
@@ -239,6 +243,7 @@ exports.getDbRecipeSingle = onCall(async (req) => {
             equipment: recipeData.equipment || [],
             cardImgReg: recipeData.cardImgReg || "",
             publishDate: recipeData.publishDate || "",
+            ownsRecipe: ownsRecipe,
             isLiked: isLiked,
             isDisliked: isDisliked,
 

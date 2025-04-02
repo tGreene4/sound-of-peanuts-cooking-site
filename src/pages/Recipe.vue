@@ -56,6 +56,7 @@ const getDbRecipeSingle = async () => {
         publishDate: recipeData.publishDate || ''
       };
 
+      ownsRecipe.value = recipeData.ownsRecipe;
       isLiked.value = recipeData.isLiked;
       isDisliked.value = recipeData.isDisliked;
 
