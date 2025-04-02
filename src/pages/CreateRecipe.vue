@@ -82,8 +82,8 @@ export default {
 
   const preparationTime = parseInt(this.time);
   if (isNaN(preparationTime) || preparationTime <= 0) {
-    console.error("Error: Invalid cooking time");
-    alert("Please enter a valid cooking time in minutes.");
+    console.error("Error: Invalid preparation time");
+    alert("Please enter a valid preparation time in minutes.");
     this.loading = false;
     return;
   }
@@ -146,7 +146,7 @@ export default {
               <br>
               <label for="nameField" class="form-label">Name</label>
               <input class="form-control" v-model="name" id="nameField"><br><br><br><br>
-              <label for="timeField" class="form-label">Cooking Time (in minutes)</label>
+              <label for="timeField" class="form-label">Preparation Time (in minutes)</label>
               <input class="form-control" v-model="time" id="timeField">
               <br><br><br><br>
             </div>

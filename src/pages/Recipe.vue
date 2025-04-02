@@ -68,6 +68,7 @@ const getDbRecipeSingle = async () => {
       }
       console.log(recipeData.publishDate._seconds);
       localLikes.value = recipeData.likes;
+      localDislikes.value = recipeData.dislikes;
     }
     else {
       console.log("Recipe not found: ", result.data.message);
