@@ -243,7 +243,7 @@ onMounted(() => {
 
               <label for="nameField" class="form-label">Name</label>
               <input class="form-control" v-model="recipe.name" id="nameField"><br><br><br><br>
-              <label for="timeField" class="form-label">Cooking Time (in minutes)</label>
+              <label for="timeField" class="form-label">Preparation Time (in minutes)</label>
               <input class="form-control" v-model="recipe.preparationTime" id="timeField">
               <br><br><br><br>
             </div>

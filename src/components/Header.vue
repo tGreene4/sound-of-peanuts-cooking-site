@@ -66,7 +66,7 @@ onMounted(() => {
             <img :src="pfpImgRef" id="Avatar" height="50vh" style="float: right;" data-toggle="tooltip" data-placement="left"
                 title="Account">
         </a>
-        <a href="/CreateRecipe"><img src="../assets/images/Create icon.png" height="50vh"
+        <a href="/createRecipe"><img src="../assets/images/Create icon.png" height="50vh"
                 style="float: right;margin-right: 1vw;" data-toggle="tooltip" data-placement="left"
                 title="Create Recipe">
         </a>
