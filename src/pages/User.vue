@@ -2,10 +2,13 @@
 import { onMounted, ref } from 'vue';
 import { auth, functions, storage } from '../api/firebase'
 import { httpsCallable } from 'firebase/functions';
+import {deleteUser, EmailAuthProvider, reauthenticateWithCredential, signOut,updateProfile} from 'firebase/auth'
 import { useRoute, useRouter } from 'vue-router';
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { signOut } from "firebase/auth";
 import Card from "@/components/Card.vue";
+import placeholderImg from "@/assets/images/User icon.png";
+import { deleteObject, ref as storageRef ,uploadBytes,getDownloadURL} from 'firebase/storage';
 const router = useRouter();
 
 const liked = ref([]);
@@ -57,6 +60,46 @@ const getThisUser = async () => {
   }
 };
 
+const deleteThisUser = async () => {
+  
+  const dbUserDelete = httpsCallable(functions,"deleteDbUser")
+  var dbSuccess = false;
+  var delUid = auth.currentUser.uid;
+  try{
+    let email = prompt("Enter email:")
+    let password = prompt("Enter password:")
+    if(email!=null && password!=null){
+      let cred = EmailAuthProvider.credential(email,password);
+      reauthenticateWithCredential(auth.currentUser,cred).then(()=>{
+        deleteUser(auth.currentUser);
+      });
+    }
+    
+  }catch(error){
+    console.log("Error deleting account:",error)
+    alert("Could not delete account")
+  }
+  
+  try{
+    const docId = route.params.id
+    console.log("Deleting user with doc ID "+docId)
+    dbSuccess = await dbUserDelete({uDocId:docId});
+  }catch(error){
+    console.log("Error deleting user from DB:",error)
+    return;
+  }
+
+  try{
+      console.log("Removed user from database")
+      deleteObject(storageRef(storage,"images/"+delUid));
+  }catch(error){
+      console.log("Error deleting pfp:",error)
+  }
+
+  router.push("/account");
+
+}
+
 const updateThisUser = async () => {
   console.log("Calling updateDbUser");
   const updateThisDbUser = httpsCallable(functions, 'updateDbUser');
@@ -90,6 +133,13 @@ const logOut = async () => {
     console.log("Error caught when attempting to log out", error);
   });
 };
+
+function logOut(){
+  signOut(auth);
+  router.push("/account")
+  
+}
+
 
 onMounted(() => {
   getThisUser();
@@ -146,6 +196,7 @@ const toggleEditName = () => {
       <div class="flex-d flex-column tab-content align-self-center" id="flexWrapper">
         <div class="tab-pane show active align-self-center" role="tabpanel" id="userContent">
           <div class="container-fluid align-self-center">
+
             <div class="row">
               <div class="col d-flex justify-content-end">
                 <button v-if="ownPage" style="width: 10%; min-width: 200px; margin: 0.2rem;" @click="logOut">Log
@@ -256,9 +307,7 @@ const toggleEditName = () => {
 
             <div class="row justify-content-end">
               <!--Connect this to delete User-->
-              <button v-if="ownPage" style="width: 10%;min-width: 200px; color: red"
-                @click="deleteWarning = true">Delete
-                User Profile</button>
+              <button v-if="ownPage" style="width: 10%;min-width: 200px" @click="deleteThisUser()">Delete User Profile</button>
             </div>
           </div>
         </div>
