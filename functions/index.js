@@ -765,39 +765,63 @@ exports.updateDbUser = onCall(async (req) => {
 
 exports.deleteDbUser = onCall(async (req) => {
     const { uDocId } = req.data;
-    logger.info(uDocId);
     if (!uDocId) {
         throw new Error("UDocID not found");
     }
-    const dbUser = await db.collection('Users').doc(uDocId).get();
-    const uId = dbUser.data().uId;
-    if (req.auth.uid == uId) {
-        logger.info("deleteDbUser passed auth check");
-        try {
-            const dbDelComplete = await dbUser.ref.delete();
-            if (dbDelComplete) {
-                logger.info("Deleted user from database");
-                const deletedUserRecipes = dbUser.data().madeRecipes;
-                for(var i=0;i<deletedUserRecipes.length;i++){
-                    let thisDoc = db.collection("Recipe").doc(deletedUserRecipes[i]).get();
-                    thisDoc.ref.update({
-                        uId: "",
-                        authorRef: "/Users/aLsEiyAU2DPPajSJdZ0f"
-                    })
-                }
-                return { success: true, message: "User deleted" }
-            }
-            else{
-                return { success: false, message: "Error: could not delete user" }
-            }
-        }
-        catch (error) {
-            logger.error("Error deleting user from database",error);
-        }
-    }else{
-        logger.error("deleteDbUser could not authenticate")
+
+    if (!req.auth || !req.auth.uid) {
+        logger.error("No user UID found in the request");
+        return { success: false, message: "Authentication failed" };
     }
+
+    logger.info("Document id: " + uDocId + "\nUser req id: " + req.auth.uid);
     
+    try {
+        const dbUser = await db.collection('Users').doc(uDocId).get();
+
+        if (!dbUser.exists) {
+            logger.error("User not found");
+            return { success: false, message: "User not found" };
+        }
+
+        const uId = dbUser.data().uId;
+
+        if (req.auth.uid !== uId) {
+            logger.error("User UID does not match the requested UID");
+            return { success: false, message: "Authentication failed" };
+        }
+
+        logger.info("Authentication successful");
+
+        await dbUser.ref.delete();
+
+        logger.info("User deleted from the database");
+
+        const deletedUserRecipes = dbUser.data().madeRecipes;
+
+        const deletedDefaultUser = await db.doc("/Users/aLsEiyAU2DPPajSJdZ0f").get();
+        const deletedDefaultUserRef = deletedDefaultUser.ref;
+
+        if (deletedUserRecipes.length > 0) {
+            const updatePromises = deletedUserRecipes.map(async (recipeId) => {
+                const recipeDoc = await db.collection("Recipe").doc(recipeId).get();
+                if (recipeDoc.exists) {
+                    return recipeDoc.ref.update({
+                        authorUid: "",
+                        authorRef: deletedDefaultUserRef,
+                    });
+                }
+            });
+            await Promise.all(updatePromises);
+        }
+
+        logger.log("User's recipes updated successfully");
+        return { success: true, message: "User deleted successfully" };
+
+    } catch (error) {
+        logger.error("Error deleting user from database: ", error);
+        return { success: false, message: "Error occurred while deleting user" };
+    }
 });
 
 exports.getUDocIdFromUId = onCall(async (req) => {

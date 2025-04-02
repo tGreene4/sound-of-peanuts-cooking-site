@@ -213,7 +213,7 @@ onMounted(() => {
                   <button class="form-control" type="button" @click="deleteRecipe" style="width:200px;"> Yes, Delete
                     Recipe</button>
                   <button class="form-control" type="button" @click="deleteWarning = false;"
-                    style="width:100px;">No</button>
+                    style="width:100px; margin-left: 2rem;">No</button>
                 </div>
               </div>
             </div>
@@ -227,7 +227,7 @@ onMounted(() => {
                   <button class="form-control" type="button" @click="updateRecipe" style="width:200px;"> Yes, Update
                     Recipe</button>
                   <button class="form-control" type="button" @click="updateWarning = false;"
-                    style="width:100px;">No</button>
+                    style="width:100px; margin-left: 2rem;">No</button>
                 </div>
               </div>
             </div>

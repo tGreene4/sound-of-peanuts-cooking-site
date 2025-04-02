@@ -2,13 +2,10 @@
 import { onMounted, ref } from 'vue';
 import { auth, functions, storage } from '../api/firebase'
 import { httpsCallable } from 'firebase/functions';
-import {deleteUser, EmailAuthProvider, reauthenticateWithCredential, signOut,updateProfile} from 'firebase/auth'
+import { deleteUser, EmailAuthProvider, reauthenticateWithCredential, signOut, } from 'firebase/auth'
 import { useRoute, useRouter } from 'vue-router';
-import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
-import { signOut } from "firebase/auth";
+import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import Card from "@/components/Card.vue";
-import placeholderImg from "@/assets/images/User icon.png";
-import { deleteObject, ref as storageRef ,uploadBytes,getDownloadURL} from 'firebase/storage';
 const router = useRouter();
 
 const liked = ref([]);
@@ -20,6 +17,7 @@ const userLoading = ref(true);
 const userNotFound = ref(true);
 
 const deleteWarning = ref(false);
+const deleteForm = ref(false);
 const updateWarning = ref(false);
 
 const nameLabel = ref("Your");
@@ -60,45 +58,41 @@ const getThisUser = async () => {
   }
 };
 
+const email = ref('');
+const password = ref('');
+
 const deleteThisUser = async () => {
-  
-  const dbUserDelete = httpsCallable(functions,"deleteDbUser")
-  var dbSuccess = false;
-  var delUid = auth.currentUser.uid;
-  try{
-    let email = prompt("Enter email:")
-    let password = prompt("Enter password:")
-    if(email!=null && password!=null){
-      let cred = EmailAuthProvider.credential(email,password);
-      reauthenticateWithCredential(auth.currentUser,cred).then(()=>{
-        deleteUser(auth.currentUser);
-      });
+  const dbUserDelete = httpsCallable(functions, "deleteDbUser");
+  const delUid = auth.currentUser.uid;
+
+  try {
+    if (email && password) {
+      let cred = EmailAuthProvider.credential(email.value, password.value);
+      await reauthenticateWithCredential(auth.currentUser, cred);
+      console.log("User reauthenticated");
+    } else {
+      throw new Error("Email or password not provided");
     }
-    
-  }catch(error){
-    console.log("Error deleting account:",error)
-    alert("Could not delete account")
-  }
-  
-  try{
-    const docId = route.params.id
-    console.log("Deleting user with doc ID "+docId)
-    dbSuccess = await dbUserDelete({uDocId:docId});
-  }catch(error){
-    console.log("Error deleting user from DB:",error)
-    return;
-  }
 
-  try{
-      console.log("Removed user from database")
-      deleteObject(storageRef(storage,"images/"+delUid));
-  }catch(error){
-      console.log("Error deleting pfp:",error)
+    const docId = route.params.id;
+    console.log("Deleting user with doc ID " + docId);
+
+    const res = await dbUserDelete({ uDocId: docId });
+    if (res.data.success) {
+      console.log("Removed user from database");
+
+      await deleteUser(auth.currentUser);
+      console.log("User deleted from Firebase Auth");
+
+      router.push("/account");
+    } else {
+      console.error(res.data.message);
+    }
+  } catch (error) {
+    console.error("Error during user deletion: ", error);
+    alert("Could not delete account: " + error.message);
   }
-
-  router.push("/account");
-
-}
+};
 
 const updateThisUser = async () => {
   console.log("Calling updateDbUser");
@@ -110,9 +104,9 @@ const updateThisUser = async () => {
   }
   try {
     const result = await updateThisDbUser({
-      uName: userName.value.slice(0,25),
+      uName: userName.value.slice(0, 25),
       pfpDownloadURL: pfpRef.value,
-      uBiography: userBiography.value.slice(0,2000),
+      uBiography: userBiography.value.slice(0, 2000),
       uDocId: userDoc
     });
 
@@ -133,13 +127,6 @@ const logOut = async () => {
     console.log("Error caught when attempting to log out", error);
   });
 };
-
-function logOut(){
-  signOut(auth);
-  router.push("/account")
-  
-}
-
 
 onMounted(() => {
   getThisUser();
@@ -163,7 +150,7 @@ const handleFileUpload = async (event) => {
 
 const showEditName = ref(false);
 const toggleEditName = () => {
-    showEditName.value = !showEditName.value;
+  showEditName.value = !showEditName.value;
 };
 </script>
 
@@ -220,8 +207,8 @@ const toggleEditName = () => {
                   </div>
                   <div v-else>
                     <h1 style="font-size: 2.5rem; font-weight: bold;">
-                        {{ userName.length > 20 ? userName.slice(0, 20) + '...' : userName }}
-                      </h1>
+                      {{ userName.length > 20 ? userName.slice(0, 20) + '...' : userName }}
+                    </h1>
                   </div>
                 </div>
                 <div class="row justify-content-center">
@@ -246,14 +233,37 @@ const toggleEditName = () => {
                     There is no going back from this.
                   </h3>
                   <div class="row justify-content-center">
-                    <button class="form-control" type="button" @click="" style="width:200px;"> Yes, Delete
+                    <button class="form-control" type="button" @click="deleteForm = true; deleteWarning = false"
+                      style="width:200px;"> Yes, Delete
                       Account</button>
                     <button class="form-control" type="button" @click="deleteWarning = false;"
-                      style="width:100px;">No</button>
+                      style="width:100px; margin-left: 2rem;">No</button>
                   </div>
                 </div>
               </div>
 
+              <div id="warning" class="container" v-if="deleteForm">
+                <div class="box">
+                  <h3>Please enter your email and password</h3>
+
+                  <div class="row justify-content-center">
+                    <input v-model="email" type="email" placeholder="Enter your email" class="form-control"
+                      style="width: 300px; margin-bottom: 10px;" />
+                    <input v-model="password" type="password" placeholder="Enter your password" class="form-control"
+                      style="width: 300px; margin-bottom: 0.2rem;" />
+
+                    <button class="form-control" type="button" @click="deleteThisUser(email, password)"
+                      style="width: 200px; margin-top: 1rem;">
+                      Yes, Delete Account
+                    </button>
+
+                    <button class="form-control" type="button" @click="deleteForm = false;"
+                      style="width: 100px; margin-left: 2rem;margin-top: 1rem;">
+                      No
+                    </button>
+                  </div>
+                </div>
+              </div>
               <div id="warning" class="container" v-if="updateWarning">
                 <div class="box">
                   <h3>
@@ -263,7 +273,7 @@ const toggleEditName = () => {
                     <button class="form-control" type="button" @click="updateThisUser" style="width:200px;"> Yes, Update
                       Account</button>
                     <button class="form-control" type="button" @click="updateWarning = false;"
-                      style="width:100px;">No</button>
+                      style="width:100px; margin-left: 2rem;">No</button>
                   </div>
                 </div>
               </div>
@@ -306,11 +316,13 @@ const toggleEditName = () => {
             </div>
 
             <div class="row justify-content-end">
-              <!--Connect this to delete User-->
-              <button v-if="ownPage" style="width: 10%;min-width: 200px" @click="deleteThisUser()">Delete User Profile</button>
+              <button v-if="ownPage" style="width: 10%;min-width: 200px; color: red"
+                @click="deleteWarning = true">Delete
+                User Profile</button>
             </div>
           </div>
         </div>
+
 
         <div class="tab-pane align-self-center" role="tabpanel" id="likedContent">
           <div class="container-fluid align-self-center">

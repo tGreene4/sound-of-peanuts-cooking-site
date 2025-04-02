@@ -90,11 +90,30 @@ const userCreate = async () => {
         }
         console.log(createSuccess);
     } catch (error) {
-        console.log("Failed to create user:" + error.message);
+        console.log("Failed to create user: " + error.message);
+
+        if (error.code === 'auth/email-already-in-use') {
+            alert("This email is already registered. Please use a different email.");
+            return;
+        }
+
+        if (auth.currentUser) {
+            const signUpUser = auth.currentUser;
+            deleteObject(storageRef(storage, 'images/' + signUpUser.uid)).catch((deleteError) => {
+                console.error("Error deleting image:", deleteError.message);
+            });
+            deleteUser(signUpUser).catch((deleteError) => {
+                console.error("Error deleting user:", deleteError.message);
+            });
+        }
+
+        alert("An error occurred while creating the account. Please try again.");
+        return;
     }
 
     const signUpUser = auth.currentUser;
     console.log(signUpUser);
+    
     if (!defaultPFP.value) {
         try {
             const storageReference = storageRef(storage, 'images/' + signUpUser.uid);
@@ -104,7 +123,7 @@ const userCreate = async () => {
             signUp.downloadURL = url;
             await updateProfile(signUpUser, { photoURL: url });
         } catch (error) {
-            console.error("Error uploading image:", error);
+            console.error("Error uploading image:", error);            
             deleteUser(signUpUser);
         }
     }
@@ -124,9 +143,8 @@ const userCreate = async () => {
         }
     } catch (error) {
         console.error("Error adding user to db:", error.message);
-        deleteObject(storageRef(storage, 'images/' + signUpUser.uid))
-        deleteUser(signUpUser);
-        alert("An error occurred while creating the account. Please try again.");
+        alert("An error occurred while adding the user to the database. Please try again.");
+        return;
     }
 
     authCheck();
