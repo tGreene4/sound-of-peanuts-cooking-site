@@ -125,7 +125,6 @@ const dislikeRecipe = async () => {
     return;
   }
 
-  console.log("Calling addDislikeRecipe with ID:", routeProp.id, "and user ID: ", user.uid);
   const dislikeRecipeFunction = httpsCallable(functions, 'addDislikeRecipe');
   try {
     const result = await dislikeRecipeFunction({ id: routeProp.id });
