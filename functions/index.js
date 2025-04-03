@@ -778,3 +778,62 @@ exports.getUDocIdFromUId = onCall(async (req) => {
 
 
 })
+
+exports.searchRecipeBy = onCall(async (req) => {
+    const { phrase, searchBy, order} = req.data;
+    logger.info(phrase,searchBy,order);
+    const searchSpan = await db.collection("Recipe").orderBy(searchBy,order).limit(50).get();
+    logger.info(searchSpan);
+    let recipes=[];
+    if(!searchSpan.empty){
+        for(doc of searchSpan.docs){
+            const recipeData = doc.data();
+            const recipeName = recipeData.name
+            logger.info(recipeName);
+            logger.info(typeof(recipeName))
+            if((recipeName.toLowerCase()).search(phrase.toLowerCase())!=-1){
+                    let author = null;
+                    if (recipeData.authorRef) {
+                        logger.log("Author ref found");
+                        logger.log(recipeData.authorRef)
+                        const aSnapshot = await recipeData.authorRef.get();
+                        logger.info(aSnapshot)
+                        if (aSnapshot.exists) {
+                            logger.log("Author found: ", aSnapshot.data());
+                            author = {
+                                id: aSnapshot.id,
+                                name: aSnapshot.data().name,
+                                pfpUrl: aSnapshot.data().pfpUrl
+                            };
+                        }
+                        else {
+                            logger.log("Author not found: ", recipeData.authorRef);
+                            author = {
+                                id: null,
+                                name: "Deleted User"
+                            }
+                        }
+                    }
+                    logger.info("Reached push")
+    
+                    recipes.push({
+                        id: doc.id,
+                        name: recipeData.name || "",
+                        likes: recipeData.likes || 0,
+                        preparationTime: recipeData.preparationTime || 0,
+                        cardImgReg: recipeData.cardImgReg || "",
+                        author: author
+                    });
+            }
+    
+        }
+        logger.info("Recipes: ",recipes)
+    
+        return{success:true,recipeList:recipes}
+
+    }else{
+        return{success:false,message:"Search returned no result"}
+    }
+    
+
+})
