@@ -73,7 +73,16 @@ onMounted(() => {
             <img :src="pfpImgRef" id="Avatar" height="50vh" style="float: right;" data-toggle="tooltip" data-placement="left"
                 title="Account">
         </a>
-        <a href="/createRecipe"><img src="../assets/images/Create icon.png" height="50vh"
+        <a href="/search"><img src="../assets/images/Search icon.png" height="50vh"
+                style="float: right;margin-right: 1vw;" data-toggle="tooltip" data-placement="left"
+                title="Search Recipes">
+        </a>
+        <a v-if="isAuthenticated" :href="'/createRecipe'"><img src="../assets/images/Create icon.png" height="50vh"
+                style="float: right;margin-right: 1vw;" data-toggle="tooltip" data-placement="left"
+                title="Create Recipe">
+        </a>
+        
+        <a v-else href="/account"><img src="../assets/images/Create icon.png" height="50vh"
                 style="float: right;margin-right: 1vw;" data-toggle="tooltip" data-placement="left"
                 title="Create Recipe">
         </a>

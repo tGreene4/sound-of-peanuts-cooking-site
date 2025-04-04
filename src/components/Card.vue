@@ -8,7 +8,7 @@
         thisAuthor: {
             type: Object,
             default: () => ({ 
-                name: "Unknown",
+                name: "this user",
                 pfpUrl: "",
                 id: 0
             })
