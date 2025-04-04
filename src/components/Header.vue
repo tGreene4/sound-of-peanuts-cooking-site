@@ -77,7 +77,12 @@ onMounted(() => {
                 style="float: right;margin-right: 1vw;" data-toggle="tooltip" data-placement="left"
                 title="Search Recipes">
         </a>
-        <a href="/createRecipe"><img src="../assets/images/Create icon.png" height="50vh"
+        <a v-if="isAuthenticated" :href="'/createRecipe'"><img src="../assets/images/Create icon.png" height="50vh"
+                style="float: right;margin-right: 1vw;" data-toggle="tooltip" data-placement="left"
+                title="Create Recipe">
+        </a>
+        
+        <a v-else href="/account"><img src="../assets/images/Create icon.png" height="50vh"
                 style="float: right;margin-right: 1vw;" data-toggle="tooltip" data-placement="left"
                 title="Create Recipe">
         </a>
