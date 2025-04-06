@@ -46,9 +46,6 @@ onMounted(() => {
         loadingPfp.value = false;
 
     })
-    onAuthStateChanged(auth, async (currentUser) => {
-        
-    });
 });
 </script>
 
