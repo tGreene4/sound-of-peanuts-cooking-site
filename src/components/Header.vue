@@ -86,6 +86,10 @@ onMounted(() => {
                 style="float: right;margin-right: 1vw;" data-toggle="tooltip" data-placement="left"
                 title="Create Recipe">
         </a>
+        <a href="/search"><img src="../assets/images/Search icon.png" height="50vh"
+                style="float: right;margin-right: 1vw;" data-toggle="tooltip" data-placement="left"
+                title="Search Recipes">
+        </a>
     </div>
 </template>
 
