@@ -2,24 +2,22 @@
 import { functions, auth } from '../api/firebase';
 import { httpsCallable } from 'firebase/functions';
 import { useRouter } from "vue-router";
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, reactive } from 'vue';
+import { Modal } from 'bootstrap';
+
 
 const router = useRouter();
 const recipeNotFound = ref(false);
 const loading = ref(true);
 const readableDate = ref('');
 const ownsRecipe = ref(false);
+const localLikes = ref(0);
+const localDislikes = ref(0);
 
-const getHelloWorld = async () => { //remove before final deployment
-  console.log("Calling helloWorld");
-  const helloWorld = httpsCallable(functions, 'helloWorld');
-  try {
-    const result = await helloWorld({});
-    console.log(result.data);
-  } catch (error) {
-    console.error("Error calling helloWorld:", error);
-  }
-};
+const state = reactive({
+  authPopup: null,
+});
+
 
 const routeProp = defineProps(['id']);
 
@@ -30,7 +28,6 @@ const recipe = ref({
   likes: 0,
   dislikes: 0,
   image: '',
-  author: [],
   preparationTime: 0,
   equipment: '',
   publishDate: ''
@@ -45,7 +42,6 @@ const getDbRecipeSingle = async () => {
 
     if (result.data.success) {
       const recipeData = result.data.recipe;
-      console.log("Recipe found:", recipe);
 
       recipe.value = {
         name: recipeData.name || "No name provided",
@@ -54,16 +50,25 @@ const getDbRecipeSingle = async () => {
         likes: recipeData.likes || 0,
         dislikes: recipeData.dislikes || 0,
         image: recipeData.cardImgReg || '',
-        author: recipeData.authorRef || '',
+        author: recipeData.author || '',
         preparationTime: recipeData.preparationTime || 0,
         equipment: recipeData.equipment || '',
         publishDate: recipeData.publishDate || ''
       };
+
+      ownsRecipe.value = recipeData.ownsRecipe;
+      isLiked.value = recipeData.isLiked;
+      isDisliked.value = recipeData.isDisliked;
+
+      console.log("Author: ", recipe.value.author)
+      console.log("Recipe" + recipe.value.author.name)
       if (recipeData.publishDate && recipeData.publishDate._seconds) {
         const date = new Date(recipeData.publishDate._seconds * 1000);
         readableDate.value = date.toLocaleDateString();
       }
       console.log(recipeData.publishDate._seconds);
+      localLikes.value = recipeData.likes;
+      localDislikes.value = recipeData.dislikes;
     }
     else {
       console.log("Recipe not found: ", result.data.message);
@@ -77,20 +82,34 @@ const getDbRecipeSingle = async () => {
   }
 };
 
+const isLiked = ref(false);
+const isDisliked = ref(false);
+
 const likeRecipe = async () => {
   const user = auth.currentUser;
 
   if (!user) {
     console.error("User is not authenticated. Cannot like the recipe.");
+    state.authPopup.show();
     return;
   }
 
-  const uid = user.uid;
-
-  console.log("Calling addLikeRecipe with ID:", routeProp.id, "and user ID: ", uid);
+  console.log("Calling addLikeRecipe with ID:", routeProp.id, "and user ID: ", user.uid);
   const likeRecipeFunction = httpsCallable(functions, 'addLikeRecipe');
   try {
-    const result = await likeRecipeFunction({ id: routeProp.id, uid });
+    const result = await likeRecipeFunction({ id: routeProp.id });
+    if (result.data.alreadyLiked == false) {
+      isLiked.value = true;
+      if (isDisliked.value) {
+        isDisliked.value = false;
+        localDislikes.value = localDislikes.value - 1;
+      }
+      localLikes.value = localLikes.value + 1;
+    }
+    else if (result.data.alreadyLiked == true) {
+      isLiked.value = false;
+      localLikes.value = localLikes.value - 1;
+    }
     console.log(result.data);
   } catch (error) {
     console.error("Error calling addLikeRecipe:", error);
@@ -101,37 +120,71 @@ const dislikeRecipe = async () => {
   const user = auth.currentUser;
 
   if (!user) {
-    console.error("User is not authenticated. Cannot like the recipe.");
+    console.error("User is not authenticated. Cannot dislike the recipe.");
+    state.authPopup.show();
     return;
   }
 
-  const uid = user.uid;
-
-  console.log("Calling addDislikeRecipe with ID:", routeProp.id, "and user ID: ", uid);
   const dislikeRecipeFunction = httpsCallable(functions, 'addDislikeRecipe');
   try {
-    const result = await dislikeRecipeFunction({ id: routeProp.id, uid });
+    const result = await dislikeRecipeFunction({ id: routeProp.id });
+
+    if (result.data.alreadyDisliked == false) {
+      isDisliked.value = true;
+      if (isLiked.value) {
+        isLiked.value = false;
+        localLikes.value = localLikes.value - 1;
+      }
+      localDislikes.value = localDislikes.value + 1;
+    }
+    else if (result.data.alreadyDisliked == true) {
+      isDisliked.value = false;
+      localDislikes.value = localDislikes.value - 1;
+    }
+
     console.log(result.data);
   } catch (error) {
     console.error("Error calling addDislikeRecipe:", error);
   }
 };
+const closePopup = async () => {
+  console.log("closing popup")
+  state.authPopup.hide();
+}
+
 
 onMounted(() => {
   getDbRecipeSingle();
+  state.authPopup = new Modal('#authPopup', {})
 });
 </script>
 
-<!-- TODO: 
-Add the popup to ask for authentication on like+dislike buttons
-Show author name (hyperlinked) and PFP near the title
-Add a script to +1 or -1 like number locally
--->
-
 <template>
-  <div class="container-fluid bg-secondary gradient-custom min-vh-100" style="padding-top: 20px;">
-    <div v-if="loading" class="spinner-border" role="status">
-      <span class="visually-hidden">Loading...</span>
+  <div class="modal fade" id="authPopup" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Not Logged In</h5>
+        </div>
+        <div class="modal-body">
+          Sorry! You're not logged in. Please log in and try again.
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" @click="closePopup">Close</button>
+          <router-link :to="{ path: '/account' }"><button type="button" class="btn btn-light" @click="closePopup">Log
+              in</button></router-link>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="main container-fluid bg-secondary gradient-custom min-vh-100" style="padding-top: 20px;">
+    <div v-if="loading" class="d-flex justify-content-center align-items-center min-vh-100">
+      <div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
     </div>
     <div v-else-if="recipeNotFound" class="text-center">
       <h1>Recipe Not Found</h1>
@@ -149,7 +202,10 @@ Add a script to +1 or -1 like number locally
               </div>
               <div class="col-md-6">
                 <h2 class="card-title mb-1">{{ recipe.name }}</h2>
-                <p>Preparation Time: <b>{{ recipe.preparationTime }} mins</b> &emsp; {{ recipe.authorRef }}
+                <p>
+                  Preparation Time: <b>{{ recipe.preparationTime }} mins</b> &emsp;
+                  By <a v-if="recipe.author.name != 'deletedUser'" :href="'/user/' + recipe.author.id">{{ recipe.author.name }}</a>
+                  <a v-else>{{ recipe.author.name }}</a>
                   &emsp; Published: {{ readableDate }}</p>
                 <hr class="my-1" />
                 <div class="m-4">
@@ -183,10 +239,15 @@ Add a script to +1 or -1 like number locally
               </div>
             </div>
             <div class="d-flex gap-2 mt-auto justify-content-end border-top py-3">
-              <button v-if="ownsRecipe" class="btn btn-outline-dark"
-                @click="router.push('/updaterecipe/' + routeProp.id)">Edit</button>
-              <button class="btn btn-outline-success" @click="likeRecipe">Like {{ recipe.likes }}</button>
-              <button class="btn btn-outline-danger" @click="dislikeRecipe">Dislike {{ recipe.dislikes }}</button>
+              <button v-if="ownsRecipe" class="btn" @click="router.push('/updaterecipe/'+ id)">Edit</button>
+              <button class="btn" :class="isLiked ? 'btn-success' : 'btn-outline-success'" @click="likeRecipe"
+                :style="{ backgroundColor: isLiked ? '#28a745' : '' }">
+                {{ isLiked ? 'Liked' : 'Like' }} {{ localLikes }}
+              </button>
+              <button class="btn" :class="isDisliked ? 'btn-danger' : 'btn-outline-danger'" @click="dislikeRecipe"
+                :style="{ backgroundColor: isDisliked ? '#dc3545' : '' }">
+                {{ isDisliked ? 'Disliked' : 'Dislike' }} {{ localDislikes }}
+              </button>
             </div>
           </div>
         </div>
@@ -211,22 +272,8 @@ button {
   min-height: 750px;
 }
 
-.card-title {
-  font-size: 2rem;
-  font-weight: bold;
-}
-
-.card-text {
-  font-size: 1.1rem;
-  line-height: 1.6;
-}
-
 .btn {
   font-size: 1rem;
   padding: 0.5rem 1rem;
-}
-
-.gradient-custom {
-  background: linear-gradient(to right, rgba(242, 233, 126, 75%), rgba(255, 121, 0, 50%));
 }
 </style>

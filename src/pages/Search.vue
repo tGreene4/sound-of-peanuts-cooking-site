@@ -85,7 +85,6 @@
       box-shadow: 0px 0px 8px rgba(255, 178, 77, 0.734);
     }
 
-
   .btn {
     background-color: grey;
     border: ridge;

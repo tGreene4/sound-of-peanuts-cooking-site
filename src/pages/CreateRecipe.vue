@@ -55,6 +55,8 @@ export default {
       try {
         const storage = getStorage();
         const file = event.target.files[0];
+        if (!file) return;
+        
         const storageRef = ref(storage, 'images/' + file.name);
         const snapshot = await uploadBytes(storageRef, file);
         const downloadURL = await getDownloadURL(snapshot.ref);
@@ -69,47 +71,59 @@ export default {
       }
     },
     async postRecipe() {
-      this.loading = true;
-      if (!this.name || !this.time || !this.steps.length || !this.ingredients.length || !this.equipment.length || !this.downloadURL) {
-        console.error("Error: Missing required fields");
-        alert("Please fill in all fields before publishing the recipe.");
-        return;
-      }
-      const user = auth.currentUser;
-      if (!user) {
-        console.error("Error: User is not authenticated");
-        alert("You must be logged in to post a recipe.");
-        return;
-      }
+  this.loading = true;
 
-      const postDbRecipe = httpsCallable(functions, 'postDbRecipe');
-      try {
-        console.log(`Calling postDbRecipe`);
-        const result = await postDbRecipe({
-          name: this.name,
-          preparationTime: parseInt(this.time),
-          instructions: this.steps.map(step => step.value),
-          ingredients: this.ingredients.map(ingredient => ingredient.value),
-          equipment: this.equipment.map(equipment => equipment.value),
-          cardImgReg: this.downloadURL,
-          uid: user.uid,
-        });
+  if (!this.name || !this.time || !this.steps.length || !this.ingredients.length || !this.equipment.length || !this.downloadURL) {
+    console.error("Error: Missing required fields");
+    alert("Please fill in all fields before publishing the recipe.");
+    this.loading = false;
+    return;
+  }
 
-        console.log("Response from postDbRecipe:", result.data);
+  const preparationTime = parseInt(this.time);
+  if (isNaN(preparationTime) || preparationTime <= 0) {
+    console.error("Error: Invalid preparation time");
+    alert("Please enter a valid preparation time in minutes.");
+    this.loading = false;
+    return;
+  }
 
-        if (result.data.success) {
-          console.log("Recipe posted successfully", result.data.message);
-          console.log("Routing to recipe ",result.data.recipeId)
-          await this.router.push("/recipe/"+result.data.recipeId);
-        } else {
-          console.warn("Recipes failed to post", result.data.message);
-        }
-      } catch (error) {
-        console.error("Error calling postDbRecipe:", error);
-      } finally{
-        this.loading=false;
-      }
-    },
+  const user = auth.currentUser;
+  if (!user) {
+    console.error("Error: User is not authenticated");
+    alert("You must be logged in to post a recipe.");
+    this.loading = false;
+    return;
+  }
+
+  const postDbRecipe = httpsCallable(functions, 'postDbRecipe');
+  try {
+    console.log(`Calling postDbRecipe`);
+    const result = await postDbRecipe({
+      name: this.name,
+      preparationTime: preparationTime,
+      instructions: this.steps.map(step => step.value),
+      ingredients: this.ingredients.map(ingredient => ingredient.value),
+      equipment: this.equipment.map(equipment => equipment.value),
+      cardImgReg: this.downloadURL,
+      uid: user.uid,
+    });
+
+    console.log("Response from postDbRecipe:", result.data);
+
+    if (result.data.success) {
+      console.log("Recipe posted successfully", result.data.message);
+      console.log("Routing to recipe ", result.data.recipeId);
+      await this.router.push("/recipe/" + result.data.recipeId);
+    } else {
+      console.warn("Recipe failed to post", result.data.message);
+    }
+  } catch (error) {
+    console.error("Error calling postDbRecipe:", error);
+  } finally {
+    this.loading = false;
+  }
+},
   },
 };
 </script>
@@ -132,7 +146,7 @@ export default {
               <br>
               <label for="nameField" class="form-label">Name</label>
               <input class="form-control" v-model="name" id="nameField"><br><br><br><br>
-              <label for="timeField" class="form-label">Cooking Time (in minutes)</label>
+              <label for="timeField" class="form-label">Preparation Time (in minutes)</label>
               <input class="form-control" v-model="time" id="timeField">
               <br><br><br><br>
             </div>
@@ -187,7 +201,7 @@ export default {
                       <button class="btn" type="button" @click="deleteField('equipment', index)" tabindex="-1">X</button>
                     </div>
                   </div>
-                </div>
+                </div><br>
                 <button type="button" class="align-self-start" @click="addField('equipment')" tabindex="-1">Add new
                   Equipment</button><br><br>
               </div>
@@ -212,11 +226,6 @@ export default {
   border-bottom-right-radius: 20px;
   margin-left: 20px;
   margin-right: 20px;
-  position: relative;
-}
-
-#content {
-  width: 100%;
   position: relative;
 }
 
@@ -249,13 +258,7 @@ export default {
   color: red;
   border: none;
   border-radius: 0;
-}
-
-button {
-  background: rgb(240, 240, 240);
-  border: black 2px solid;
-  border-radius: 15px;
-  Box-shadow: 3px 3px 5px black;
+  background: white;
 }
 
 
@@ -263,12 +266,6 @@ img {
   border: 2px dashed black;
   border-radius: 20px;
   align-self: center;
-}
-
-#media {
-  background: linear-gradient(to left, rgba(255, 121, 0, 0%), rgba(255, 121, 0, 100%));
-  border-radius: 2px;
-  width: 100%;
 }
 
 button:hover{

@@ -5,19 +5,19 @@ import { ref, onMounted } from 'vue';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import placeholderImg from '@/assets/images/coconut.png';
 import NotFound from '@/components/NotFound.vue';
-import {useRouter} from "vue-router";
+import { useRouter } from "vue-router";
 const router = useRouter();
 
 // Props
 const routeProp = defineProps(['id']);
 // Reactive variables
 const recipe = ref({
-    name: '',
-    ingredients: [],
-    instructions: [],
-    equipment: [],
-    preparationTime: 0,
-    image: '',
+  name: '',
+  ingredients: [],
+  instructions: [],
+  equipment: [],
+  preparationTime: 0,
+  image: '',
 });
 const recipeNotFound = ref(false);
 const loading = ref(true);
@@ -27,298 +27,303 @@ const deleteWarning = ref(false);
 const updateWarning = ref(false);
 
 const addField = (type) => {
-    switch (type) {
-        case 'instructions':
-            recipe.value.instructions.push({ value: '' });
-            break;
-        case 'ingredients':
-            recipe.value.ingredients.push({ value: '' });
-            break;
-        case 'equipment':
-            recipe.value.equipment.push({ value: '' });
-            break;
-    }
+  switch (type) {
+    case 'instructions':
+      recipe.value.instructions.push({ value: '' });
+      break;
+    case 'ingredients':
+      recipe.value.ingredients.push({ value: '' });
+      break;
+    case 'equipment':
+      recipe.value.equipment.push({ value: '' });
+      break;
+  }
 };
 
 const deleteField = (type, index) => {
-    switch (type) {
-        case 'instructions':
-            recipe.value.instructions.splice(index, 1);
-            break;
-        case 'ingredients':
-            recipe.value.ingredients.splice(index, 1);
-            break;
-        case 'equipment':
-            recipe.value.equipment.splice(index, 1);
-            break;
-    }
+  switch (type) {
+    case 'instructions':
+      recipe.value.instructions.splice(index, 1);
+      break;
+    case 'ingredients':
+      recipe.value.ingredients.splice(index, 1);
+      break;
+    case 'equipment':
+      recipe.value.equipment.splice(index, 1);
+      break;
+  }
 };
 
 const getDbRecipeSingle = async () => {
-    console.log("Calling getDbRecipeSingle with ID:", routeProp.id);
-    const getDbRecipeSingleFunction = httpsCallable(functions, 'getDbRecipeSingle');
-    try {
-        const result = await getDbRecipeSingleFunction({ id: routeProp.id });
-        console.log("Response from getDbRecipeSingle:", result.data);
+  console.log("Calling getDbRecipeSingle with ID:", routeProp.id);
+  const getDbRecipeSingleFunction = httpsCallable(functions, 'getDbRecipeSingle');
+  try {
+    const result = await getDbRecipeSingleFunction({ id: routeProp.id });
+    console.log("Response from getDbRecipeSingle:", result.data);
 
-        if (result.data.success) {
-            const recipeData = result.data.recipe;
-            console.log("Recipe found:", recipeData);
+    if (result.data.success) {
+      const recipeData = result.data.recipe;
+      console.log("Recipe found:", recipeData);
 
-            recipe.value = {
-                name: recipeData.name || "No name provided",
-                ingredients: (recipeData.ingredients || []).map((ingredient) => ({ value: ingredient })),
-                instructions: (recipeData.instructions || []).map((instruction) => ({ value: instruction })),
-                equipment: (recipeData.equipment || []).map((equipment) => ({ value: equipment })),
-                preparationTime: recipeData.preparationTime || 0,
-                image: recipeData.cardImgReg || '',
-            };
-            downloadURL.value = recipeData.image || '';
-        } else {
-            console.log("Recipe not found: ", result.data.message);
-            recipeNotFound.value = true;
-        }
-    } catch (error) {
-        console.error("Error calling getDbRecipeSingle:", error);
-        recipeNotFound.value = true;
-    } finally {
-        loading.value = false;
+      recipe.value = {
+        name: recipeData.name || "No name provided",
+        ingredients: (recipeData.ingredients || []).map((ingredient) => ({ value: ingredient })),
+        instructions: (recipeData.instructions || []).map((instruction) => ({ value: instruction })),
+        equipment: (recipeData.equipment || []).map((equipment) => ({ value: equipment })),
+        preparationTime: recipeData.preparationTime || 0,
+        image: recipeData.cardImgReg || '',
+      };
+      downloadURL.value = recipeData.cardImgReg || '';
+    } else {
+      console.log("Recipe not found: ", result.data.message);
+      recipeNotFound.value = true;
     }
+  } catch (error) {
+    console.error("Error calling getDbRecipeSingle:", error);
+    recipeNotFound.value = true;
+  } finally {
+    loading.value = false;
+  }
 };
 
-// Update recipe
 const updateRecipe = async () => {
-    loading.value = true;
-    if (!recipe.value.name || !recipe.value.preparationTime || !recipe.value.instructions.length || !recipe.value.ingredients.length || !recipe.value.equipment.length || !downloadURL.value) {
-        console.error("Error: Missing required fields");
-        alert("Please fill in all fields before updating the recipe.");
-        loading.value = false;
-        return;
+  loading.value = true;
+  console.log(!recipe.value.name, !recipe.value.preparationTime, !recipe.value.instructions.length, !recipe.value.ingredients.length, !recipe.value.equipment.length, !downloadURL.value);
+  if (!recipe.value.name || !recipe.value.preparationTime || !recipe.value.instructions.length || !recipe.value.ingredients.length || !recipe.value.equipment.length || !downloadURL.value) {
+    console.error("Error: Missing required fields");
+    alert("Please fill in all fields before updating the recipe.");
+    loading.value = false;
+    return;
+  }
+
+  const user = auth.currentUser;
+  if (!user) {
+    console.error("Error: User is not authenticated");
+    alert("You must be logged in to update a recipe.");
+    loading.value = false;
+    return;
+  }
+  const parsedInstructions = recipe.value.instructions.map((step) => step.value);
+  const parsedIngredients = recipe.value.ingredients.map((ingredient) => ingredient.value);
+  const parsedEquipment = recipe.value.equipment.map((item) => item.value);
+
+  const updateDbRecipe = httpsCallable(functions, 'updateDbRecipe');
+  try {
+    console.log(`Calling updateDbRecipe`);
+    const result = await updateDbRecipe({
+      id: routeProp.id,
+      name: recipe.value.name,
+      preparationTime: parseInt(recipe.value.preparationTime),
+      instructions: parsedInstructions,
+      ingredients: parsedIngredients,
+      equipment: parsedEquipment,
+      cardImgReg: downloadURL.value,
+    });
+
+    console.log("Response from updateDbRecipe:", result.data);
+
+    if (result.data.success) {
+      console.log("Recipe updated successfully", result.data.message);
+      alert("Recipe updated successfully!");
+      await router.push("/recipe/" + routeProp.id);
+    } else {
+      console.warn("Recipe failed to update", result.data.message);
+      alert("Failed to update the recipe. Please try again.");
     }
-
-    const user = auth.currentUser;
-    if (!user) {
-        console.error("Error: User is not authenticated");
-        alert("You must be logged in to update a recipe.");
-        loading.value = false;
-        return;
-    }
-    const parsedInstructions = recipe.value.instructions.map((step) => step.value);
-    const parsedIngredients = recipe.value.ingredients.map((ingredient) => ingredient.value);
-    const parsedEquipment = recipe.value.equipment.map((item) => item.value);
-
-    const updateDbRecipe = httpsCallable(functions, 'updateDbRecipe');
-    try {
-        console.log(`Calling updateDbRecipe`);
-        const result = await updateDbRecipe({
-            id: routeProp.id,
-            name: recipe.value.name,
-            preparationTime: parseInt(recipe.value.preparationTime),
-            instructions: parsedInstructions,
-            ingredients: parsedIngredients,
-            equipment: parsedEquipment,           
-            cardImgReg: downloadURL.value,
-            uid: user.uid,
-        });
-
-        console.log("Response from updateDbRecipe:", result.data);
-
-        if (result.data.success) {
-            console.log("Recipe updated successfully", result.data.message);
-            alert("Recipe updated successfully!");
-            await router.push("/recipe/" + routeProp.id);
-        } else {
-            console.warn("Recipe failed to update", result.data.message);
-            alert("Failed to update the recipe. Please try again.");
-        }
-    } catch (error) {
-        console.error("Error calling updateDbRecipe:", error);
-        alert("An error occurred while updating the recipe. Please try again.");
-    } finally {
-      loading.value = false;
-    }
+  } catch (error) {
+    console.error("Error calling updateDbRecipe:", error);
+    alert("An error occurred while updating the recipe. Please try again.");
+  } finally {
+    loading.value = false;
+  }
 };
 
-// Delete recipe
 const deleteRecipe = async () => {
-    loading.value=true;
-    const user = auth.currentUser;
-    if (!user) {
-        console.error("Error: User is not authenticated");
-        alert("You must be authenticated to delete this recipe.");
-        return;
-    }
-    const deleteDbRecipe = httpsCallable(functions, 'deleteDbRecipe');
-    try {
-        console.log(`Calling deleteDbRecipe`);
-        const result = await deleteDbRecipe({ id: routeProp.id, uid: user.uid });
+  loading.value = true;
+  const user = auth.currentUser;
+  if (!user) {
+    console.error("Error: User is not authenticated");
+    alert("You must be authenticated to delete this recipe.");
+    return;
+  }
+  const deleteDbRecipe = httpsCallable(functions, 'deleteDbRecipe');
+  try {
+    console.log(`Calling deleteDbRecipe`);
+    const result = await deleteDbRecipe({ id: routeProp.id, uid: user.uid });
 
-        console.log("Response from deleteDbRecipe:", result.data);
+    console.log("Response from deleteDbRecipe:", result.data);
 
-        if (result.data.success) {
-            console.log("Recipe deleted successfully", result.data.message);
-            alert("Recipe deleted successfully!");
-            await router.push("/");
-        } else {
-            console.warn("Recipe failed to delete", result.data.message);
-            alert("Failed to delete the recipe. Please try again.");
-        }
-    } catch (error) {
-        console.error("Error calling deleteDbRecipe:", error);
-        alert("An error occurred while deleting the recipe. Please try again.");
-    } finally{
-      loading.value = false;
+    if (result.data.success) {
+      console.log("Recipe deleted successfully", result.data.message);
+      alert("Recipe deleted successfully!");
+      await router.push("/");
+    } else {
+      console.warn("Recipe failed to delete", result.data.message);
+      alert("Failed to delete the recipe. Please try again.");
     }
+  } catch (error) {
+    console.error("Error calling deleteDbRecipe:", error);
+    alert("An error occurred while deleting the recipe. Please try again.");
+  } finally {
+    loading.value = false;
+  }
 };
 
 const handleFileUpload = async (event) => {
-    try {
-        const storage = getStorage();
-        const file = event.target.files[0];
-        const fileRef = storageRef(storage, 'images/' + file.name);
-        const snapshot = await uploadBytes(fileRef, file);
-        const url = await getDownloadURL(snapshot.ref);
-        console.log(url);
-        downloadURL.value = url;
-    } catch (error) {
-        console.error("Error uploading image:", error);
-    }
+  try {
+    const storage = getStorage();
+    const file = event.target.files[0];
+    const fileRef = storageRef(storage, 'images/' + file.name);
+    const snapshot = await uploadBytes(fileRef, file);
+    const url = await getDownloadURL(snapshot.ref);
+    console.log(url);
+    downloadURL.value = url;
+  } catch (error) {
+    console.error("Error uploading image:", error);
+  }
 };
 
 onMounted(() => {
-    getDbRecipeSingle();
+  getDbRecipeSingle();
 });
 </script>
 
 <template>
-    <div class="main container-fluid align-self-center min-vh-100">
-        <div v-if="loading" class="spinner-border" role="status">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-        <div v-else-if="recipeNotFound">
-            <NotFound />
-        </div>
-        <div v-else class="flex-d flex-column align-self-center" id="flexWrapper">
-            <form class="align-self-center" id="content">
-                <div class="container-fluid align-self-center">
-
-                    <div class="row justify-content-center">
-
-                      <div id="warning" class="container" v-if="deleteWarning" >
-                        <div class="box">
-                          <h3>
-                            Are You Sure That You Want To Delete This Recipe?
-                          </h3>
-                          <div class="row justify-content-center">
-                            <button class="form-control" type="button" @click="deleteRecipe" style="width:200px;"> Yes, Delete
-                              Recipe</button>
-                            <button class="form-control" type="button" @click="deleteWarning=false;" style="width:100px;">No</button>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div id="warning" class="container" v-if="updateWarning" >
-                        <div class="box">
-                          <h3>
-                            Are You Sure That You Want To Update This Recipe?
-                          </h3>
-                          <div class="row justify-content-center">
-                            <button class="form-control" type="button" @click="updateRecipe" style="width:200px;"> Yes, Update
-                              Recipe</button>
-                            <button class="form-control" type="button" @click="updateWarning=false;" style="width:100px;">No</button>
-                          </div>
-                        </div>
-                      </div>
-
-                        <div class="col-xl-3">
-                            <br>
-                            <div style="width:40%;align-self:center;">
-                                <button class="form-control" type="button" @click="updateWarning=true"
-                                    style="width:200px;">Update Recipe</button>
-                            </div>
-                            <br>
-
-                            <label for="nameField" class="form-label">Name</label>
-                            <input class="form-control" v-model="recipe.name" id="nameField"><br><br><br><br>
-                            <label for="timeField" class="form-label">Cooking Time (in minutes)</label>
-                            <input class="form-control" v-model="recipe.preparationTime" id="timeField">
-                            <br><br><br><br>
-                        </div>
-
-                        <div class="col-xl-3">
-                          <br>
-                          <div style="width:40%;align-self:center;">
-                            <button class="form-control" type="button" @click="deleteWarning=true;" style="width:200px;">Delete
-                              Recipe</button>
-                          </div>
-                        </div>
-
-                        <div class="col-xl-2">
-                            <a>Upload Image</a><br>
-                            <input type="file" id="media" accept="image/*" multiple
-                                @change="(event) => handleFileUpload(event)" />
-                            <br><br>
-                        </div>
-                        <div class="col-xl-3">
-                            <img class="card-img-top img-thumbnail img-fluid align-self-center"
-                                :src="downloadURL ||recipe.image || placeholderImg" alt="Card image cap"
-                                style="max-height:90%;max-width:90%;position: relative; top:10px">
-                            <br>
-                        </div>
-                    </div>
-
-                    <div class="row justify-content-center">
-                        <div class="col-xxl-4 col-xl-12 form-group">
-                            <label for="instructionsField" class="form-label">Instructions</label>
-                            <div class="container-fluid" id="instructionsFields"
-                                v-for="(step, index) in recipe.instructions" :key="index">
-                                <div class="input-group mb-3">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text" id="inputGroup-sizing-sm">Step # {{ index + 1
-                                            }}</span>
-                                    </div>
-                                  <input type="text" class="form-control" v-model="step.value" @keyup.enter="addField('instructions')">
-                                  <div class="input-group-append">
-                                    <button class="btn" type="button" @click="deleteField('instructions', index)" tabindex="-1">X</button>
-                                  </div>
-                                </div>
-                            </div>
-                          <br><button type="button" @click="addField('instructions')" tabindex="-1">Add new step</button><br>
-                        </div>
-
-                        <div class="col-xxl-2 col-xl-5 form-group">
-                            <label for="ingredientFields" class="form-label">Ingredients</label>
-                            <div id="ingredientFields" v-for="(ingredient, index) in recipe.ingredients" :key="index">
-                                <div class="input-group mb-3">
-                                  <input type="text" class="form-control" v-model="ingredient.value" @keyup.enter="addField('ingredients')">
-                                  <div class="input-group-append">
-                                    <button class="btn" type="button" @click="deleteField('ingredients', index)" tabindex="-1">X</button>
-                                  </div>
-                                </div>
-                            </div>
-                          <br><button type="button" @click="addField('ingredients')" tabindex="-1">Add new Ingredient</button><br>
-                        </div>
-                        <div class="col-xxl-2 col-xl-5 form-group">
-                            <label for="equipmentFields" class="form-label">Equipment</label>
-                            <div id="equipmentFields" v-for="(item, index) in recipe.equipment" :key="index">
-                                <div class="input-group mb-3">
-                                  <input type="text" class="form-control" v-model="item.value" @keyup.enter="addField('equipment')">
-                                  <div class="input-group-append">
-                                    <button class="btn" type="button" @click="deleteField('equipment', index)" tabindex="-1">X</button>
-                                  </div>
-                                </div>
-                            </div>
-                          <button type="button" class="align-self-start" @click="addField('equipment')" tabindex="-1">Add new
-                            Equipment</button><br><br>
-                        </div>
-                    </div>
-
-                    <br>
-                    <br>
-                </div>
-            </form>
-        </div>
+  <div class="main container-fluid align-self-center min-vh-100">
+    <div v-if="loading" class="d-flex justify-content-center align-items-center min-vh-100">
+      <div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
     </div>
+    <div v-else-if="recipeNotFound">
+      <NotFound />
+    </div>
+    <div v-else class="flex-d flex-column align-self-center" id="flexWrapper">
+      <form class="align-self-center" id="content">
+        <div class="container-fluid align-self-center">
+
+          <div class="row justify-content-center">
+
+            <div id="warning" class="container" v-if="deleteWarning">
+              <div class="box">
+                <h3>
+                  Are You Sure That You Want To Delete This Recipe?
+                </h3>
+                <div class="row justify-content-center">
+                  <button class="form-control" type="button" @click="deleteRecipe" style="width:200px;"> Yes, Delete
+                    Recipe</button>
+                  <button class="form-control" type="button" @click="deleteWarning = false;"
+                    style="width:100px; margin-left: 2rem;">No</button>
+                </div>
+              </div>
+            </div>
+
+            <div id="warning" class="container" v-if="updateWarning">
+              <div class="box">
+                <h3>
+                  Are You Sure That You Want To Update This Recipe?
+                </h3>
+                <div class="row justify-content-center">
+                  <button class="form-control" type="button" @click="updateRecipe" style="width:200px;"> Yes, Update
+                    Recipe</button>
+                  <button class="form-control" type="button" @click="updateWarning = false;"
+                    style="width:100px; margin-left: 2rem;">No</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-xl-3">
+              <br>
+              <div style="width:40%;align-self:center;">
+                <button class="form-control" type="button" @click="updateWarning = true" style="width:200px;">Update
+                  Recipe</button>
+              </div>
+              <br>
+
+              <label for="nameField" class="form-label">Name</label>
+              <input class="form-control" v-model="recipe.name" id="nameField"><br><br><br><br>
+              <label for="timeField" class="form-label">Preparation Time (in minutes)</label>
+              <input class="form-control" v-model="recipe.preparationTime" id="timeField">
+              <br><br><br><br>
+            </div>
+
+            <div class="col-xl-3">
+              <br>
+              <div style="width:40%;align-self:center;">
+                <button class="form-control" type="button" @click="deleteWarning = true;" style="width:200px;">Delete
+                  Recipe</button>
+              </div>
+            </div>
+
+            <div class="col-xl-2">
+              <a>Upload Image</a><br>
+              <input type="file" id="media" accept="image/*" multiple @change="(event) => handleFileUpload(event)" />
+              <br><br>
+            </div>
+            <div class="col-xl-3">
+              <img class="card-img-top img-thumbnail img-fluid align-self-center"
+                :src="downloadURL || recipe.image || placeholderImg" alt="Card image cap"
+                style="max-height:90%;max-width:90%;position: relative; top:10px">
+              <br>
+            </div>
+          </div>
+
+          <div class="row justify-content-center">
+            <div class="col-xxl-4 col-xl-12 form-group">
+              <label for="instructionsField" class="form-label">Instructions</label>
+              <div class="container-fluid" id="instructionsFields" v-for="(step, index) in recipe.instructions"
+                :key="index">
+                <div class="input-group mb-3">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text" id="inputGroup-sizing-sm">Step # {{ index + 1
+                    }}</span>
+                  </div>
+                  <input type="text" class="form-control" v-model="step.value" @keyup.enter="addField('instructions')">
+                  <div class="input-group-append">
+                    <button class="btn" type="button" @click="deleteField('instructions', index)"
+                      tabindex="-1">X</button>
+                  </div>
+                </div>
+              </div>
+              <br><button type="button" @click="addField('instructions')" tabindex="-1">Add new step</button><br>
+            </div>
+
+            <div class="col-xxl-2 col-xl-5 form-group">
+              <label for="ingredientFields" class="form-label">Ingredients</label>
+              <div id="ingredientFields" v-for="(ingredient, index) in recipe.ingredients" :key="index">
+                <div class="input-group mb-3">
+                  <input type="text" class="form-control" v-model="ingredient.value"
+                    @keyup.enter="addField('ingredients')">
+                  <div class="input-group-append">
+                    <button class="btn" type="button" @click="deleteField('ingredients', index)"
+                      tabindex="-1">X</button>
+                  </div>
+                </div>
+              </div>
+              <br><button type="button" @click="addField('ingredients')" tabindex="-1">Add new Ingredient</button><br>
+            </div>
+            <div class="col-xxl-2 col-xl-5 form-group">
+              <label for="equipmentFields" class="form-label">Equipment</label>
+              <div id="equipmentFields" v-for="(item, index) in recipe.equipment" :key="index">
+                <div class="input-group mb-3">
+                  <input type="text" class="form-control" v-model="item.value" @keyup.enter="addField('equipment')">
+                  <div class="input-group-append">
+                    <button class="btn" type="button" @click="deleteField('equipment', index)" tabindex="-1">X</button>
+                  </div>
+
+                </div>
+              </div>
+              <button type="button" class="align-self-start" @click="addField('equipment')" tabindex="-1">Add new
+                Equipment</button><br><br>
+            </div>
+          </div>
+
+          <br>
+          <br>
+        </div>
+      </form>
+    </div>
+  </div>
 </template>
 
 
@@ -334,11 +339,6 @@ onMounted(() => {
   border-bottom-right-radius: 20px;
   margin-left: 20px;
   margin-right: 20px;
-  position: relative;
-}
-
-#content {
-  width: 100%;
   position: relative;
 }
 
@@ -371,18 +371,7 @@ onMounted(() => {
   color: red;
   border: none;
   border-radius: 0;
-}
-
-button {
-  background: rgb(240, 240, 240);
-  border: black 2px solid;
-  border-radius: 15px;
-  Box-shadow: 3px 3px 5px black;
-}
-
-button:hover{
-  background: rgb(0, 0, 0);
-  color: white;
+  background: white;
 }
 
 
@@ -390,33 +379,5 @@ img {
   border: 2px dashed black;
   border-radius: 20px;
   align-self: center;
-}
-
-#warning{
-  position: fixed;
-  align-content: center;
-  top: 25%;
-  left: 50%;
-  margin-top: -100px;
-  margin-left: -200px;
-  width: 400px;
-  height: 200px;
-  z-index: 100;
-}
-
-.box {
-  border: 2px solid;
-  border-radius: 5px;
-  padding: 10px;
-  min-width: 18rem;
-  min-height: 5rem;
-  Box-shadow: 3px 3px 5px black;
-  background-color: rgba(255, 183, 77, 100%);
-}
-
-#media {
-  background: linear-gradient(to left, rgba(255, 121, 0, 0%), rgba(255, 121, 0, 100%));
-  border-radius: 2px;
-  width: 100%;
 }
 </style>

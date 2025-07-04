@@ -18,7 +18,7 @@ const signUp = {
     email: ref(""),
     password: ref(""),
     confirmPassword: ref(""),
-    downloadURL: ""
+    downloadURL: "https://firebasestorage.googleapis.com/v0/b/sound-of-peanuts-cooking-site.appspot.com/o/User%20icon%20Clear.png?alt=media&token=02ef6aea-e4bd-4c39-a65a-f00acea43188"
 }
 
 const login = {
@@ -27,7 +27,8 @@ const login = {
 }
 
 var file = placeholderPfp;
-var pfpRef = ref("https://firebasestorage.googleapis.com/v0/b/sound-of-peanuts-cooking-site.appspot.com/o/User%20icon%20Clear.png?alt=media&token=02ef6aea-e4bd-4c39-a65a-f00acea43188")
+const pfpRef = ref("https://firebasestorage.googleapis.com/v0/b/sound-of-peanuts-cooking-site.appspot.com/o/User%20icon%20Clear.png?alt=media&token=02ef6aea-e4bd-4c39-a65a-f00acea43188")
+const defaultPFP = ref(true);
 
 function authCheck() {
     console.log("Auth check")
@@ -51,29 +52,16 @@ function authCheck() {
     else {
         loading.value = false;
     }
-
 }
 
 auth.authStateReady().then(authCheck)
 
-// async handleFileUpload(event) {
-//       try {
-//         const storage = getStorage();
-//         const file = event.target.files[0];
-//         console.log(downloadURL);
-//         this.downloadURL = downloadURL;
-//         const imageElement = this.$refs.image;
-//         if (imageElement) {
-//           imageElement.setAttribute("src", downloadURL);
-//         }
-//       } catch (error) {
-//         console.error("Error uploading image:", error);
-//       }
-//     },
-
 const handleFileUpload = function (event) {
     file = event.target.files[0];
+    if (!file) return;
+    
     pfpRef.value = URL.createObjectURL(file);
+    defaultPFP.value = false;
 };
 
 const userCreate = async () => {
@@ -102,21 +90,42 @@ const userCreate = async () => {
         }
         console.log(createSuccess);
     } catch (error) {
-        console.log("Failed to create user:" + error.message);
+        console.log("Failed to create user: " + error.message);
+
+        if (error.code === 'auth/email-already-in-use') {
+            alert("This email is already registered. Please use a different email.");
+            return;
+        }
+
+        if (auth.currentUser) {
+            const signUpUser = auth.currentUser;
+            deleteObject(storageRef(storage, 'images/' + signUpUser.uid)).catch((deleteError) => {
+                console.error("Error deleting image:", deleteError.message);
+            });
+            deleteUser(signUpUser).catch((deleteError) => {
+                console.error("Error deleting user:", deleteError.message);
+            });
+        }
+
+        alert("An error occurred while creating the account. Please try again.");
+        return;
     }
 
     const signUpUser = auth.currentUser;
     console.log(signUpUser);
-    try {
-        const storageReference = storageRef(storage, 'images/' + signUpUser.uid);
+    
+    if (!defaultPFP.value) {
+        try {
+            const storageReference = storageRef(storage, 'images/' + signUpUser.uid);
             const snapshot = await uploadBytes(storageReference, file);
             const url = await getDownloadURL(snapshot.ref);
             console.log("Image uploaded successfully. Download URL:", url);
             signUp.downloadURL = url;
             await updateProfile(signUpUser, { photoURL: url });
-    } catch (error) {
-        console.error("Error uploading image:", error);
-        deleteUser(signUpUser);
+        } catch (error) {
+            console.error("Error uploading image:", error);            
+            deleteUser(signUpUser);
+        }
     }
 
     try {
@@ -134,9 +143,8 @@ const userCreate = async () => {
         }
     } catch (error) {
         console.error("Error adding user to db:", error.message);
-        deleteObject(storageRef(storage, 'images/' + signUpUser.uid))
-        deleteUser(signUpUser);
-        alert("An error occurred while creating the account. Please try again.");
+        alert("An error occurred while adding the user to the database. Please try again.");
+        return;
     }
 
     authCheck();
@@ -177,7 +185,7 @@ function userLogin(event) {
                         role="tab" aria-controls="log in tab" aria-selected="false">Log In</button>
                 </li>
             </ul>
-            <div class="tab-content" style="width: 8cm;">
+            <div class="tab-content" style=" min-width: 50%;">
                 <div class="tab-pane show active" id="newAccountDiv">
                     <form>
                         <label for="usernameInput" class="form-label">Username:</label>
@@ -197,7 +205,7 @@ function userLogin(event) {
                             placeholder="Enter the same password as above" v-model="signUp.confirmPassword.value">
 
                         <label for="pfpInput" class="form-label">Upload your Profile Picture</label>
-                        <img :src="pfpRef" style="width:100%;height:30vh;display:block;object-fit: cover;"
+                        <img :src="pfpRef" style="width:100%;height:30rem;display:block;object-fit: cover;"
                             id="pfpPreviewImg">
                         <input type="file" :value="null" class="form-control" id="pfpInput"
                             accept="image/png,image/jpeg" multiple @change="(event) => handleFileUpload(event)">
@@ -226,21 +234,26 @@ function userLogin(event) {
 </template>
 
 <style scoped>
-.gradient-custom {
-    background: linear-gradient(to right, rgba(242, 233, 126, 75%), rgba(255, 121, 0, 50%));
+#flexWrapper {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    background: radial-gradient(rgba(242, 233, 126, 75%), rgba(255, 121, 0, 50%));
 }
 
 #accountPageDiv {
     align-items: center;
     width: max-content;
+    align-content: center;
     padding: 4vh;
     border: 2px solid lightgrey;
     border-radius: 20px;
     margin: 3vh;
     background-color: rgb(243, 239, 234);
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
 }
 
-#emailInput,
 #emailLoginInput {
     width: 35ch;
 }
